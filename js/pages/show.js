@@ -4,7 +4,7 @@
  */
 
 import * as provider from '../api/provider.js';
-import { getShow, updateTrackingStatus, rateShow, addShow } from '../database/shows.js';
+import { getShow, getShowByTmdbId, updateTrackingStatus, rateShow, addShow } from '../database/shows.js';
 import { getEpisodes, markWatched, markUnwatched, markSeasonWatched, markSeasonUnwatched, addEpisodes } from '../database/episodes.js';
 import { getPosterUrl, getBackdropUrl } from '../api/tmdb.js';
 import { formatYear, formatDate, starRating, statusBadge, STATUS_MAP } from '../utils/dom.js';
@@ -34,8 +34,7 @@ export async function init(params) {
 
   try {
     // 1. Check if in DB
-    const dbShows = await window.db.shows.where('tmdbId').equals(tmdbId).toArray();
-    const localShow = dbShows[0];
+    const localShow = await getShowByTmdbId(tmdbId);
     
     if (localShow) {
       isTracked = true;
@@ -170,18 +169,29 @@ function renderContent(container) {
 
         <!-- Episode List -->
         <div class="card" style="padding:0;">
-          ${seasonEps.map(ep => `
-            <div class="episode-item ${ep.watched ? 'watched' : ''}" data-ep-id="${ep.id || ''}" data-ep-index="${ep.episode}">
-              <div class="episode-checkbox ${ep.watched ? 'checked' : ''}">
-                ${ep.watched ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+          ${seasonEps.map(ep => {
+            let imgHtml = '';
+            if (ep.stillPath) {
+              const src = ep.stillPath.startsWith('http') ? ep.stillPath : getPosterUrl(ep.stillPath, 'backdropSmall');
+              imgHtml = `<img src="${src}" class="episode-image" loading="lazy" style="width:120px;height:68px;object-fit:cover;border-radius:var(--radius-sm);margin:0 var(--space-3);flex-shrink:0;">`;
+            } else {
+              imgHtml = `<div class="episode-image skeleton" style="width:120px;height:68px;border-radius:var(--radius-sm);margin:0 var(--space-3);flex-shrink:0;"></div>`;
+            }
+
+            return `
+              <div class="episode-item ${ep.watched ? 'watched' : ''}" data-ep-id="${ep.id || ''}" data-ep-index="${ep.episode}" style="display:flex;align-items:center;">
+                <div class="episode-checkbox ${ep.watched ? 'checked' : ''}">
+                  ${ep.watched ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+                </div>
+                ${imgHtml}
+                <div class="episode-info" style="flex:1;">
+                  <div class="episode-number">${ep.season}x${String(ep.episode).padStart(2, '0')}</div>
+                  <div class="episode-title">${ep.title}</div>
+                </div>
+                <div class="episode-date">${formatDate(ep.airDate)}</div>
               </div>
-              <div class="episode-info">
-                <div class="episode-number">${ep.season}x${String(ep.episode).padStart(2, '0')}</div>
-                <div class="episode-title">${ep.title}</div>
-              </div>
-              <div class="episode-date">${formatDate(ep.airDate)}</div>
-            </div>
-          `).join('')}
+            `;
+          }).join('')}
         </div>
       </div>
     ` : ''}

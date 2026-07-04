@@ -166,7 +166,15 @@ function bindEvents() {
   document.addEventListener('click', async (e) => {
     const delColBtn = e.target.closest('[data-action="delete-col"]');
     if (delColBtn) {
-      if (!confirm(`Delete collection "${delColBtn.dataset.name}"?`)) return;
+      const { confirmModal } = await import('../components/modal.js');
+      const isConfirmed = await confirmModal(
+        'Delete Collection',
+        `Are you sure you want to delete the collection "${delColBtn.dataset.name}"? This won't delete the shows inside it.`,
+        'Delete',
+        true
+      );
+      if (!isConfirmed) return;
+      
       await deleteCollection(parseInt(delColBtn.dataset.id));
       toast('Collection deleted');
       renderLists();
@@ -174,7 +182,15 @@ function bindEvents() {
 
     const delTagBtn = e.target.closest('[data-action="delete-tag"]');
     if (delTagBtn) {
-      if (!confirm(`Delete tag "#${delTagBtn.dataset.name}"?`)) return;
+      const { confirmModal } = await import('../components/modal.js');
+      const isConfirmed = await confirmModal(
+        'Delete Tag',
+        `Are you sure you want to delete the tag "#${delTagBtn.dataset.name}"?`,
+        'Delete',
+        true
+      );
+      if (!isConfirmed) return;
+      
       await deleteTag(parseInt(delTagBtn.dataset.id));
       toast('Tag deleted');
       renderLists();

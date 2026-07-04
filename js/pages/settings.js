@@ -143,7 +143,14 @@ function bindEvents() {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (!confirm('This will MERGE the imported backup with your current data. Duplicate IDs will be overwritten. Continue?')) {
+    const { confirmModal } = await import('../components/modal.js');
+    const isConfirmed = await confirmModal(
+      'Restore Backup',
+      'This will MERGE the imported backup with your current data. Duplicate IDs will be overwritten. Continue?',
+      'Restore'
+    );
+
+    if (!isConfirmed) {
       fileInput.value = '';
       return;
     }
@@ -180,16 +187,27 @@ function bindEvents() {
   // Clear Data
   const clearBtn = document.getElementById('clear-data-btn');
   clearBtn?.addEventListener('click', async () => {
-    const confirm1 = confirm('WARNING: This will permanently delete your entire library, history, and collections. This action cannot be undone. Are you sure?');
-    if (!confirm1) return;
+    const { confirmModal } = await import('../components/modal.js');
     
-    const confirm2 = confirm('Are you ABSOLUTELY sure?');
-    if (!confirm2) return;
+    const confirm1 = await confirmModal(
+      'Delete All Data',
+      'WARNING: This will permanently delete your entire library, history, collections, and API keys. This action cannot be undone. Are you sure?',
+      'Yes, Delete Everything',
+      true
+    );
+    if (!confirm1) return;
 
     try {
+      // Clear DB
       await clearAllData();
+      
+      // Clear LocalStorage settings (including TMDB key)
+      localStorage.removeItem('showdeck_tmdb_key');
+      localStorage.removeItem('showdeck_theme');
+      
       toast('All data has been deleted.', 'success');
       setTimeout(() => window.location.hash = '#/home', 1500);
+      setTimeout(() => window.location.reload(), 1600);
     } catch (err) {
       console.error(err);
       toast('Failed to clear data', 'error');
