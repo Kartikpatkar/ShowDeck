@@ -29,12 +29,12 @@
 ---
 
 ## Phase 1: Database & API Layer
-- [ ] Dexie.js integration
-- [ ] IndexedDB schema (shows, movies, episodes, collections, tags, activity)
-- [ ] TMDB API wrapper (`tmdb.js`)
-- [ ] TVMaze API wrapper (`tvmaze.js`)
-- [ ] Unified provider interface (`provider.js`)
-- [ ] API response caching in IndexedDB
+- [x] Dexie.js integration
+- [x] IndexedDB schema (shows, movies, episodes, collections, tags, activity)
+- [x] TMDB API wrapper (`tmdb.js`)
+- [x] TVMaze API wrapper (`tvmaze.js`)
+- [x] Unified provider interface (`provider.js`)
+- [x] API response caching in IndexedDB
 
 ---
 
@@ -141,9 +141,9 @@
 
 ## Current Status
 
-**Phase:** 0 ✅ Complete → Moving to Phase 1  
-**Last Completed:** Full app shell — sidebar, router, theme toggle, CSS design system, home page  
-**Next Up:** Phase 1 — Dexie.js + IndexedDB schema + TMDB/TVMaze API wrappers  
+**Phase:** 1 ✅ Complete → Moving to Phase 2  
+**Last Completed:** Full DB layer (Dexie.js, CRUD for shows/movies/episodes/collections/tags/stats) + API layer (TMDB + TVMaze + unified provider with caching)  
+**Next Up:** Phase 2 — Core pages (Home dashboard, Search, Library)  
 **Blockers:** None
 
 ---
