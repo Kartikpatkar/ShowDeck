@@ -16,14 +16,15 @@
 - [x] Project vision & spec (`PROJECT_IDEA.md`)
 - [x] Technical architecture (`ARCHITECTURE.md`)
 - [x] Build tracker (`TRACKER.md`)
-- [ ] Directory structure scaffold
-- [ ] `index.html` — app shell
-- [ ] `manifest.json` — PWA manifest
-- [ ] CSS design system (`variables.css`, `reset.css`, `base.css`)
-- [ ] Theme toggle (light/dark) with CSS custom properties
-- [ ] `app.js` — entry point
-- [ ] `router.js` — hash-based SPA router
-- [ ] Sidebar navigation component
+- [x] Directory structure scaffold
+- [x] `index.html` — app shell
+- [x] `manifest.json` — PWA manifest
+- [x] CSS design system (`variables.css`, `reset.css`, `base.css`, `layout.css`, `components.css`, `utilities.css`)
+- [x] Theme toggle (light/dark) with CSS custom properties
+- [x] `app.js` — entry point
+- [x] `router.js` — hash-based SPA router
+- [x] Sidebar navigation component
+- [x] Toast notification component
 
 ---
 
@@ -140,9 +141,9 @@
 
 ## Current Status
 
-**Phase:** 0 — Foundation  
-**Last Completed:** Architecture doc, tracker  
-**Next Up:** Directory scaffold + app shell + CSS design system  
+**Phase:** 0 ✅ Complete → Moving to Phase 1  
+**Last Completed:** Full app shell — sidebar, router, theme toggle, CSS design system, home page  
+**Next Up:** Phase 1 — Dexie.js + IndexedDB schema + TMDB/TVMaze API wrappers  
 **Blockers:** None
 
 ---
