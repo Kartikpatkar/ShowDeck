@@ -20,7 +20,6 @@ const STATIC_ASSETS = [
   '/css/pages/pages.css',
   '/js/app.js',
   '/js/router.js',
-  '/js/theme.js',
   '/js/components/sidebar.js',
   '/js/components/toast.js',
   '/js/utils/dom.js',
@@ -44,10 +43,7 @@ const STATIC_ASSETS = [
   '/js/pages/movie.js',
   '/js/pages/collections.js',
   '/js/pages/stats.js',
-  '/js/pages/settings.js',
-  // External
-  'https://cdn.jsdelivr.net/npm/dexie@4.0.11/+esm',
-  'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js'
+  '/js/pages/settings.js'
 ];
 
 self.addEventListener('install', (e) => {

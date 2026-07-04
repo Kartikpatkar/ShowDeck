@@ -11,6 +11,21 @@ import { getTotalWatchedEpisodes } from '../database/episodes.js';
 import { getPosterUrl } from '../api/tmdb.js';
 import { formatDate, formatYear, truncate, statusBadge } from '../utils/dom.js';
 
+export async function init() {
+  // Bind onboarding key save if it exists
+  const homeSaveBtn = document.getElementById('home-save-key');
+  if (homeSaveBtn) {
+    homeSaveBtn.addEventListener('click', () => {
+      const key = document.getElementById('home-api-key').value.trim();
+      if (key) {
+        localStorage.setItem('showdeck_tmdb_key', key);
+        import('../components/toast.js').then(m => m.toast('API Key saved! Enjoy ShowDeck. 🎉', 'success'));
+        setTimeout(() => window.location.reload(), 1000);
+      }
+    });
+  }
+}
+
 export async function render() {
   // Fetch data
   const [
@@ -123,6 +138,23 @@ export async function render() {
     `;
   }
 
+  const apiKey = localStorage.getItem('showdeck_tmdb_key');
+  const onboardingHtml = !apiKey ? `
+    <div class="card" style="margin-bottom:var(--space-8); border: 2px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent);">
+      <h2 style="margin-bottom:var(--space-2);">Welcome to ShowDeck! 🎬</h2>
+      <p style="margin-bottom:var(--space-4); color:var(--text-secondary);">
+        ShowDeck is a free, local-first tracker. To enable search and rich movie metadata, you need to provide your own free TMDB API key.
+      </p>
+      <div style="display:flex; gap:var(--space-2);">
+        <input type="password" id="home-api-key" class="input" placeholder="Enter TMDB API Key" style="flex:1;">
+        <button class="btn btn-primary" id="home-save-key">Save Key & Start</button>
+      </div>
+      <p style="margin-top:var(--space-2); font-size:var(--text-xs); color:var(--text-tertiary);">
+        <a href="https://developer.themoviedb.org/docs" target="_blank" style="color:var(--color-primary); text-decoration:underline;">Get a free key here</a>. Your key never leaves your device.
+      </p>
+    </div>
+  ` : '';
+
   return `
     <div class="page-container animate-fade-in">
       <div class="page-header">
@@ -131,6 +163,8 @@ export async function render() {
           <p class="page-subtitle">Here's what's happening with your entertainment.</p>
         </div>
       </div>
+
+      ${onboardingHtml}
 
       <!-- Quick Stats -->
       <div class="section">
