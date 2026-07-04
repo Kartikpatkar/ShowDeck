@@ -94,6 +94,13 @@ function renderContent(container) {
   const isSeasonComplete = seasonEps.length > 0 && watchedCount === seasonEps.length;
 
   container.innerHTML = `
+    <!-- Back Button -->
+    <div style="padding:var(--space-4) var(--space-4) 0; position:relative; z-index:10;">
+      <button class="btn btn-ghost" onclick="window.history.length > 1 ? window.history.back() : window.location.hash='#/home'" style="padding:var(--space-2); margin-left:-var(--space-2); font-weight:var(--weight-medium);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="m15 18-6-6 6-6"/></svg>
+        Back
+      </button>
+    </div>
     <!-- Hero -->
     <div class="detail-hero">
       ${backdropUrl 

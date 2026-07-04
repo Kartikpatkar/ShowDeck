@@ -21,6 +21,21 @@ export function render() {
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:var(--space-8);">
         
+        <!-- Personalization -->
+        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-6);">
+          <div>
+            <h3 class="section-title" style="margin:0;">Personalization</h3>
+            <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">Customize your ShowDeck experience.</p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+            <label style="font-weight:var(--weight-medium);">Your Name</label>
+            <div style="display:flex;gap:var(--space-2);">
+              <input type="text" id="user-name-input" class="input" placeholder="What should we call you?" value="${localStorage.getItem('showdeck_user_name') || ''}" style="flex:1;">
+              <button class="btn btn-secondary" id="save-name-btn">Save</button>
+            </div>
+          </div>
+        </div>
+        
         <!-- API Keys -->
         <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-6);">
           <div>
@@ -81,6 +96,19 @@ export function init() {
 }
 
 function bindEvents() {
+  // User Name
+  const saveNameBtn = document.getElementById('save-name-btn');
+  saveNameBtn?.addEventListener('click', () => {
+    const name = document.getElementById('user-name-input').value.trim();
+    if (name) {
+      localStorage.setItem('showdeck_user_name', name);
+      toast('Name saved', 'success');
+    } else {
+      localStorage.removeItem('showdeck_user_name');
+      toast('Name removed', 'success');
+    }
+  });
+
   // TMDB Key
   const saveKeyBtn = document.getElementById('save-key-btn');
   saveKeyBtn?.addEventListener('click', () => {
