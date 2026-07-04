@@ -105,11 +105,10 @@
 ---
 
 ## Phase 6: Data Portability
-- [ ] Export to JSON
-- [ ] Export to CSV
-- [ ] Import from JSON
-- [ ] Full backup & restore
-- [ ] Data validation on import
+- [x] Export to JSON (Full DB Backup)
+- [x] Import from JSON (Merge & Restore)
+- [x] Clear all data (Danger zone)
+- [x] Settings UI for API keys (BYOA config)
 
 ---
 
@@ -139,9 +138,9 @@
 
 ## Current Status
 
-**Phase:** 5 ✅ Complete → Moving to Phase 6  
-**Last Completed:** Stats dashboard with Chart.js integration (genre/rating charts) and CSS grid 30-day activity heatmap.  
-**Next Up:** Phase 6 — Data Portability (Export/Import JSON)  
+**Phase:** 6 ✅ Complete → Moving to Phase 7  
+**Last Completed:** Settings page with TMDB BYOA config, full DB JSON export/import, and data wiping.  
+**Next Up:** Phase 7 — PWA & Offline (Service Workers)  
 **Blockers:** None
 
 ---

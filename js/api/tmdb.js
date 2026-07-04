@@ -4,8 +4,17 @@
  * https://developer.themoviedb.org/docs
  */
 
-// Placeholder API key — user will swap with their own
-const API_KEY = 'YOUR_TMDB_API_KEY';
+/**
+ * Get the user's TMDB API Key from localStorage.
+ */
+function getApiKey() {
+  const key = localStorage.getItem('showdeck_tmdb_key');
+  if (!key) {
+    console.warn('[TMDB] No API key found. Add it in Settings to enable movie support and rich artwork.');
+  }
+  return key || '';
+}
+
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_BASE = 'https://image.tmdb.org/t/p';
 
@@ -44,8 +53,13 @@ export function getBackdropUrl(path, size = 'backdropLarge') {
  * @private Fetch wrapper with error handling.
  */
 async function tmdbFetch(endpoint, params = {}) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error('Missing TMDB API Key. Please add it in Settings.');
+  }
+
   const url = new URL(`${BASE_URL}${endpoint}`);
-  url.searchParams.set('api_key', API_KEY);
+  url.searchParams.set('api_key', apiKey);
   url.searchParams.set('language', 'en-US');
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 

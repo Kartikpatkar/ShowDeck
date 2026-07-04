@@ -129,7 +129,7 @@ router
     loadPage(() => import('./pages/stats.js'), params);
   })
   .on('/settings', (params) => {
-    loadPage(() => Promise.resolve(placeholderPage('Settings', 'Customize your experience')), params);
+    loadPage(() => import('./pages/settings.js'), params);
   })
   .onNotFound(() => {
     const container = getPageContainer();
