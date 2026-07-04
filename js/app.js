@@ -172,6 +172,13 @@ function init() {
   console.log('[ShowDeck] App initialized');
 }
 
+// ── Global image error handler ──
+window.addEventListener('error', function(e) {
+  if (e.target && e.target.tagName === 'IMG') {
+    e.target.style.display = 'none'; // Hide broken images globally
+  }
+}, true);
+
 // ── Global Keyboard Shortcuts ──
 window.addEventListener('keydown', (e) => {
   // Ignore if typing in input

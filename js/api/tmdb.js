@@ -63,11 +63,21 @@ async function tmdbFetch(endpoint, params = {}) {
   url.searchParams.set('language', 'en-US');
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 
-  const response = await fetch(url.toString());
-  if (!response.ok) {
-    throw new Error(`TMDB API error: ${response.status} ${response.statusText}`);
+  try {
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      if (response.status === 401) {
+        import('../components/toast.js').then(m => m.toast('Invalid TMDB API Key. Please check Settings.', 'error'));
+      }
+      throw new Error(`TMDB API error: ${response.status} ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (err) {
+    if (!navigator.onLine) {
+      import('../components/toast.js').then(m => m.toast('You are offline. Showing cached data.', 'warning'));
+    }
+    throw err;
   }
-  return response.json();
 }
 
 // ── Search ──

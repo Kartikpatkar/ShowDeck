@@ -28,7 +28,7 @@ export function render() {
       <!-- Search Bar -->
       <div class="section">
         <div class="search-container">
-          <div class="input-group">
+          <form onsubmit="event.preventDefault(); document.getElementById('search-input').blur();" class="input-group" style="position:relative;">
             <span class="input-group-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             </span>
@@ -40,8 +40,12 @@ export function render() {
               autocomplete="off"
               autofocus
               aria-label="Search shows and movies"
+              style="padding-right: 40px;"
             >
-          </div>
+            <button type="button" id="search-clear-btn" class="hidden" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-tertiary);padding:4px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </form>
 
           <!-- Type Filters -->
           <div class="search-type-filters" id="search-type-filters">
@@ -65,21 +69,39 @@ export function render() {
 
 export function init() {
   const input = document.getElementById('search-input');
+  const clearBtn = document.getElementById('search-clear-btn');
   const filtersEl = document.getElementById('search-type-filters');
 
-  // Debounced search
-  const doSearch = debounce(async (query) => {
-    if (!query.trim()) {
+  const doSearch = debounce((query) => {
+    currentQuery = query.trim();
+    
+    // Toggle clear button
+    if (currentQuery) {
+      clearBtn?.classList.remove('hidden');
+    } else {
+      clearBtn?.classList.add('hidden');
+    }
+    
+    // If empty, clear results
+    if (!currentQuery) {
       document.getElementById('search-results').innerHTML = '';
       document.getElementById('search-load-more').classList.add('hidden');
       return;
     }
-    currentQuery = query.trim();
+    
     currentPage = 1;
-    await performSearch();
+    performSearch();
   }, 350);
 
   input?.addEventListener('input', (e) => doSearch(e.target.value));
+
+  clearBtn?.addEventListener('click', () => {
+    if (input) {
+      input.value = '';
+      input.focus();
+      doSearch('');
+    }
+  });
 
   // Type filter buttons
   filtersEl?.addEventListener('click', (e) => {
