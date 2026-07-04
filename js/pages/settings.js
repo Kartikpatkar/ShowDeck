@@ -21,11 +21,11 @@ export function render() {
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:var(--space-8);">
         
-        <!-- Metadata Provider -->
-        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);">
+        <!-- API Keys -->
+        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-6);">
           <div>
-            <h3 class="section-title" style="margin:0;">Metadata Provider</h3>
-            <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">Configure where ShowDeck fetches information.</p>
+            <h3 class="section-title" style="margin:0;">API Providers</h3>
+            <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">ShowDeck connects directly to these services.</p>
           </div>
           
           <div style="display:flex;flex-direction:column;gap:var(--space-3);">
@@ -41,8 +41,8 @@ export function render() {
           </div>
         </div>
 
-        <!-- Data Portability -->
-        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);">
+        <!-- Danger Zone -->
+        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);border-color:var(--color-error);padding:var(--space-6);">
           <div>
             <h3 class="section-title" style="margin:0;">Data Management</h3>
             <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">Backup or restore your library.</p>

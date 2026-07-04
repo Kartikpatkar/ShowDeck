@@ -140,7 +140,7 @@ export async function render() {
 
   const apiKey = localStorage.getItem('showdeck_tmdb_key');
   const onboardingHtml = !apiKey ? `
-    <div class="card" style="margin-bottom:var(--space-8); border: 2px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent);">
+    <div class="card" style="margin-bottom:var(--space-8); border: 2px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); padding: var(--space-6);">
       <h2 style="margin-bottom:var(--space-2);">Welcome to ShowDeck! 🎬</h2>
       <p style="margin-bottom:var(--space-4); color:var(--text-secondary);">
         ShowDeck is a free, local-first tracker. To enable search and rich movie metadata, you need to provide your own free TMDB API key.

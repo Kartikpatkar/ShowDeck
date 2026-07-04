@@ -68,7 +68,7 @@ export async function init() {
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:var(--space-8);">
         <!-- Genre Chart -->
-        <div class="card" style="display:flex;flex-direction:column;">
+        <div class="card" style="display:flex;flex-direction:column;padding:var(--space-6);">
           <h3 class="section-title">Top Genres</h3>
           <div style="flex:1;position:relative;min-height:250px;">
             <canvas id="genreChart"></canvas>
@@ -76,7 +76,7 @@ export async function init() {
         </div>
 
         <!-- Rating Chart -->
-        <div class="card" style="display:flex;flex-direction:column;">
+        <div class="card" style="display:flex;flex-direction:column;padding:var(--space-6);">
           <h3 class="section-title">Rating Distribution</h3>
           <div style="flex:1;position:relative;min-height:250px;">
             <canvas id="ratingChart"></canvas>
@@ -85,7 +85,7 @@ export async function init() {
       </div>
       
       <!-- Activity Heatmap -->
-      <div class="card" style="margin-top:var(--space-8);">
+      <div class="card" style="margin-top:var(--space-8);padding:var(--space-6);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4);">
           <h3 class="section-title" style="margin:0;">Watch Activity</h3>
           <div style="display:flex;gap:var(--space-4);font-size:var(--text-sm);">
