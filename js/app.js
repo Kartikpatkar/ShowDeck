@@ -111,10 +111,10 @@ router
     loadPage(() => import('./pages/home.js'), params);
   })
   .on('/search', (params) => {
-    loadPage(() => Promise.resolve(placeholderPage('Search', 'Find TV shows and movies')), params);
+    loadPage(() => import('./pages/search.js'), params);
   })
   .on('/library', (params) => {
-    loadPage(() => Promise.resolve(placeholderPage('Library', 'Your personal collection')), params);
+    loadPage(() => import('./pages/library.js'), params);
   })
   .on('/show/:id', (params) => {
     loadPage(() => Promise.resolve(placeholderPage('Show Details', `Show #${params.id}`)), params);

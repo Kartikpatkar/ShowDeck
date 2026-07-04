@@ -39,22 +39,22 @@
 ---
 
 ## Phase 2: Core Pages
-- [ ] Home / Dashboard page
-  - [ ] Continue Watching section
-  - [ ] Recently Added section
-  - [ ] Quick Statistics cards
-  - [ ] Upcoming Episodes section
-- [ ] Search page
-  - [ ] Search bar with debounce
-  - [ ] Results grid (shows & movies)
-  - [ ] Add to library from search
-- [ ] Library page
-  - [ ] Grid view
-  - [ ] List view
-  - [ ] Compact view
-  - [ ] Filters (status, genre, rating)
-  - [ ] Sorting (title, date added, rating)
-  - [ ] Grouping
+- [x] Home / Dashboard page
+  - [x] Continue Watching section
+  - [x] Recently Added section
+  - [x] Quick Statistics cards
+  - [x] Upcoming Episodes section
+- [x] Search page
+  - [x] Search bar with debounce
+  - [x] Results grid (shows & movies)
+  - [x] Add to library from search
+- [x] Library page
+  - [x] Grid view
+  - [x] List view
+  - [x] Compact view
+  - [x] Filters (status, genre, rating)
+  - [x] Sorting (title, date added, rating)
+  - [x] Grouping
 
 ---
 
@@ -141,9 +141,9 @@
 
 ## Current Status
 
-**Phase:** 1 ✅ Complete → Moving to Phase 2  
-**Last Completed:** Full DB layer (Dexie.js, CRUD for shows/movies/episodes/collections/tags/stats) + API layer (TMDB + TVMaze + unified provider with caching)  
-**Next Up:** Phase 2 — Core pages (Home dashboard, Search, Library)  
+**Phase:** 2 ✅ Complete → Moving to Phase 3  
+**Last Completed:** Home (live stats, continue watching, recently added), Search (debounced, type filters, add to library), Library (grid/list/compact, filters, sort, delete)  
+**Next Up:** Phase 3 — Show/Movie detail pages + episode tracking  
 **Blockers:** None
 
 ---
