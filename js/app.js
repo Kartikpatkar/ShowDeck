@@ -172,6 +172,21 @@ function init() {
   console.log('[ShowDeck] App initialized');
 }
 
+// ── Global Keyboard Shortcuts ──
+window.addEventListener('keydown', (e) => {
+  // Ignore if typing in input
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+  if (e.key === '/') {
+    e.preventDefault();
+    router.navigate('/search');
+  } else if (e.key.toLowerCase() === 'h') {
+    router.navigate('/home');
+  } else if (e.key.toLowerCase() === 'l') {
+    router.navigate('/library');
+  }
+});
+
 // ── PWA & Offline Support ──
 
 if ('serviceWorker' in navigator) {
