@@ -172,6 +172,32 @@ function init() {
   console.log('[ShowDeck] App initialized');
 }
 
+// ── PWA & Offline Support ──
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(
+      (registration) => { console.log('ServiceWorker registration successful:', registration.scope); },
+      (err) => { console.log('ServiceWorker registration failed:', err); }
+    );
+  });
+}
+
+function updateOnlineStatus() {
+  const banner = document.getElementById('offline-banner');
+  if (banner) {
+    if (navigator.onLine) {
+      banner.classList.add('hidden');
+    } else {
+      banner.classList.remove('hidden');
+    }
+  }
+}
+
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus(); // Check on init
+
 // Boot
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);

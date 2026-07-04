@@ -113,13 +113,13 @@
 ---
 
 ## Phase 7: PWA & Offline
-- [ ] Service Worker
-  - [ ] Cache static assets
-  - [ ] Cache API responses
-  - [ ] Offline fallback page
-- [ ] PWA manifest (icons, theme, display)
-- [ ] Install prompt handling
-- [ ] Offline indicator in UI
+- [x] Service Worker
+  - [x] Cache static assets
+  - [x] Cache API responses
+  - [x] Offline fallback page
+- [x] PWA manifest (icons, theme, display)
+- [x] Install prompt handling
+- [x] Offline indicator in UI
 
 ---
 
@@ -138,9 +138,9 @@
 
 ## Current Status
 
-**Phase:** 6 ✅ Complete → Moving to Phase 7  
-**Last Completed:** Settings page with TMDB BYOA config, full DB JSON export/import, and data wiping.  
-**Next Up:** Phase 7 — PWA & Offline (Service Workers)  
+**Phase:** 7 ✅ Complete → Moving to Phase 8  
+**Last Completed:** Service Worker implementation for offline fallback, static asset caching, and dynamic API/Image caching. Added offline UI banner.  
+**Next Up:** Phase 8 — Polish & Final Review  
 **Blockers:** None
 
 ---
