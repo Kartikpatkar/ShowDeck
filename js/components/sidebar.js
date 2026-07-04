@@ -63,7 +63,7 @@ export class Sidebar {
     sidebar.innerHTML = `
       <div class="sidebar-header">
         <a href="#/" class="sidebar-brand" aria-label="ShowDeck Home">
-          <div class="sidebar-brand-icon">${icons.clapperboard}</div>
+          <div class="sidebar-brand-icon"><img src="assets/icon-192.png" alt="ShowDeck Logo" style="width:100%; height:100%; object-fit:contain; border-radius:4px;"></div>
           <span class="sidebar-brand-name">ShowDeck</span>
         </a>
         <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar" data-tooltip="Collapse">
