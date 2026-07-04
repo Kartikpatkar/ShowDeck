@@ -117,16 +117,16 @@ router
     loadPage(() => import('./pages/library.js'), params);
   })
   .on('/show/:id', (params) => {
-    loadPage(() => Promise.resolve(placeholderPage('Show Details', `Show #${params.id}`)), params);
+    loadPage(() => import('./pages/show.js'), params);
   })
   .on('/movie/:id', (params) => {
-    loadPage(() => Promise.resolve(placeholderPage('Movie Details', `Movie #${params.id}`)), params);
+    loadPage(() => import('./pages/movie.js'), params);
   })
   .on('/collections', (params) => {
-    loadPage(() => Promise.resolve(placeholderPage('Collections', 'Organize your entertainment')), params);
+    loadPage(() => import('./pages/collections.js'), params);
   })
   .on('/stats', (params) => {
-    loadPage(() => Promise.resolve(placeholderPage('Statistics', 'Your watching insights')), params);
+    loadPage(() => import('./pages/stats.js'), params);
   })
   .on('/settings', (params) => {
     loadPage(() => Promise.resolve(placeholderPage('Settings', 'Customize your experience')), params);

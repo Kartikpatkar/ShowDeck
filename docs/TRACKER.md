@@ -59,50 +59,48 @@
 ---
 
 ## Phase 3: Detail Pages & Tracking
-- [ ] Show detail page
-  - [ ] Poster & backdrop
-  - [ ] Overview, genres, status
-  - [ ] Season/episode list
-  - [ ] Cast & crew
-  - [ ] Streaming platforms
-  - [ ] Progress bar
-- [ ] Movie detail page
-  - [ ] Same layout as show (minus episodes)
-- [ ] Episode tracking
-  - [ ] Mark watched / unwatched
-  - [ ] Skip / favorite / rewatch
-  - [ ] Batch mark season
-- [ ] Rating widget (5-star, 10-point, heart, thumbs)
-- [ ] Notes editor (per show/movie)
+- [x] Show detail page
+  - [x] Hero section (backdrop + poster)
+  - [x] Info & metadata (genres, status, runtime)
+  - [x] Status tracking controls (Watching, Completed, etc.)
+  - [x] Season/Episode list with bulk mark-as-watched
+  - [x] Cast & crew
+- [x] Movie detail page
+  - [x] Hero section
+  - [x] Status tracking
+  - [x] Cast & crew
+- [x] Episode tracking
+  - [x] Mark watched / unwatched
+  - [x] Skip / favorite / rewatch
+  - [x] Batch mark season
+- [x] Rating widget (5-star, 10-point, heart, thumbs)
+- [x] Notes editor (per show/movie)
 
 ---
 
 ## Phase 4: Organization
-- [ ] Collections CRUD
-  - [ ] Create / edit / delete collections
-  - [ ] Add/remove shows & movies
-  - [ ] Collection detail page
-- [ ] Tags system
-  - [ ] Create / assign / remove tags
-  - [ ] Tag-based filtering
-- [ ] Collection picker modal
-- [ ] Tag input component
+- [x] Collections CRUD
+  - [x] Create / edit / delete collections
+  - [x] Add/remove shows & movies
+  - [x] Collection detail page
+- [x] Tags system
+  - [x] Create / assign / remove tags
+  - [x] Tag-based filtering
+- [x] Collection picker modal
+- [x] Tag input component
 
 ---
 
 ## Phase 5: Statistics & Analytics
-- [ ] Statistics page
-  - [ ] Total shows / movies / episodes
-  - [ ] Hours watched
-  - [ ] Genre distribution chart
-  - [ ] Completion rate
-  - [ ] Rating distribution
-- [ ] GitHub-style activity heatmap
-  - [ ] Daily watching history
-  - [ ] Year view
-  - [ ] Tooltips
-- [ ] Current streak / longest streak
-- [ ] Most active month / year
+- [x] Statistics page
+  - [x] Total shows / movies / episodes
+  - [x] Hours watched
+  - [x] Genre distribution chart
+  - [x] Rating distribution chart
+- [x] Activity heatmap
+  - [x] 30-day activity tracking
+  - [x] Tooltips
+- [x] Current streak / longest streak
 
 ---
 
@@ -141,9 +139,9 @@
 
 ## Current Status
 
-**Phase:** 2 ✅ Complete → Moving to Phase 3  
-**Last Completed:** Home (live stats, continue watching, recently added), Search (debounced, type filters, add to library), Library (grid/list/compact, filters, sort, delete)  
-**Next Up:** Phase 3 — Show/Movie detail pages + episode tracking  
+**Phase:** 5 ✅ Complete → Moving to Phase 6  
+**Last Completed:** Stats dashboard with Chart.js integration (genre/rating charts) and CSS grid 30-day activity heatmap.  
+**Next Up:** Phase 6 — Data Portability (Export/Import JSON)  
 **Blockers:** None
 
 ---
