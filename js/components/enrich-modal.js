@@ -3,9 +3,10 @@
  * UI component for manual TMDB searching and metadata linking.
  */
 
-import { searchShows, searchMovies, getPosterUrl } from '../api/tmdb.js';
 import { db } from '../database/db.js';
+import { getPosterUrl, searchShows, searchMovies } from '../api/tmdb.js';
 import { toast } from './toast.js';
+import { escapeHtml } from '../utils/dom.js';
 
 export function openEnrichModal(id, type, initialQuery, onSuccess) {
   // Create overlay
@@ -88,12 +89,12 @@ export function openEnrichModal(id, type, initialQuery, onSuccess) {
         return `
           <div class="library-list-item card" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);cursor:pointer;text-decoration:none;flex-shrink:0;">
             ${posterUrl
-              ? `<img src="${posterUrl}" alt="${match.title || match.name}" style="width:56px;height:84px;object-fit:cover;border-radius:var(--radius-sm);flex-shrink:0;" loading="lazy">`
+              ? `<img src="${posterUrl}" alt="${escapeHtml(match.title || match.name)}" style="width:56px;height:84px;object-fit:cover;border-radius:var(--radius-sm);flex-shrink:0;" loading="lazy">`
               : `<div style="width:56px;height:84px;background:var(--surface-3);border-radius:var(--radius-sm);flex-shrink:0;display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;">🎬</span></div>`
             }
             <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--space-1);">
-              <div style="font-weight:var(--weight-medium);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${match.title || match.name}</div>
-              <div style="font-size:var(--text-xs);color:var(--text-tertiary);">${year} • ${type === 'show' ? 'TV Show' : 'Movie'}</div>
+              <div style="font-weight:var(--weight-medium);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(match.title || match.name)}</div>
+              <div style="font-size:var(--text-xs);color:var(--text-tertiary);">${escapeHtml(year)} • ${type === 'show' ? 'TV Show' : 'Movie'}</div>
             </div>
             <div style="display:flex;align-items:center;flex-shrink:0;">
               <button class="btn btn-secondary btn-sm enrich-link-btn" data-tmdb='${JSON.stringify(match).replace(/'/g, "&#39;")}'>Link</button>

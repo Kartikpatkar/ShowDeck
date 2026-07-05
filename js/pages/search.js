@@ -7,7 +7,7 @@ import * as provider from '../api/provider.js';
 import { getPosterUrl } from '../api/tmdb.js';
 import { showExists, addShow } from '../database/shows.js';
 import { movieExists, addMovie } from '../database/movies.js';
-import { debounce, formatYear, truncate, STATUS_MAP } from '../utils/dom.js';
+import { debounce, formatYear, truncate, STATUS_MAP, escapeHtml } from '../utils/dom.js';
 import { toast } from '../components/toast.js';
 
 let currentQuery = '';
@@ -350,7 +350,7 @@ function renderResultCard(item) {
         }
       </a>
       <div class="poster-card-info" style="display:flex;flex-direction:column;gap:var(--space-1);">
-        <div class="poster-card-info-title">${item.title}</div>
+        <div class="poster-card-info-title">${escapeHtml(item.title)}</div>
         <div class="poster-card-info-sub" style="display:flex;align-items:center;justify-content:space-between;">
           <span>${year} • ${typeLabel}</span>
           ${rating ? `<span style="color:var(--color-warning);font-size:var(--text-xs);">${rating}</span>` : ''}
