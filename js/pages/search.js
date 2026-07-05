@@ -14,6 +14,7 @@ let currentQuery = '';
 let currentPage = 1;
 let totalPages = 0;
 let searchType = 'multi'; // 'multi' | 'shows' | 'movies'
+let viewMode = localStorage.getItem('showdeck-search-view') || 'grid';
 
 export function render() {
   return `
@@ -48,10 +49,19 @@ export function render() {
           </form>
 
           <!-- Type Filters -->
-          <div class="search-type-filters" id="search-type-filters">
+          <div class="search-type-filters" id="search-type-filters" style="display:flex;align-items:center;gap:var(--space-2);width:100%;">
             <button class="btn btn-sm ${searchType === 'multi' ? 'btn-primary' : 'btn-ghost'}" data-type="multi" id="filter-all">All</button>
             <button class="btn btn-sm ${searchType === 'shows' ? 'btn-primary' : 'btn-ghost'}" data-type="shows" id="filter-shows">TV Shows</button>
             <button class="btn btn-sm ${searchType === 'movies' ? 'btn-primary' : 'btn-ghost'}" data-type="movies" id="filter-movies">Movies</button>
+            
+            <div class="view-toggle" id="search-view-toggle" role="group" style="margin-left:auto;">
+              <button class="btn btn-icon btn-sm ${viewMode === 'grid' ? 'btn-primary' : 'btn-ghost'}" data-view="grid" aria-label="Grid view" data-tooltip="Grid">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/></svg>
+              </button>
+              <button class="btn btn-icon btn-sm ${viewMode === 'list' ? 'btn-primary' : 'btn-ghost'}" data-view="list" aria-label="List view" data-tooltip="List">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -108,16 +118,41 @@ export function init() {
     const btn = e.target.closest('[data-type]');
     if (!btn) return;
     searchType = btn.dataset.type;
-
-    // Update button styles
-    filtersEl.querySelectorAll('.btn').forEach(b => {
-      b.classList.remove('btn-primary');
-      b.classList.add('btn-ghost');
+    
+    // Update active button
+    document.querySelectorAll('#search-type-filters .btn').forEach(btn => {
+      if (btn.hasAttribute('data-type')) {
+        btn.classList.toggle('btn-primary', btn.dataset.type === searchType);
+        btn.classList.toggle('btn-ghost', btn.dataset.type !== searchType);
+      }
     });
-    btn.classList.remove('btn-ghost');
-    btn.classList.add('btn-primary');
 
     if (currentQuery) {
+      currentPage = 1;
+      performSearch();
+    }
+  });
+
+  document.getElementById('search-view-toggle')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-view]');
+    if (!btn) return;
+    
+    viewMode = btn.dataset.view;
+    localStorage.setItem('showdeck-search-view', viewMode);
+
+    // Update active buttons
+    document.querySelectorAll('#search-view-toggle .btn').forEach(b => {
+      b.classList.remove('btn-primary');
+      b.classList.add('btn-ghost');
+      if (b.dataset.view === viewMode) {
+        b.classList.remove('btn-ghost');
+        b.classList.add('btn-primary');
+      }
+    });
+
+    // Re-render results if any
+    if (currentQuery) {
+      document.getElementById('search-results').innerHTML = '';
       currentPage = 1;
       performSearch();
     }
@@ -193,15 +228,18 @@ async function performSearch(append = false) {
       return;
     }
 
-    const cardsHTML = results.map(item => renderResultCard(item)).join('');
-
+    // Render
+    let cardsHTML = results.map(renderResultCard).join('');
+    
+    const wrapperClass = viewMode === 'list' ? 'library-list stagger-children' : 'grid-posters stagger-children';
+    
     if (append) {
-      const grid = resultsEl.querySelector('.grid-posters');
+      let grid = resultsEl.querySelector(`.${wrapperClass.split(' ')[0]}`);
       if (grid) {
         grid.insertAdjacentHTML('beforeend', cardsHTML);
       }
     } else {
-      resultsEl.innerHTML = `<div class="grid-posters stagger-children">${cardsHTML}</div>`;
+      resultsEl.innerHTML = `<div class="${wrapperClass}">${cardsHTML}</div>`;
     }
 
     // Show/hide load more
@@ -230,6 +268,41 @@ function renderResultCard(item) {
   const rating = item.voteAverage ? `★ ${item.voteAverage.toFixed(1)}` : '';
   const route = item.mediaType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
 
+  if (viewMode === 'list') {
+    const genres = (item.genres || []).slice(0, 3).join(', ');
+    return `
+      <div class="library-list-item card" id="result-${item.mediaType}-${item.tmdbId}" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);text-decoration:none;">
+        <a href="${route}" style="flex-shrink:0;">
+          ${posterUrl
+            ? `<img src="${posterUrl}" alt="${item.title}" style="width:64px;height:96px;object-fit:cover;border-radius:var(--radius-sm);" loading="lazy">`
+            : `<div style="width:64px;height:96px;background:var(--surface-3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;">🎬</span></div>`
+          }
+        </a>
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--space-1);">
+          <a href="${route}" style="text-decoration:none;">
+            <div style="font-weight:var(--weight-medium);color:var(--text-primary);font-size:var(--text-lg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</div>
+            <div style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:2px;">${year} • ${typeLabel}${genres ? ` • ${genres}` : ''}</div>
+          </a>
+          <div style="display:flex;gap:var(--space-2);align-items:center;margin-top:var(--space-2);">
+            ${item.inLibrary
+              ? `<span class="badge badge-success">✓ In Library</span>`
+              : `<button class="btn btn-primary btn-sm"
+                  data-action="add"
+                  data-media-type="${item.mediaType}"
+                  data-tmdb-id="${item.tmdbId}"
+                  data-title="${item.title.replace(/"/g, '&quot;')}"
+                  id="add-${item.mediaType}-${item.tmdbId}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                  Add
+                </button>`
+            }
+            ${rating ? `<span style="font-size:var(--text-sm);color:var(--color-warning);">★ ${item.voteAverage.toFixed(1)}</span>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   return `
     <div class="poster-card search-result-card" id="result-${item.mediaType}-${item.tmdbId}">
       <a href="${route}">
@@ -252,7 +325,8 @@ function renderResultCard(item) {
               data-media-type="${item.mediaType}"
               data-title="${item.title.replace(/"/g, '&quot;')}"
               id="add-${item.mediaType}-${item.tmdbId}">
-              + Add to Library
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              Add to Library
             </button>`
         }
       </div>

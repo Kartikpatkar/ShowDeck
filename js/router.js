@@ -83,9 +83,10 @@ export class Router {
   _onHashChange() {
     const hash = window.location.hash.slice(1) || '/';
     const path = hash.startsWith('/') ? hash : `/${hash}`;
+    const pathWithoutQuery = path.split('?')[0];
 
     for (const [routePath, route] of this.routes) {
-      const match = path.match(route.pattern);
+      const match = pathWithoutQuery.match(route.pattern);
       if (match) {
         const params = {};
         route.paramNames.forEach((name, i) => {

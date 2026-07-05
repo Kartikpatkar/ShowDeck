@@ -65,7 +65,7 @@ export async function render() {
         : '';
 
       cards.push(`
-        <a href="#/show/${show.id}" class="poster-card" id="cw-${show.id}">
+        <a href="#/show/${show.tmdbId}" class="poster-card" id="cw-${show.id}">
           ${posterUrl
             ? `<img class="poster-card-image" src="${posterUrl}" alt="${show.title}" loading="lazy">`
             : `<div class="poster-card-image skeleton"></div>`
@@ -107,7 +107,7 @@ export async function render() {
     const cards = recentItems.map(item => {
       const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
       const isShow = item.totalSeasons !== undefined;
-      const route = isShow ? `#/show/${item.id}` : `#/movie/${item.id}`;
+      const route = isShow ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
       const year = formatYear(isShow ? item.firstAirDate : item.releaseDate);
 
       return `

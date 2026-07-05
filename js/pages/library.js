@@ -252,7 +252,7 @@ function renderItems() {
 function renderGridCard(item) {
   const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
   const year = formatYear(item.itemType === 'show' ? item.firstAirDate : item.releaseDate);
-  const route = item.itemType === 'show' ? `#/show/${item.id}` : `#/movie/${item.id}`;
+  const route = item.itemType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
   const status = STATUS_MAP[item.trackingStatus] || STATUS_MAP.plan;
 
   return `
@@ -276,7 +276,7 @@ function renderGridCard(item) {
 function renderListItem(item) {
   const posterUrl = getPosterUrl(item.posterPath, 'posterSmall');
   const year = formatYear(item.itemType === 'show' ? item.firstAirDate : item.releaseDate);
-  const route = item.itemType === 'show' ? `#/show/${item.id}` : `#/movie/${item.id}`;
+  const route = item.itemType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
   const genres = (item.genres || []).slice(0, 3).join(', ');
 
   return `
@@ -304,7 +304,7 @@ function renderListItem(item) {
 
 function renderCompactItem(item) {
   const year = formatYear(item.itemType === 'show' ? item.firstAirDate : item.releaseDate);
-  const route = item.itemType === 'show' ? `#/show/${item.id}` : `#/movie/${item.id}`;
+  const route = item.itemType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
   const status = STATUS_MAP[item.trackingStatus] || STATUS_MAP.plan;
 
   return `
