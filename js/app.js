@@ -142,6 +142,9 @@ router
   .on('/share', (params) => {
     loadPage(() => import('./pages/share.js'), params);
   })
+  .on('/help', (params) => {
+    loadPage(() => import('./pages/help.js'), params);
+  })
   .onNotFound(() => {
     const container = getPageContainer();
     if (container) {

@@ -1,55 +1,102 @@
-# Contributing to ShowDeck
+# 🤝 Contributing to ShowDeck
 
-First off, thank you for considering contributing to ShowDeck! It's people like you that make open-source tools great.
+Thank you for your interest in contributing to **ShowDeck**!
 
-## Core Philosophy
+ShowDeck is a **privacy-first, offline-first personal entertainment tracker** built as a Progressive Web App (PWA).
 
-ShowDeck is built on a few core principles:
-1. **Vanilla over Frameworks**: We do not use React, Vue, Angular, or bundlers like Webpack/Vite in production. The goal is a clean, readable, static HTML/JS/CSS stack.
-2. **Local First**: All data must remain on the user's device. Features requiring a backend database or user authentication will be rejected.
-3. **Privacy First**: No tracking scripts, no analytics.
-4. **Performance**: Animations and UI elements should be buttery smooth (targeting 60fps). Avoid main-thread blocking operations.
+The project focuses on:
 
-## How to Contribute
+* Local-first data ownership (IndexedDB)
+* Zero backend dependencies
+* High performance (Vanilla JS / CSS)
+* PWA best practices (Offline support, caching)
+* Clean, native-like UI/UX
 
-### 1. Reporting Bugs
-- Use the GitHub Issue Tracker.
-- Describe the bug clearly. Include steps to reproduce, expected behavior, and actual behavior.
-- Include your browser version and OS.
+We welcome contributions related to:
 
-### 2. Suggesting Enhancements
-- Open an issue outlining the feature.
-- Explain *why* this enhancement would be useful to most users.
-- Keep the core philosophy in mind (e.g., if the feature requires a server, it's not a fit for ShowDeck).
+* Bug fixes
+* New features
+* Performance improvements
+* UI / UX enhancements
+* Accessibility improvements
+* Documentation updates
 
-### 3. Submitting Pull Requests
-1. Fork the repository.
-2. Create a new branch for your feature or bugfix (`git checkout -b feature-name`).
-3. Make your changes. Ensure you follow the existing code style (see below).
-4. Test your changes locally. Ensure offline support (`sw.js`) and PWA features are not broken.
-5. Commit your changes with descriptive commit messages.
-6. Push to your branch and open a Pull Request.
+---
 
-## Code Style Guide
+# 🧩 Ways to Contribute
 
-### JavaScript
-- Use ES6 Modules (`import`/`export`).
-- Use `async`/`await` for asynchronous operations.
-- Variables and functions should be `camelCase`.
-- Classes should be `PascalCase`.
-- We use the utility functions provided in `js/utils/dom.js` (like `el()` and `$()`) instead of generic DOM manipulation where possible to keep code concise.
+## 🐞 Report Bugs
 
-### CSS
-- Use custom properties (CSS variables) defined in `css/variables.css` for colors, spacing, and typography.
-- Avoid inline styles.
-- Avoid using `!important`.
-- Keep CSS modularized by component or page.
+Found an issue? Please [create an issue on GitHub](https://github.com/Kartikpatkar/ShowDeck/issues) and include:
 
-## Testing Your Changes
-To run the app locally during development:
-1. Ensure you have Node.js installed.
-2. Run `npx serve .` in the root directory.
-3. Open `http://localhost:3000`.
-4. Check the DevTools console for errors and use the "Network" tab to simulate offline mode.
+* Clear description of the problem
+* Steps to reproduce
+* Expected behavior vs Actual behavior
+* Browser & OS version
+* Console errors (if any)
 
-Thank you for contributing! 🎬
+## 💡 Suggest Features
+
+Have an idea? Please create a feature request and include:
+
+* Problem being solved
+* Expected user experience
+* Mockups or screenshots (optional)
+
+We especially welcome ideas around:
+* Data visualization (Stats)
+* Backup/Restore mechanisms
+* UI animations
+* Performance optimization
+
+---
+
+## 💻 Submit Code
+
+Pull requests are welcome for bug fixes, new functionality, refactoring, and UI improvements. Please keep pull requests focused and avoid unrelated changes.
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/Kartikpatkar/ShowDeck.git
+cd ShowDeck
+```
+
+### Running Locally
+
+ShowDeck uses vanilla JS modules and requires a local HTTP server to run properly (to avoid CORS issues with ES Modules).
+
+```bash
+# Using Node (serve)
+npx serve .
+
+# Using Python
+python3 -m http.server 3000
+```
+
+Open `http://localhost:3000` in your browser.
+
+---
+
+# ✅ Before Submitting a Pull Request
+
+## 1. Create a Feature Branch
+
+```bash
+git checkout -b feature/my-feature
+```
+
+## 2. Keep Changes Focused
+
+Good: `feat: Add CSV export functionality`
+Avoid: `Feature + Refactor + UI Redesign` in a single PR.
+
+## 3. Test Thoroughly
+
+Verify:
+* No console errors
+* IndexedDB transactions complete successfully
+* PWA loads correctly while offline
+* UI responds well on mobile dimensions
+
+Thank you for contributing!

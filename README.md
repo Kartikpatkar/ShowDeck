@@ -1,48 +1,106 @@
-# ShowDeck
+# 🎬 ShowDeck – Personal Entertainment Tracker
 
-A privacy-first, offline-first, local-first personal entertainment tracker built as a Progressive Web App (PWA).
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg)](#)
+[![Progressive Web App](https://img.shields.io/badge/PWA-Ready-green.svg)](#)
+[![Vanilla JS](https://img.shields.io/badge/Tech-Vanilla%20JS-F7DF1E.svg)](#)
 
-ShowDeck allows you to track your favorite TV shows and movies, rate episodes, take personal notes, and view your watch statistics—all without creating an account or sending your data to a third-party server.
+> **Tagline:** *Track, rate, and organize your favorite TV shows and movies with complete privacy.*
 
-## Features
+---
 
-- **Local-First Architecture:** All your data is stored locally on your device using IndexedDB (Dexie.js).
-- **Offline Support:** The app caches itself using a Service Worker, allowing you to view your library even without an internet connection.
-- **Direct API Connections:** ShowDeck connects directly to TMDB (The Movie Database) and TVMaze from your browser. You provide your own TMDB API key.
-- **Privacy Guaranteed:** No analytics, no tracking pixels, no backend servers. Your data never leaves your device unless you export it.
-- **Rich Organization:** Track status (Watching, Completed, Plan to Watch, etc.), rate shows out of 5 stars, and write personal notes for specific episodes.
-- **Customization:** Choose between Light and Dark mode, or customize the app's accent color (Purple, Blue, Green, Red).
-- **Data Portability:** Export your entire library to JSON or CSV for use in spreadsheets or to back up to another device. You can also generate a shareable link of your library stats.
-- **Import from TV Time:** Easily migrate your data from TV Time via a ZIP export.
+## ✨ Overview
 
-## Installation
+**ShowDeck** is a modern, offline-first Progressive Web App (PWA) built specifically for entertainment enthusiasts who want to track their watch history without compromising their privacy.
 
-Since ShowDeck is a Progressive Web App (PWA), you can install it directly to your home screen or desktop:
+Unlike traditional entertainment trackers (like Trakt, TV Time, or Letterboxd), ShowDeck focuses on:
 
-1. **iOS (Safari):** Tap the Share button, then select "Add to Home Screen".
-2. **Android (Chrome):** Tap the menu button, then select "Install app" or "Add to Home Screen".
-3. **Desktop (Chrome/Edge):** Click the installation icon on the right side of the URL bar.
+* Local-first privacy (No accounts, no cloud syncing)
+* Direct TMDB & TVMaze API connections
+* Offline-first architecture
+* Fast, native-like mobile experience
+* 100% data ownership
 
-## Getting Started
+Whether you're tracking currently airing shows, building a backlog of movies, or taking personal notes on individual episodes, ShowDeck helps you stay organized locally.
 
-1. Open ShowDeck and navigate to **Settings**.
-2. Under **API Providers**, enter a valid [TMDB API Key (v3 auth)](https://developer.themoviedb.org/docs). This key is stored securely on your device.
-3. Start searching for shows and movies!
+---
 
-## Tech Stack
+## 🚀 Key Features
+
+### 🗂️ Unified Entertainment Library
+Organize your media into standard lists:
+* Watching
+* Completed
+* Plan to Watch
+* On Hold
+* Dropped
+
+### 🔍 Direct API Integration
+ShowDeck connects directly to TMDB (The Movie Database) and TVMaze from your device. You supply your own free TMDB API key, meaning there is no middleman server tracking your requests.
+
+### 📝 Episode Notes & Ratings
+* Rate shows and movies on a 5-star scale.
+* Mark individual episodes as watched.
+* Write private, auto-saving notes for any episode.
+
+### 🎨 Themes & Customization
+Personalize your app experience with multiple accent colors:
+* Purple
+* Blue
+* Green
+* Red
+* Native Dark/Light mode support
+
+### 💾 Data Portability & Sharing
+* Export your entire database to JSON or CSV.
+* Import your existing watch history from TV Time (via ZIP export).
+* Generate a read-only, encoded Share Link to show off your library stats to friends.
+
+---
+
+## 💻 Tech Stack
 
 ShowDeck is built using vanilla web technologies to ensure maximum performance, zero dependencies, and long-term stability:
 
-- **HTML5 & CSS3** (Vanilla CSS with custom properties for theming)
-- **Vanilla JavaScript** (ES Modules)
-- **Dexie.js** (IndexedDB wrapper for local storage)
-- **Chart.js** (For rendering statistics)
-- **JSZip** (For TV Time migrations)
+* **HTML5 & CSS3** (Vanilla CSS with custom properties)
+* **Vanilla JavaScript** (ES Modules)
+* **Dexie.js** (IndexedDB wrapper for local storage)
+* **Chart.js** (For rendering statistics)
+* **JSZip** (For TV Time migrations)
 
-## Contributing
+---
 
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to ShowDeck.
+## 🚀 Getting Started
 
-## License
+Since ShowDeck is a Progressive Web App, you can run it entirely in your browser or install it locally.
+
+### Installation
+1. **iOS (Safari):** Tap the Share button, then select "Add to Home Screen".
+2. **Android (Chrome):** Tap the menu button, then select "Install app".
+3. **Desktop (Chrome/Edge):** Click the installation icon on the right side of the URL bar.
+
+### Setup
+1. Open ShowDeck and navigate to **Settings**.
+2. Under **API Providers**, enter a valid [TMDB API Key (v3 auth)](https://developer.themoviedb.org/docs).
+3. Start searching for shows and movies!
+
+---
+
+## 👨‍💻 About the Author
+
+Created by **Kartik Patkar**. 
+* **GitHub:** [@Kartikpatkar](https://github.com/Kartikpatkar)
+* **Issues:** [Report a Bug or Request a Feature](https://github.com/Kartikpatkar/ShowDeck/issues)
+
+---
+
+## 🤝 Contributing & Privacy
+
+* See [CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute.
+* See [PRIVACY.md](PRIVACY.md) to understand how your data is handled.
+
+---
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

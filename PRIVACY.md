@@ -1,29 +1,53 @@
-# Privacy Policy
+# Privacy Policy for ShowDeck
 
-**ShowDeck is built with a strictly privacy-first architecture.** 
+**Last Updated:** July 5, 2026
 
-## 1. Local Data Storage
-All of your data—including your watch history, collections, preferences, and API keys—is stored **locally on your device** using your browser's `localStorage` and `IndexedDB`. 
-
-We do not have a database. We do not have servers. We physically cannot see, access, or sell your data.
-
-## 2. API Communication
-To fetch metadata for TV shows and movies (such as titles, posters, and release dates), ShowDeck communicates directly with external APIs (primarily **The Movie Database (TMDB)**). 
-
-- These requests are made directly from your browser to TMDB's servers.
-- Because you provide your own TMDB API key, these requests are tied to your TMDB account/key, governed by TMDB's own privacy policies.
-- ShowDeck does not intercept, proxy, or monitor these requests.
-
-## 3. Data Imports (TV Time)
-When you use the "Import from TV Time" feature, your GDPR `.zip` file is parsed and processed **entirely within your browser**. The file is never uploaded to any server.
-
-## 4. Analytics and Tracking
-ShowDeck contains **zero** analytics, telemetrics, or tracking scripts. We do not use Google Analytics, Mixpanel, or any similar services.
-
-## 5. Your Rights & Data Portability
-Because you own your data, you have complete control over it. You can:
-- Export your entire dataset to a JSON file at any time via the Settings page.
-- Permanently and irrevocably delete all data from your device using the "Delete All Data" button.
+Your privacy and the security of your data are of paramount importance. This Privacy Policy details how **ShowDeck** handles data, what information is stored, and your controls over your personal data.
 
 ---
-*By using ShowDeck, you acknowledge that you are responsible for the data stored in your browser and the safety of your own API keys.*
+
+## 1. What Data We Collect
+
+To provide its core functionality (entertainment tracking), ShowDeck stores the following information locally on your device:
+
+* **Authentication Information**: Your personal TMDB API Key.
+* **Library Metadata**: Show and movie titles, IDs, posters, overviews, ratings, watch status, and personal notes.
+* **User Preferences**: UI configuration settings, such as your theme preference (light/dark mode, accent colors), and your display name.
+
+---
+
+## 2. How Data Is Stored and Transmitted
+
+ShowDeck is designed with an **offline-first, zero-tracking architecture**:
+
+* **Local Storage**: All your data is stored locally on your physical device using the browser's IndexedDB (`Dexie.js`) and `localStorage`.
+* **No Cloud Syncing**: The application does **not** use any cloud services for storage. Your data never leaves your device unless you manually export it.
+* **No Backend Servers**: ShowDeck does **not** transmit any usage data, analytics, or library data to any ShowDeck-owned servers. We do not run a backend database.
+* **Direct API Calls**: When searching for shows or syncing data, your browser makes requests directly to `api.themoviedb.org` and `api.tvmaze.com`. These third-party services may collect standard connection logs (like IP addresses) subject to their own privacy policies.
+
+---
+
+## 3. Data Portability & Deletion
+
+You have complete control over your data:
+
+* **Export**: You can export your entire library at any time to a JSON or CSV file via the Settings page.
+* **Deletion**: You can instantly and permanently delete all your data using the "Wipe All Data" button in Settings. This clears IndexedDB and all local storage keys, leaving no trace behind.
+
+---
+
+## 4. Analytics and Tracking
+
+**We do not track you.**
+ShowDeck contains:
+* Zero analytics scripts (no Google Analytics, Mixpanel, etc.)
+* Zero tracking pixels
+* Zero advertising networks
+
+---
+
+## 5. Changes to This Policy
+
+We may update our Privacy Policy from time to time. Any changes will be documented in this repository. 
+
+If you have any questions regarding this Privacy Policy, please open an issue on the [GitHub repository](https://github.com/Kartikpatkar/ShowDeck/issues).
