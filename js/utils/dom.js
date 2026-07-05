@@ -88,6 +88,39 @@ export function truncate(text, maxLength = 150) {
 }
 
 /**
+ * Format vote count (e.g. 1.2k)
+ */
+export function formatVoteCount(count) {
+  if (!count) return '0';
+  if (count < 1000) return count.toString();
+  return (count / 1000).toFixed(1) + 'k';
+}
+
+/**
+ * Get relative time (e.g. "Releases in 5 days")
+ */
+export function getRelativeTime(dateStr) {
+  if (!dateStr) return null;
+  const date = new Date(dateStr);
+  const now = new Date();
+  
+  if (date <= now) return null;
+  
+  const diff = date - now;
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  
+  if (days > 365) return `Releases in ${Math.floor(days / 365)} years`;
+  if (days > 30) return `Releases in ${Math.floor(days / 30)} months`;
+  if (days > 1) return `Releases in ${days} days`;
+  if (days === 1) return `Releases tomorrow`;
+  
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  if (hours > 0) return `Releases in ${hours} hours`;
+  
+  return `Releases very soon`;
+}
+
+/**
  * Get star rating display.
  */
 export function starRating(rating, max = 5) {

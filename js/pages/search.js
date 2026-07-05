@@ -92,10 +92,9 @@ export function init() {
       clearBtn?.classList.add('hidden');
     }
     
-    // If empty, clear results
+    // If empty, show trending
     if (!currentQuery) {
-      document.getElementById('search-results').innerHTML = '';
-      document.getElementById('search-load-more').classList.add('hidden');
+      loadTrending();
       return;
     }
     
@@ -155,14 +154,20 @@ export function init() {
       document.getElementById('search-results').innerHTML = '';
       currentPage = 1;
       performSearch();
+    } else {
+      loadTrending();
     }
   });
 
-  // Load more
-  document.getElementById('load-more-btn')?.addEventListener('click', async () => {
-    currentPage++;
-    await performSearch(true);
+  document.getElementById('load-more-btn')?.addEventListener('click', () => {
+    if (currentQuery) {
+      currentPage++;
+      performSearch(true);
+    }
   });
+
+  // Load trending on init
+  loadTrending();
 
   // Result clicks (event delegation)
   document.getElementById('search-results')?.addEventListener('click', async (e) => {
@@ -173,6 +178,39 @@ export function init() {
       await handleAdd(addBtn);
     }
   });
+}
+
+async function loadTrending() {
+  const container = document.getElementById('search-results');
+  if (!container) return;
+  
+  container.innerHTML = `
+    <div style="display:flex;justify-content:center;padding:var(--space-8);">
+      <div class="spinner"></div>
+    </div>
+  `;
+  document.getElementById('search-load-more')?.classList.add('hidden');
+  
+  try {
+    const data = await provider.getTrendingShows();
+    
+    if (!data.results || data.results.length === 0) {
+      container.innerHTML = `<div class="empty-state">No trending shows found.</div>`;
+      return;
+    }
+    
+    const html = `
+      <h2 class="section-title" style="margin-bottom:var(--space-4);">Trending TV Shows</h2>
+      ${viewMode === 'list' 
+        ? `<div class="library-list stagger-children">${data.results.map(renderListItem).join('')}</div>`
+        : `<div class="grid-posters stagger-children">${data.results.map(renderGridItem).join('')}</div>`
+      }
+    `;
+    container.innerHTML = html;
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `<div class="empty-state" style="color:var(--color-error);">Failed to load trending shows.</div>`;
+  }
 }
 
 async function performSearch(append = false) {

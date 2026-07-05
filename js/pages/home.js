@@ -7,7 +7,6 @@ import { db } from '../database/db.js';
 import { getRecentShows, getShowsByStatus } from '../database/shows.js';
 import { getRecentMovies, getAllMovies } from '../database/movies.js';
 import { getShowProgress, getNextEpisode } from '../database/episodes.js';
-import { getTotalWatchedEpisodes } from '../database/episodes.js';
 import { getPosterUrl } from '../api/tmdb.js';
 import { formatDate, formatYear, truncate, statusBadge } from '../utils/dom.js';
 import { openEnrichModal } from '../components/enrich-modal.js';
@@ -57,9 +56,6 @@ export async function init() {
 export async function render() {
   // Fetch data
   const [
-    showCount,
-    movieCount,
-    episodeCount,
     watchingShows,
     planToWatchShows,
     planToWatchMovies,
@@ -68,9 +64,6 @@ export async function render() {
     allShows,
     allMovies
   ] = await Promise.all([
-    db.shows.count(),
-    db.movies.count(),
-    getTotalWatchedEpisodes(),
     getShowsByStatus('watching'),
     getShowsByStatus('plan'),
     getAllMovies({ trackingStatus: 'plan' }),
@@ -79,12 +72,6 @@ export async function render() {
     db.shows.toArray(),
     db.movies.toArray()
   ]);
-
-  // Calculate hours (rough estimate)
-  const episodeHours = Math.round((episodeCount * 42) / 60);
-  const watchedMovies = await db.movies.where('trackingStatus').equals('completed').toArray();
-  const movieHours = Math.round(watchedMovies.reduce((s, m) => s + (m.runtime || 120), 0) / 60);
-  const totalHours = episodeHours + movieHours;
 
   // Build continue watching cards with progress
   let continueWatchingHTML = '';
@@ -330,26 +317,6 @@ export async function render() {
 
       ${onboardingHtml}
 
-      <!-- Quick Stats -->
-      <div class="section">
-        <div class="grid-stats stagger-children">
-          <div class="stat-card">
-            <span class="stat-card-label">Shows</span>
-            <span class="stat-card-value" id="stat-shows">${showCount}</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-card-label">Movies</span>
-            <span class="stat-card-value" id="stat-movies">${movieCount}</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-card-label">Episodes Watched</span>
-            <span class="stat-card-value" id="stat-episodes">${episodeCount}</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-card-label">Hours Watched</span>
-            <span class="stat-card-value" id="stat-hours">${totalHours}</span>
-          </div>
-        </div>
       </div>
 
       <!-- Continue Watching -->

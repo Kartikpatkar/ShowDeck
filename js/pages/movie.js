@@ -6,7 +6,7 @@
 import * as provider from '../api/provider.js';
 import { getMovieByTmdbId, updateMovieTrackingStatus, rateMovie, addMovie } from '../database/movies.js';
 import { getPosterUrl, getBackdropUrl } from '../api/tmdb.js';
-import { formatYear, starRating, interactiveStarRating, STATUS_MAP } from '../utils/dom.js';
+import { formatDate, formatYear, interactiveStarRating, formatVoteCount, getRelativeTime, STATUS_MAP } from '../utils/dom.js';
 import { toast } from '../components/toast.js';
 
 let currentMovieId = null; 
@@ -76,14 +76,23 @@ function renderContent(container) {
   const backdropUrl = getBackdropUrl(movieData.backdropPath, 'backdropLarge');
   const posterUrl = getPosterUrl(movieData.posterPath, 'posterLarge');
   const year = formatYear(movieData.releaseDate);
+  const director = movieData.crew?.find(c => c.job === 'Director')?.name;
+  const countdown = getRelativeTime(movieData.releaseDate);
+  const imdbUrl = movieData.externalIds?.imdb_id ? `https://www.imdb.com/title/${movieData.externalIds.imdb_id}/` : null;
 
   container.innerHTML = `
     <!-- Back Button -->
-    <div style="padding:var(--space-4) var(--space-4) 0; position:relative; z-index:10;">
+    <div style="padding:var(--space-4) var(--space-4) 0; position:relative; z-index:10; display:flex; justify-content:space-between; align-items:center;">
       <button class="btn btn-ghost" onclick="window.history.length > 1 ? window.history.back() : window.location.hash='#/home'" style="padding:var(--space-2); margin-left:-var(--space-2); font-weight:var(--weight-medium);">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="m15 18-6-6 6-6"/></svg>
         Back
       </button>
+      ${imdbUrl ? `
+        <a href="${imdbUrl}" target="_blank" class="btn btn-sm btn-ghost" style="color:var(--color-warning);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          IMDb
+        </a>
+      ` : ''}
     </div>
     <!-- Hero -->
     <div class="detail-hero">
@@ -102,13 +111,15 @@ function renderContent(container) {
       </div>
       
       <div class="detail-meta">
+        ${countdown ? `<div style="display:inline-block;background:var(--color-primary);color:white;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:bold;margin-bottom:var(--space-2);">${countdown}</div>` : ''}
         <h1 class="detail-title">${movieData.title}</h1>
+        ${director ? `<div style="font-size:var(--text-md);color:var(--text-secondary);margin-bottom:var(--space-2);">Directed by <span style="color:var(--text-primary);font-weight:var(--weight-medium);">${director}</span></div>` : ''}
         <div class="detail-subtitle">
           <span>${year}</span>
           <span>•</span>
           <span>${movieData.runtime ? `${Math.floor(movieData.runtime/60)}h ${movieData.runtime%60}m` : 'Unknown runtime'}</span>
           ${movieData.genres && movieData.genres.length > 0 ? `<span>•</span><span>${movieData.genres.slice(0,3).join(', ')}</span>` : ''}
-          ${movieData.voteAverage ? `<span>•</span><span style="color:var(--color-warning);font-weight:var(--weight-semibold);">★ ${(movieData.voteAverage).toFixed(1)}</span>` : ''}
+          ${movieData.voteAverage ? `<span>•</span><span style="color:var(--color-warning);font-weight:var(--weight-semibold);">★ ${(movieData.voteAverage).toFixed(1)} <span style="font-size:12px;color:var(--text-tertiary);font-weight:normal;">(${formatVoteCount(movieData.voteCount)})</span></span>` : ''}
         </div>
         
         <!-- Controls -->
@@ -118,6 +129,7 @@ function renderContent(container) {
               ${Object.entries(STATUS_MAP).map(([val, {label}]) => `
                 <option value="${val}" ${movieData.trackingStatus === val ? 'selected' : ''}>${label}</option>
               `).join('')}
+            </select>
             <button class="btn btn-ghost" id="remove-btn" style="color:var(--color-error);" title="Remove from Library">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
             </button>

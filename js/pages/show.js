@@ -7,7 +7,7 @@ import * as provider from '../api/provider.js';
 import { getShow, getShowByTmdbId, updateTrackingStatus, rateShow, addShow } from '../database/shows.js';
 import { getEpisodes, markWatched, markUnwatched, markSeasonWatched, markSeasonUnwatched, addEpisodes } from '../database/episodes.js';
 import { getPosterUrl, getBackdropUrl } from '../api/tmdb.js';
-import { formatYear, formatDate, starRating, interactiveStarRating, statusBadge, STATUS_MAP } from '../utils/dom.js';
+import { formatYear, formatDate, starRating, interactiveStarRating, statusBadge, STATUS_MAP, formatVoteCount, getRelativeTime } from '../utils/dom.js';
 import { toast } from '../components/toast.js';
 
 let currentShowId = null; // Internal ID
@@ -15,6 +15,7 @@ let showData = null; // Data from DB or API
 let episodesData = [];
 let currentSeason = 1;
 let isTracked = false;
+let activeTab = 'episodes'; // 'episodes' | 'cast'
 
 export function render() {
   return `
@@ -196,13 +197,21 @@ function renderContent(container) {
   const watchedCount = seasonEps.filter(e => e.watched).length;
   const isSeasonComplete = seasonEps.length > 0 && watchedCount === seasonEps.length;
 
+  const imdbUrl = showData.externalIds?.imdb_id ? `https://www.imdb.com/title/${showData.externalIds.imdb_id}/` : null;
+
   container.innerHTML = `
     <!-- Back Button -->
-    <div style="padding:var(--space-4) var(--space-4) 0; position:relative; z-index:10;">
+    <div style="padding:var(--space-4) var(--space-4) 0; position:relative; z-index:10; display:flex; justify-content:space-between; align-items:center;">
       <button class="btn btn-ghost" onclick="window.history.length > 1 ? window.history.back() : window.location.hash='#/home'" style="padding:var(--space-2); margin-left:-var(--space-2); font-weight:var(--weight-medium);">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="m15 18-6-6 6-6"/></svg>
         Back
       </button>
+      ${imdbUrl ? `
+        <a href="${imdbUrl}" target="_blank" class="btn btn-sm btn-ghost" style="color:var(--color-warning);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          IMDb
+        </a>
+      ` : ''}
     </div>
     <!-- Hero -->
     <div class="detail-hero">
@@ -225,10 +234,10 @@ function renderContent(container) {
         <div class="detail-subtitle">
           <span>${year}</span>
           <span>•</span>
-          <span>${showData.status}</span>
+          <span style="color:var(--text-primary);font-weight:var(--weight-medium);">${showData.status}</span>
           ${showData.network ? `<span>•</span><span>${showData.network}</span>` : ''}
           ${showData.genres && showData.genres.length > 0 ? `<span>•</span><span>${showData.genres.slice(0,3).join(', ')}</span>` : ''}
-          ${showData.voteAverage ? `<span>•</span><span style="color:var(--color-warning);font-weight:var(--weight-semibold);">★ ${(showData.voteAverage).toFixed(1)}</span>` : ''}
+          ${showData.voteAverage ? `<span>•</span><span style="color:var(--color-warning);font-weight:var(--weight-semibold);">★ ${(showData.voteAverage).toFixed(1)} <span style="font-size:12px;color:var(--text-tertiary);font-weight:normal;">(${formatVoteCount(showData.voteCount)})</span></span>` : ''}
         </div>
         
         <!-- Controls -->
@@ -274,11 +283,19 @@ function renderContent(container) {
       </div>
     ` : ''}
 
+    <!-- Content Tabs -->
+    <div style="margin-top:var(--space-8); border-bottom:1px solid var(--border-subtle); display:flex; gap:var(--space-6);">
+      <button class="content-tab ${activeTab === 'episodes' ? 'active' : ''}" data-tab="episodes" style="background:none; border:none; padding:var(--space-2) 0; font-size:var(--text-md); font-weight:var(--weight-semibold); color:${activeTab === 'episodes' ? 'var(--color-primary)' : 'var(--text-tertiary)'}; border-bottom:${activeTab === 'episodes' ? '2px solid var(--color-primary)' : '2px solid transparent'}; cursor:pointer;">Episodes</button>
+      ${showData.cast && showData.cast.length > 0 ? `
+        <button class="content-tab ${activeTab === 'cast' ? 'active' : ''}" data-tab="cast" style="background:none; border:none; padding:var(--space-2) 0; font-size:var(--text-md); font-weight:var(--weight-semibold); color:${activeTab === 'cast' ? 'var(--color-primary)' : 'var(--text-tertiary)'}; border-bottom:${activeTab === 'cast' ? '2px solid var(--color-primary)' : '2px solid transparent'}; cursor:pointer;">Cast</button>
+      ` : ''}
+    </div>
+
     ${episodesData.length > 0 ? `
       <!-- Episodes Section -->
-      <div style="margin-top:var(--space-12);">
+      <div style="margin-top:var(--space-6); display:${activeTab === 'episodes' ? 'block' : 'none'};">
         <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:var(--space-4);">
-          <h3 class="section-title" style="margin:0;">Episodes</h3>
+          <h3 class="section-title" style="margin:0;"></h3>
           ${isTracked ? `
             <button class="btn btn-sm ${isSeasonComplete ? 'btn-ghost' : 'btn-secondary'}" id="mark-season-btn">
               ${isSeasonComplete ? 'Unmark Season' : 'Mark Season Watched'}
@@ -295,6 +312,21 @@ function renderContent(container) {
           `).join('')}
         </div>
 
+        ${(() => {
+          const sData = showData.seasons?.find(s => s.seasonNumber === currentSeason);
+          if (!sData || (!sData.overview && !sData.posterPath)) return '';
+          const sPosterUrl = sData.posterPath ? getPosterUrl(sData.posterPath, 'posterMedium') : null;
+          return `
+            <div class="card" style="margin-bottom:var(--space-4); display:flex; gap:var(--space-4); align-items:flex-start;">
+              ${sPosterUrl ? `<img src="${sPosterUrl}" style="width:80px; border-radius:var(--radius-sm);">` : ''}
+              <div style="flex:1;">
+                <h4 style="margin-bottom:var(--space-1);">${sData.name || `Season ${currentSeason}`}</h4>
+                <p style="font-size:var(--text-sm); color:var(--text-secondary); margin:0;">${sData.overview || 'No overview available for this season.'}</p>
+              </div>
+            </div>
+          `;
+        })()}
+
         <!-- Episode List -->
         <div class="card" style="padding:0;">
           ${seasonEps.map(ep => {
@@ -305,32 +337,44 @@ function renderContent(container) {
             } else {
               imgHtml = `<div class="episode-image skeleton" style="width:120px;height:68px;border-radius:var(--radius-sm);margin:0 var(--space-3);flex-shrink:0;"></div>`;
             }
+            
+            const countdown = getRelativeTime(ep.airDate);
 
             return `
-              <a href="#/episode/${showData.tmdbId}/${ep.season}/${ep.episode}" class="episode-item ${ep.watched ? 'watched' : ''}" data-ep-id="${ep.id || ''}" data-ep-index="${ep.episode}" style="display:flex;align-items:center;text-decoration:none;color:inherit;padding:var(--space-2) 0;border-bottom:1px solid var(--border-subtle);">
-                <div class="episode-checkbox ${ep.watched ? 'checked' : ''}" style="margin:0 var(--space-3);" data-action="toggle-watch">
-                  ${ep.watched ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
-                </div>
-                ${imgHtml}
-                <div class="episode-info" style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;">
-                  <div class="episode-number" style="font-size:var(--text-xs);color:var(--text-tertiary);">${ep.season}x${String(ep.episode).padStart(2, '0')}</div>
-                  <div class="episode-title" style="font-weight:var(--weight-medium);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ep.title}</div>
-                </div>
-                <div class="episode-actions" style="display:flex;align-items:center;gap:var(--space-2);margin-right:var(--space-3);">
-                  ${ep.watched ? `<button class="btn btn-secondary btn-sm add-watch-btn" data-ep-id="${ep.id}" data-action="add-watch" style="padding:0 var(--space-2);height:24px;min-height:24px;font-size:12px;" title="Add another watch">+1${ep.watchCount && ep.watchCount > 1 ? ` (${ep.watchCount})` : ''}</button>` : ''}
-                  <div class="episode-date" style="font-size:var(--text-xs);color:var(--text-tertiary);text-align:right;">
-                    <div>${formatDate(ep.airDate)}</div>
-                    ${ep.runtime || ep.voteAverage ? `
-                      <div style="margin-top:2px;">
-                        ${ep.runtime ? `<span>${ep.runtime} min</span>` : ''}
-                        ${ep.runtime && ep.voteAverage ? '<span> • </span>' : ''}
-                        ${ep.voteAverage ? `<span style="color:var(--color-warning);">★ ${ep.voteAverage.toFixed(1)}</span>` : ''}
-                      </div>
-                    ` : ''}
+              <div class="episode-item ${ep.watched ? 'watched' : ''}" data-ep-id="${ep.id || ''}" data-ep-index="${ep.episode}" style="display:block;border-bottom:1px solid var(--border-subtle);">
+                <div style="display:flex;align-items:center;padding:var(--space-2) 0;">
+                  <div class="episode-checkbox ${ep.watched ? 'checked' : ''}" style="margin:0 var(--space-3);cursor:pointer;" data-action="toggle-watch">
+                    ${ep.watched ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
                   </div>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-tertiary);margin-left:var(--space-2);"><path d="m9 18 6-6-6-6"/></svg>
+                  <a href="#/episode/${showData.tmdbId}/${ep.season}/${ep.episode}" style="display:flex;align-items:center;text-decoration:none;color:inherit;flex:1;min-width:0;">
+                    ${imgHtml}
+                    <div class="episode-info" style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;">
+                      <div class="episode-number" style="font-size:var(--text-xs);color:var(--text-tertiary);">${ep.season}x${String(ep.episode).padStart(2, '0')}</div>
+                      <div class="episode-title" style="font-weight:var(--weight-medium);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ep.title}</div>
+                      ${countdown ? `<div style="font-size:10px;font-weight:bold;color:var(--color-primary);margin-top:2px;">${countdown}</div>` : ''}
+                    </div>
+                  </a>
+                  <div class="episode-actions" style="display:flex;align-items:center;gap:var(--space-2);margin-right:var(--space-3);">
+                    ${ep.watched ? `<button class="btn btn-secondary btn-sm add-watch-btn" data-ep-id="${ep.id}" data-action="add-watch" style="padding:0 var(--space-2);height:24px;min-height:24px;font-size:12px;" title="Add another watch">+1${ep.watchCount && ep.watchCount > 1 ? ` (${ep.watchCount})` : ''}</button>` : ''}
+                    <div class="episode-date" style="font-size:var(--text-xs);color:var(--text-tertiary);text-align:right;">
+                      <div>${formatDate(ep.airDate)}</div>
+                      ${ep.runtime || ep.voteAverage ? `
+                        <div style="margin-top:2px;">
+                          ${ep.runtime ? `<span>${ep.runtime} min</span>` : ''}
+                          ${ep.runtime && ep.voteAverage ? '<span> • </span>' : ''}
+                          ${ep.voteAverage ? `<span style="color:var(--color-warning);">★ ${ep.voteAverage.toFixed(1)}</span>` : ''}
+                        </div>
+                      ` : ''}
+                    </div>
+                    <button class="btn btn-icon btn-sm" data-action="toggle-overview" style="color:var(--text-tertiary);margin-left:var(--space-2);" title="Expand overview">
+                      <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s;"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                  </div>
                 </div>
-              </a>
+                <div class="episode-overview-inline" style="display:none;padding:0 var(--space-3) var(--space-3) 54px;font-size:var(--text-sm);color:var(--text-secondary);">
+                  ${ep.overview || 'No overview available.'}
+                </div>
+              </div>
             `;
           }).join('')}
         </div>
@@ -339,8 +383,7 @@ function renderContent(container) {
 
     ${showData.cast && showData.cast.length > 0 ? `
       <!-- Cast -->
-      <div style="margin-top:var(--space-12);">
-        <h3 class="section-title">Cast</h3>
+      <div style="margin-top:var(--space-6); display:${activeTab === 'cast' ? 'block' : 'none'};">
         <div class="cast-grid stagger-children">
           ${showData.cast.map(c => `
             <div class="cast-card">
@@ -577,6 +620,21 @@ function bindEvents() {
           renderContent(container);
           bindEvents();
         }
+      } else if (action === 'toggle-overview') {
+        const item = target.closest('.episode-item');
+        if (item) {
+          const overviewEl = item.querySelector('.episode-overview-inline');
+          const chevron = target.querySelector('.chevron-icon');
+          if (overviewEl && chevron) {
+            if (overviewEl.style.display === 'none') {
+              overviewEl.style.display = 'block';
+              chevron.style.transform = 'rotate(180deg)';
+            } else {
+              overviewEl.style.display = 'none';
+              chevron.style.transform = 'rotate(0deg)';
+            }
+          }
+        }
       }
     });
   }
@@ -603,6 +661,24 @@ function bindEvents() {
 
       const newTabs = document.getElementById('season-tabs');
       if (newTabs) newTabs.scrollLeft = scrollPos;
+    });
+  }
+
+  // Content Tabs (Episodes / Cast)
+  const detailContainer = document.getElementById('detail-container');
+  if (detailContainer) {
+    const contentTabs = detailContainer.querySelectorAll('.content-tab');
+    contentTabs.forEach(tab => {
+      // Use addEventListener directly, but we need to ensure we don't duplicate them
+      // However since we re-render entirely in renderContent, they are fresh DOM nodes
+      tab.addEventListener('click', (e) => {
+        const newTab = e.target.dataset.tab;
+        if (newTab !== activeTab) {
+          activeTab = newTab;
+          renderContent(container);
+          bindEvents();
+        }
+      });
     });
   }
 }

@@ -59,6 +59,23 @@ export async function searchMovies(query, page = 1) {
 }
 
 /**
+ * Get trending shows (cached for 24h).
+ */
+export async function getTrendingShows() {
+  const cached = await getCached('trending_shows');
+  if (cached) return { results: cached };
+  
+  try {
+    const data = await tmdb.getTrendingShows();
+    await setCache('trending_shows', data);
+    return { results: data };
+  } catch (err) {
+    console.warn('[Provider] TMDB trending failed:', err.message);
+    return { results: [] };
+  }
+}
+
+/**
  * Get full show details.
  * Tries TMDB first for richer data.
  */

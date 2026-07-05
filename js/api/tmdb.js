@@ -108,6 +108,8 @@ export async function searchMovies(query, page = 1) {
   };
 }
 
+
+
 /**
  * Multi-search (shows + movies + people).
  */
@@ -277,7 +279,7 @@ export async function getMovieDetails(tmdbId) {
 /**
  * Get trending shows.
  */
-export async function getTrendingShows(timeWindow = 'week') {
+export async function getTrendingShows(timeWindow = 'day') {
   const data = await tmdbFetch(`/trending/tv/${timeWindow}`);
   return data.results.map(mapShowResult);
 }
