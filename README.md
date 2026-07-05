@@ -45,10 +45,8 @@ ShowDeck connects directly to TMDB (The Movie Database) and TVMaze from your dev
 
 ### 🎨 Themes & Customization
 Personalize your app experience with multiple accent colors:
-* Purple
-* Blue
-* Green
-* Red
+* Purple, Blue, Green, Red
+* Custom Hex Color Picker
 * Native Dark/Light mode support
 
 ### 💾 Data Portability & Sharing
@@ -74,10 +72,11 @@ ShowDeck is built using vanilla web technologies to ensure maximum performance, 
 
 Since ShowDeck is a Progressive Web App, you can run it entirely in your browser or install it locally.
 
-### Installation
+### Installation & Onboarding
 1. **iOS (Safari):** Tap the Share button, then select "Add to Home Screen".
 2. **Android (Chrome):** Tap the menu button, then select "Install app".
 3. **Desktop (Chrome/Edge):** Click the installation icon on the right side of the URL bar.
+4. **Onboarding:** When you open the app for the first time, a streamlined setup flow will guide you through entering your name, choosing a theme, and securely linking your TMDB API Key.
 
 ### Setup
 1. Open ShowDeck and navigate to **Settings**.

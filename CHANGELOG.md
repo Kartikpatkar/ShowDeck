@@ -5,7 +5,8 @@ All notable changes to ShowDeck will be documented in this file.
 ## [1.0.0] - 2026-07-05
 
 ### Added
-- **Multiple Accent Themes**: Added Purple, Blue, Green, and Red themes in Settings.
+- **Multiple Accent Themes**: Added Purple, Blue, Green, and Red themes in Settings, plus a Custom Hex Color picker.
+- **User Onboarding**: Implemented a welcoming onboarding flow to set up user profile, themes, and API connection.
 - **Export to CSV**: Added ability to export library data to CSV.
 - **Share Library**: Generate a shareable, read-only link of your library stats (`#/share`).
 - **Episode Notes**: Added auto-saving "My Notes" textareas to episode pages.
@@ -24,6 +25,9 @@ All notable changes to ShowDeck will be documented in this file.
 - Bundled Dexie.js locally to ensure the app boots without relying on a CDN.
 - Fixed iOS PWA installation by strictly resizing `icon-192.png` and `icon-512.png` to true PNGs.
 - Fixed a fatal crash in `syncShow` and `syncMovie` when TMDB returns null data (e.g., when offline).
+- Fixed a CSP violation blocking `ipapi.co` geolocation lookups for local release dates.
+- Fixed mobile search grid overflowing UI text and buttons.
+- Fixed localStorage theme race conditions by refactoring `window.location.reload()` calls into seamless SPA `hashchange` events.
 
 ### Changed
 - Refactored DOM utility functions into a centralized `utils/dom.js`.
