@@ -35,14 +35,22 @@ export async function init(params) {
   try {
     const localMovie = await getMovieByTmdbId(tmdbId);
     
+    // Always fetch rich data from API for cast, overview, watchProviders, etc.
+    const { getMovieDetails } = await import('../api/tmdb.js');
+    const richData = await getMovieDetails(tmdbId);
+    if (!richData && !localMovie) throw new Error('Movie not found');
+
     if (localMovie) {
       isTracked = true;
       currentMovieId = localMovie.id;
-      movieData = localMovie;
+      movieData = richData || localMovie;
+      // Preserve local tracking info
+      movieData.id = localMovie.id;
+      movieData.trackingStatus = localMovie.trackingStatus;
+      movieData.rating = localMovie.rating;
     } else {
       isTracked = false;
-      movieData = await provider.getMovieDetails(tmdbId);
-      if (!movieData) throw new Error('Movie not found');
+      movieData = richData;
     }
 
     renderContent(container);

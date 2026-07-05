@@ -319,8 +319,10 @@ function renderListItem(item) {
       <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--space-1);">
         <div style="font-weight:var(--weight-medium);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</div>
         <div style="font-size:var(--text-xs);color:var(--text-tertiary);">${year} • ${item.itemType === 'show' ? 'TV Show' : 'Movie'}${item.progress ? ` • ${item.progress.percentage}%` : ''}${genres ? ` • ${genres}` : ''}</div>
-        <div style="display:flex;gap:var(--space-2);align-items:center;margin-top:var(--space-1);">
+        ${item.itemType === 'movie' && item.overview ? `<div style="font-size:var(--text-xs);color:var(--text-secondary);margin-top:var(--space-1);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${item.overview}</div>` : ''}
+        <div style="display:flex;gap:var(--space-2);align-items:center;margin-top:var(--space-2);">
           ${statusBadge(item.trackingStatus)}
+          ${item.itemType === 'movie' && item.voteAverage ? `<span class="badge badge-secondary" style="font-size:10px;background:var(--surface-3);color:var(--text-secondary);">TMDB ★ ${item.voteAverage.toFixed(1)}</span>` : ''}
           ${item.rating ? `<span class="badge badge-warning">★ ${item.rating}</span>` : ''}
         </div>
       </div>

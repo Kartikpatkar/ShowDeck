@@ -41,10 +41,20 @@ export async function init(params) {
     // 1. Check if in DB
     const localShow = await getShowByTmdbId(tmdbId);
     
+    // Always fetch rich data from API for cast, overview, watchProviders, etc.
+    const { getShowDetails } = await import('../api/tmdb.js');
+    const richData = await getShowDetails(tmdbId);
+    if (!richData && !localShow) throw new Error('Show not found');
+    
     if (localShow) {
       isTracked = true;
       currentShowId = localShow.id;
-      showData = localShow;
+      showData = richData || localShow;
+      // Preserve local tracking info
+      showData.id = localShow.id;
+      showData.trackingStatus = localShow.trackingStatus;
+      showData.rating = localShow.rating;
+
       episodesData = await getEpisodes(currentShowId);
       
       // If we don't have episodes yet, fetch them
@@ -55,10 +65,10 @@ export async function init(params) {
     } else {
       // 2. Not tracked, fetch from API
       isTracked = false;
-      showData = await provider.getShowDetails(tmdbId);
-      if (!showData) throw new Error('Show not found');
+      showData = richData;
       
       // Fetch episodes (in memory only, not saved to DB)
+      const provider = await import('../api/provider.js');
       episodesData = await provider.getAllEpisodes(tmdbId, null, showData.totalSeasons);
     }
     
