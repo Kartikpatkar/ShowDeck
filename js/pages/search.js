@@ -206,13 +206,24 @@ async function loadTrending() {
       container.innerHTML = `<div class="empty-state">No trending shows found.</div>`;
       return;
     }
+    // Check which items are already in library
+    const results = [];
+    for (const item of data.results) {
+      if (!item.tmdbId) continue;
+      let inLibrary = false;
+      if (item.mediaType === 'show') {
+        inLibrary = await showExists(item.tmdbId);
+      } else if (item.mediaType === 'movie') {
+        inLibrary = await movieExists(item.tmdbId);
+      }
+      results.push({ ...item, inLibrary });
+    }
+    
+    const wrapperClass = viewMode === 'list' ? 'library-list stagger-children' : 'grid-posters stagger-children';
     
     const html = `
       <h2 class="section-title" style="margin-bottom:var(--space-4);">Trending TV Shows</h2>
-      ${viewMode === 'list' 
-        ? `<div class="library-list stagger-children">${data.results.map(renderListItem).join('')}</div>`
-        : `<div class="grid-posters stagger-children">${data.results.map(renderGridItem).join('')}</div>`
-      }
+      <div class="${wrapperClass}">${results.map(renderResultCard).join('')}</div>
     `;
     container.innerHTML = html;
   } catch (err) {
@@ -365,14 +376,14 @@ function renderResultCard(item) {
         </div>
         ${item.inLibrary
           ? `<span class="badge badge-success" style="width:fit-content;margin-top:var(--space-1);">✓ In Library</span>`
-          : `<button class="btn btn-primary btn-sm" style="width:100%;margin-top:var(--space-1);"
+          : `<button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:var(--space-1);"
               data-action="add"
               data-tmdb-id="${item.tmdbId}"
               data-media-type="${item.mediaType}"
               data-title="${item.title.replace(/"/g, '&quot;')}"
               id="add-${item.mediaType}-${item.tmdbId}">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-              Add to Library
+              Add
             </button>`
         }
       </div>
