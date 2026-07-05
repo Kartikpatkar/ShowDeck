@@ -106,7 +106,13 @@ export function render() {
             </div>
           </div>
 
-          <p class="text-tertiary" style="font-size:var(--text-xs);">
+          <div style="border-top:1px solid var(--border-color);padding-top:var(--space-4);margin-top:var(--space-2);">
+            <h4 style="margin-bottom:var(--space-2);">Fix Missing Matches</h4>
+            <p class="text-tertiary" style="font-size:var(--text-xs);margin-bottom:var(--space-3);">Manually match imported items that couldn't be found on TMDB automatically.</p>
+            <a href="#/enrich" class="btn btn-secondary" style="width:100%;justify-content:center;">Find Missing Matches</a>
+          </div>
+
+          <p class="text-tertiary" style="font-size:var(--text-xs);margin-top:var(--space-2);">
             Request your data from TV Time via Settings → Privacy → Download my data. Your file is processed entirely on this device.
           </p>
         </div>

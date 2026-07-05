@@ -131,6 +131,9 @@ router
   .on('/settings', (params) => {
     loadPage(() => import('./pages/settings.js'), params);
   })
+  .on('/enrich', (params) => {
+    loadPage(() => import('./pages/enrich.js'), params);
+  })
   .onNotFound(() => {
     const container = getPageContainer();
     if (container) {
@@ -145,6 +148,7 @@ router.afterEach = (route) => {
     let navRoute = route;
     if (route === '/home') navRoute = '/';
     if (route.startsWith('/show/') || route.startsWith('/movie/')) navRoute = '/library';
+    if (route === '/enrich') navRoute = '/settings';
     sidebar.setActive(navRoute);
   }
 

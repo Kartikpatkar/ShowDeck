@@ -10,6 +10,7 @@ import { getShowProgress, getNextEpisode } from '../database/episodes.js';
 import { getTotalWatchedEpisodes } from '../database/episodes.js';
 import { getPosterUrl } from '../api/tmdb.js';
 import { formatDate, formatYear, truncate, statusBadge } from '../utils/dom.js';
+import { openEnrichModal } from '../components/enrich-modal.js';
 
 let viewMode = localStorage.getItem('showdeck-home-view') || 'grid';
 
@@ -37,6 +38,19 @@ export async function init() {
     localStorage.setItem('showdeck-home-view', viewMode);
     // Reload to apply view mode quickly
     import('../router.js').then(r => window.dispatchEvent(new Event('hashchange')));
+  });
+
+  // Enrich Modal Triggers
+  document.querySelectorAll('.enrich-trigger').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = parseInt(el.dataset.id);
+      const type = el.dataset.type;
+      const title = decodeURIComponent(el.dataset.title);
+      openEnrichModal(id, type, title, () => {
+        import('../router.js').then(r => window.dispatchEvent(new Event('hashchange')));
+      });
+    });
   });
 }
 
@@ -119,22 +133,30 @@ export async function render() {
     const cards = recentItems.map(item => {
       const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
       const isShow = item.totalSeasons !== undefined;
-      const route = isShow ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
+      const typeStr = isShow ? 'show' : 'movie';
+      const isMissing = item.tmdbId === null;
+      
+      const route = isMissing ? 'javascript:void(0)' : (isShow ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`);
+      const triggerClass = isMissing ? 'enrich-trigger' : '';
+      const triggerAttrs = isMissing ? `data-id="${item.id}" data-type="${typeStr}" data-title="${encodeURIComponent(item.title)}"` : '';
+      
       const year = formatYear(isShow ? item.firstAirDate : item.releaseDate);
+      const missingBadge = isMissing ? `<div style="position:absolute;top:4px;right:4px;background:var(--color-error);color:white;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:bold;">Fix Match</div>` : '';
 
       if (viewMode === 'list') {
         const typeLabel = isShow ? 'TV Show' : 'Movie';
         const rating = item.rating ? `<span class="badge badge-warning" style="margin-top:var(--space-1);">★ ${item.rating}</span>` : '';
         return `
-          <div class="library-list-item card" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);">
-            <a href="${route}" style="flex-shrink:0;">
+          <div class="library-list-item card" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);position:relative;">
+            ${missingBadge}
+            <a href="${route}" class="${triggerClass}" ${triggerAttrs} style="flex-shrink:0;">
               ${posterUrl
                 ? `<img src="${posterUrl}" alt="${item.title}" style="width:56px;height:84px;object-fit:cover;border-radius:var(--radius-sm);" loading="lazy">`
                 : `<div style="width:56px;height:84px;background:var(--surface-3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;">🎬</span></div>`
               }
             </a>
             <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--space-1);">
-              <a href="${route}" style="text-decoration:none;">
+              <a href="${route}" class="${triggerClass}" ${triggerAttrs} style="text-decoration:none;">
                 <div style="font-weight:var(--weight-medium);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</div>
                 <div style="font-size:var(--text-xs);color:var(--text-tertiary);">${year} • ${typeLabel}</div>
               </a>
@@ -145,7 +167,8 @@ export async function render() {
       }
 
       return `
-        <a href="${route}" class="poster-card" id="recent-${isShow ? 'show' : 'movie'}-${item.id}">
+        <a href="${route}" class="poster-card ${triggerClass}" ${triggerAttrs} id="recent-${isShow ? 'show' : 'movie'}-${item.id}" style="position:relative;">
+          ${missingBadge}
           ${posterUrl
             ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
             : `<div class="poster-card-image skeleton"></div>`

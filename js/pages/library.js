@@ -9,6 +9,7 @@ import { getShowProgress } from '../database/episodes.js';
 import { getPosterUrl } from '../api/tmdb.js';
 import { formatYear, statusBadge, STATUS_MAP, debounce } from '../utils/dom.js';
 import { toast } from '../components/toast.js';
+import { openEnrichModal } from '../components/enrich-modal.js';
 
 let viewMode = localStorage.getItem('showdeck-library-view') || 'grid';
 let filterStatus = '';
@@ -247,16 +248,34 @@ function renderItems() {
   } else {
     contentEl.innerHTML = `<div class="library-compact stagger-children">${items.map(renderCompactItem).join('')}</div>`;
   }
+
+  // Enrich Modal Triggers
+  document.querySelectorAll('.enrich-trigger').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = parseInt(el.dataset.id);
+      const type = el.dataset.type;
+      const title = decodeURIComponent(el.dataset.title);
+      openEnrichModal(id, type, title, () => {
+        loadLibrary();
+      });
+    });
+  });
 }
 
 function renderGridCard(item) {
   const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
   const year = formatYear(item.itemType === 'show' ? item.firstAirDate : item.releaseDate);
-  const route = item.itemType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
   const status = STATUS_MAP[item.trackingStatus] || STATUS_MAP.plan;
+  const isMissing = item.tmdbId === null;
+  const route = isMissing ? 'javascript:void(0)' : (item.itemType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`);
+  const triggerClass = isMissing ? 'enrich-trigger' : '';
+  const triggerAttrs = isMissing ? `data-id="${item.id}" data-type="${item.itemType}" data-title="${encodeURIComponent(item.title)}"` : '';
+  const missingBadge = isMissing ? `<div style="position:absolute;top:4px;right:4px;background:var(--color-error);color:white;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:bold;z-index:2;">Fix Match</div>` : '';
 
   return `
-    <a href="${route}" class="poster-card" id="lib-${item.itemType}-${item.id}">
+    <a href="${route}" class="poster-card ${triggerClass}" ${triggerAttrs} id="lib-${item.itemType}-${item.id}" style="position:relative;">
+      ${missingBadge}
       ${posterUrl
         ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
         : `<div class="poster-card-image" style="display:flex;align-items:center;justify-content:center;background:var(--surface-3);"><span style="font-size:var(--text-3xl);opacity:0.3;">🎬</span></div>`
@@ -276,11 +295,16 @@ function renderGridCard(item) {
 function renderListItem(item) {
   const posterUrl = getPosterUrl(item.posterPath, 'posterSmall');
   const year = formatYear(item.itemType === 'show' ? item.firstAirDate : item.releaseDate);
-  const route = item.itemType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
   const genres = (item.genres || []).slice(0, 3).join(', ');
+  const isMissing = item.tmdbId === null;
+  const route = isMissing ? 'javascript:void(0)' : (item.itemType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`);
+  const triggerClass = isMissing ? 'enrich-trigger' : '';
+  const triggerAttrs = isMissing ? `data-id="${item.id}" data-type="${item.itemType}" data-title="${encodeURIComponent(item.title)}"` : '';
+  const missingBadge = isMissing ? `<div style="position:absolute;top:4px;right:4px;background:var(--color-error);color:white;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:bold;">Fix Match</div>` : '';
 
   return `
-    <a href="${route}" class="library-list-item card" id="lib-list-${item.itemType}-${item.id}" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);text-decoration:none;">
+    <a href="${route}" class="library-list-item card ${triggerClass}" ${triggerAttrs} id="lib-list-${item.itemType}-${item.id}" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);text-decoration:none;position:relative;">
+      ${missingBadge}
       ${posterUrl
         ? `<img src="${posterUrl}" alt="${item.title}" style="width:56px;height:84px;object-fit:cover;border-radius:var(--radius-sm);flex-shrink:0;" loading="lazy">`
         : `<div style="width:56px;height:84px;background:var(--surface-3);border-radius:var(--radius-sm);flex-shrink:0;display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;">🎬</span></div>`
@@ -304,14 +328,18 @@ function renderListItem(item) {
 
 function renderCompactItem(item) {
   const year = formatYear(item.itemType === 'show' ? item.firstAirDate : item.releaseDate);
-  const route = item.itemType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
   const status = STATUS_MAP[item.trackingStatus] || STATUS_MAP.plan;
+  const isMissing = item.tmdbId === null;
+  const route = isMissing ? 'javascript:void(0)' : (item.itemType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`);
+  const triggerClass = isMissing ? 'enrich-trigger' : '';
+  const triggerAttrs = isMissing ? `data-id="${item.id}" data-type="${item.itemType}" data-title="${encodeURIComponent(item.title)}"` : '';
 
   return `
-    <a href="${route}" class="library-compact-item" id="lib-compact-${item.itemType}-${item.id}"
+    <a href="${route}" class="library-compact-item ${triggerClass}" ${triggerAttrs} id="lib-compact-${item.itemType}-${item.id}"
       style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) var(--space-3);border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--text-primary);transition:background var(--duration-fast) var(--ease-out);"
       onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='transparent'">
       <span style="width:8px;height:8px;border-radius:var(--radius-full);background:var(--color-${status.color});flex-shrink:0;"></span>
+      ${isMissing ? `<span style="font-size:10px;background:var(--color-error);color:white;padding:1px 4px;border-radius:4px;">Fix</span>` : ''}
       <span style="flex:1;font-size:var(--text-sm);font-weight:var(--weight-medium);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</span>
       <span style="font-size:var(--text-xs);color:var(--text-tertiary);flex-shrink:0;">${year}</span>
       <span style="font-size:var(--text-xs);color:var(--text-tertiary);flex-shrink:0;width:50px;">${item.itemType === 'show' ? 'TV' : 'Movie'}</span>

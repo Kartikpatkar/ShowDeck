@@ -120,32 +120,33 @@ export async function importTVTimeData(zipFile, onProgress = () => {}) {
 
       // Search TMDB for this show
       const results = await searchShows(showName, 1);
-      if (!results || !results.results || results.results.length === 0) {
-        summary.showsNotFound++;
-        summary.notFoundShows.push(showName);
-        continue;
-      }
-
-      const match = results.results[0];
-
-      // Determine tracking status
       const status = determineStatus(showInfo);
 
-      // Insert show
+      let match = null;
+      if (results && results.results && results.results.length > 0) {
+        match = results.results[0];
+      }
+
+      if (!match) {
+        summary.showsNotFound++;
+        summary.notFoundShows.push(showName);
+      }
+
+      // Insert show (with or without match)
       const showId = await db.shows.add({
-        tmdbId: match.tmdbId,
-        title: match.title,
-        originalTitle: match.originalTitle || match.title,
-        posterPath: match.posterPath || null,
-        backdropPath: match.backdropPath || null,
-        overview: match.overview || '',
-        genres: match.genres || [],
-        status: match.status || '',
-        firstAirDate: match.firstAirDate || '',
-        totalSeasons: match.totalSeasons || 0,
-        totalEpisodes: match.totalEpisodes || 0,
-        network: match.network || '',
-        runtime: match.runtime || 0,
+        tmdbId: match ? match.tmdbId : null,
+        title: match ? match.title : showName,
+        originalTitle: match ? (match.originalTitle || match.title) : showName,
+        posterPath: match ? match.posterPath : null,
+        backdropPath: match ? match.backdropPath : null,
+        overview: match ? match.overview : '',
+        genres: match ? match.genres : [],
+        status: match ? match.status : '',
+        firstAirDate: match ? match.firstAirDate : '',
+        totalSeasons: match ? match.totalSeasons : 0,
+        totalEpisodes: match ? match.totalEpisodes : 0,
+        network: match ? match.network : '',
+        runtime: match ? match.runtime : 0,
         trackingStatus: status,
         rating: 0,
         addedAt: showInfo.followedAt || new Date().toISOString(),
