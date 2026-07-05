@@ -210,10 +210,23 @@ window.addEventListener('keydown', (e) => {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').then(
-      (registration) => { console.log('ServiceWorker registration successful:', registration.scope); },
-      (err) => { console.log('ServiceWorker registration failed:', err); }
-    );
+    navigator.serviceWorker.register('./sw.js').then((registration) => {
+      console.log('ServiceWorker registration successful:', registration.scope);
+      
+      // Check for updates
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            import('./components/toast.js').then(({ toast }) => {
+              toast('Update available! Refresh to apply.', 'warning', 10000);
+            });
+          }
+        });
+      });
+    }).catch(err => {
+      console.error('ServiceWorker registration failed:', err);
+    });
   });
 }
 
