@@ -98,6 +98,19 @@ export function starRating(rating, max = 5) {
 }
 
 /**
+ * Get interactive star rating HTML (clickable spans).
+ */
+export function interactiveStarRating(rating, max = 5) {
+  let html = '';
+  const full = Math.floor(rating);
+  for (let i = 1; i <= max; i++) {
+    const char = i <= full ? '★' : (i - 1 < rating ? '½' : '☆');
+    html += `<span data-val="${i}" style="cursor:pointer;" class="star-interactive">${char}</span>`;
+  }
+  return html;
+}
+
+/**
  * Tracking status labels and colors.
  */
 export const STATUS_MAP = {

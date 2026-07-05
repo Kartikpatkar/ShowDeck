@@ -6,7 +6,7 @@
 import * as provider from '../api/provider.js';
 import { getMovieByTmdbId, updateMovieTrackingStatus, rateMovie, addMovie } from '../database/movies.js';
 import { getPosterUrl, getBackdropUrl } from '../api/tmdb.js';
-import { formatYear, starRating, STATUS_MAP } from '../utils/dom.js';
+import { formatYear, starRating, interactiveStarRating, STATUS_MAP } from '../utils/dom.js';
 import { toast } from '../components/toast.js';
 
 let currentMovieId = null; 
@@ -102,7 +102,7 @@ function renderContent(container) {
               `).join('')}
             </select>
             <div class="rating-stars" id="movie-rating" style="display:flex;align-items:center;gap:4px;font-size:24px;cursor:pointer;color:var(--color-warning);">
-              ${starRating(movieData.rating || 0)}
+              ${interactiveStarRating(movieData.rating || 0)}
             </div>
           ` : `
             <button class="btn btn-primary" id="movie-track-btn">
@@ -169,6 +169,30 @@ function bindEvents() {
       await updateMovieTrackingStatus(currentMovieId, e.target.value);
       movieData.trackingStatus = e.target.value;
       toast('Status updated');
+    });
+  }
+
+  const ratingControl = document.getElementById('movie-rating');
+  if (ratingControl) {
+    ratingControl.addEventListener('click', async (e) => {
+      const star = e.target.closest('.star-interactive');
+      if (!star) return;
+
+      if (!isTracked) {
+        toast('Add movie to library first to rate it', 'warning');
+        return;
+      }
+      
+      const num = parseInt(star.dataset.val, 10);
+      if (num >= 1 && num <= 5) {
+        const { rateMovie } = await import('../database/movies.js');
+        await rateMovie(currentMovieId, num);
+        movieData.rating = num;
+        
+        const { interactiveStarRating } = await import('../utils/dom.js');
+        ratingControl.innerHTML = interactiveStarRating(num);
+        toast('Rating saved', 'success');
+      }
     });
   }
 }

@@ -7,7 +7,7 @@ import * as provider from '../api/provider.js';
 import { getShow, getShowByTmdbId, updateTrackingStatus, rateShow, addShow } from '../database/shows.js';
 import { getEpisodes, markWatched, markUnwatched, markSeasonWatched, markSeasonUnwatched, addEpisodes } from '../database/episodes.js';
 import { getPosterUrl, getBackdropUrl } from '../api/tmdb.js';
-import { formatYear, formatDate, starRating, statusBadge, STATUS_MAP } from '../utils/dom.js';
+import { formatYear, formatDate, starRating, interactiveStarRating, statusBadge, STATUS_MAP } from '../utils/dom.js';
 import { toast } from '../components/toast.js';
 
 let currentShowId = null; // Internal ID
@@ -136,7 +136,7 @@ function renderContent(container) {
               `).join('')}
             </select>
             <div class="rating-stars" id="rating-control" style="display:flex;align-items:center;gap:4px;font-size:24px;cursor:pointer;color:var(--color-warning);">
-              ${starRating(showData.rating || 0)}
+              ${interactiveStarRating(showData.rating || 0)}
             </div>
           ` : `
             <button class="btn btn-primary" id="track-btn">
@@ -257,6 +257,32 @@ function bindEvents() {
       await updateTrackingStatus(currentShowId, e.target.value);
       showData.trackingStatus = e.target.value;
       toast('Status updated');
+    });
+  }
+
+  // Rating Control
+  const ratingControl = document.getElementById('rating-control');
+  if (ratingControl) {
+    ratingControl.addEventListener('click', async (e) => {
+      const star = e.target.closest('.star-interactive');
+      if (!star) return;
+
+      if (!isTracked) {
+        toast('Add show to library first to rate it', 'warning');
+        return;
+      }
+      
+      const num = parseInt(star.dataset.val, 10);
+      if (num >= 1 && num <= 5) {
+        const { rateShow } = await import('../database/shows.js');
+        await rateShow(currentShowId, num);
+        showData.rating = num;
+        
+        // Update DOM inline
+        const { interactiveStarRating } = await import('../utils/dom.js');
+        ratingControl.innerHTML = interactiveStarRating(num);
+        toast('Rating saved', 'success');
+      }
     });
   }
 
