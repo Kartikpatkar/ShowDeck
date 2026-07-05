@@ -7,7 +7,7 @@ import * as provider from '../api/provider.js';
 import { getShow, getShowByTmdbId, updateTrackingStatus, rateShow, addShow } from '../database/shows.js';
 import { getEpisodes, markWatched, markUnwatched, markSeasonWatched, markSeasonUnwatched, addEpisodes } from '../database/episodes.js';
 import { getPosterUrl, getBackdropUrl } from '../api/tmdb.js';
-import { formatYear, formatDate, starRating, interactiveStarRating, statusBadge, STATUS_MAP, formatVoteCount, getRelativeTime } from '../utils/dom.js';
+import { formatYear, formatDate, starRating, interactiveStarRating, statusBadge, STATUS_MAP, formatVoteCount, getRelativeTime, toggleGlobalLoading, timeAgo } from '../utils/dom.js';
 import { toast } from '../components/toast.js';
 
 let currentShowId = null; // Internal ID
@@ -241,14 +241,15 @@ function renderContent(container) {
   container.innerHTML = `
     <!-- Back Button -->
     <div style="padding:var(--space-4) var(--space-4) 0; position:relative; z-index:10; display:flex; justify-content:space-between; align-items:center;">
-      <button class="btn btn-ghost" onclick="window.history.length > 1 ? window.history.back() : window.location.hash='#/home'" style="padding:var(--space-2); margin-left:-var(--space-2); font-weight:var(--weight-medium);">
+      <button class="btn btn-ghost" onclick="window.history.length > 1 ? window.history.back() : window.location.hash='#/home'" style="padding:var(--space-2); margin-left:calc(-1 * var(--space-2)); font-weight:var(--weight-medium);">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="m15 18-6-6 6-6"/></svg>
         Back
       </button>
-      <div style="display:flex;gap:var(--space-2);">
+      <div style="display:flex;gap:var(--space-2);align-items:center;">
         ${isTracked ? `
-          <button class="btn btn-sm btn-ghost" id="sync-show-btn" style="color:var(--text-secondary);" title="Sync with TMDB">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+          <span class="text-tertiary" style="font-size:var(--text-xs);margin-right:var(--space-2);display:none;" id="last-synced-text">Synced ${timeAgo(showData.updatedAt)}</span>
+          <button class="btn btn-sm btn-ghost" id="sync-show-btn" style="color:var(--text-secondary);" aria-label="Sync with TMDB" data-tooltip="Sync">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
             Sync
           </button>
         ` : ''}
@@ -507,10 +508,16 @@ function bindEvents() {
 
   // Sync button
   const syncBtn = document.getElementById('sync-show-btn');
-  if (syncBtn && isTracked) {
+  const syncText = document.getElementById('last-synced-text');
+  if (syncBtn && syncText) {
+    if (!navigator.onLine) syncText.style.display = 'inline'; // Always show offline
+    syncBtn.addEventListener('mouseenter', () => syncText.style.display = 'inline');
+    syncBtn.addEventListener('mouseleave', () => { if (navigator.onLine) syncText.style.display = 'none'; });
+
     syncBtn.addEventListener('click', async () => {
       syncBtn.disabled = true;
       syncBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></div> Syncing...';
+      toggleGlobalLoading(true);
       try {
         const { syncShow } = await import('../database/shows.js');
         await syncShow(currentShowId);
@@ -522,6 +529,8 @@ function bindEvents() {
         toast('Failed to sync', 'error');
         syncBtn.disabled = false;
         syncBtn.textContent = 'Sync';
+      } finally {
+        toggleGlobalLoading(false);
       }
     });
   }
@@ -568,7 +577,7 @@ function bindEvents() {
   // Rating Control
   const ratingControl = document.getElementById('rating-control');
   if (ratingControl) {
-    ratingControl.addEventListener('click', async (e) => {
+    const handleRate = async (e) => {
       const star = e.target.closest('.star-interactive');
       if (!star) return;
 
@@ -587,6 +596,14 @@ function bindEvents() {
         const { interactiveStarRating } = await import('../utils/dom.js');
         ratingControl.innerHTML = interactiveStarRating(num);
         toast('Rating saved', 'success');
+      }
+    };
+    
+    ratingControl.addEventListener('click', handleRate);
+    ratingControl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleRate(e);
       }
     });
   }

@@ -7,6 +7,7 @@ import { db, clearAllData } from '../database/db.js';
 import { toast } from '../components/toast.js';
 import { el } from '../utils/dom.js';
 import { getApiUsage } from '../utils/apiTracker.js';
+import { APP_VERSION } from '../app.js';
 
 export function render() {
   const currentKey = localStorage.getItem('showdeck_tmdb_key') || '';
@@ -141,6 +142,10 @@ export function render() {
           </div>
         </div>
 
+      </div>
+
+      <div style="text-align:center;padding:var(--space-4) 0;">
+        <p class="text-tertiary" style="font-size:var(--text-xs);">ShowDeck v${APP_VERSION} • Privacy-first, offline-first entertainment tracker.</p>
       </div>
     </div>
   `;
@@ -278,6 +283,16 @@ function bindEvents() {
 
       const { shows, movies, episodes, collections, tags, activity } = backup.data;
 
+      // Basic schema validation (M-5)
+      const requiredShowFields = ['title'];
+      const requiredMovieFields = ['title'];
+      if (shows?.length && !requiredShowFields.every(f => f in shows[0])) {
+        throw new Error('Invalid backup: shows data is malformed');
+      }
+      if (movies?.length && !requiredMovieFields.every(f => f in movies[0])) {
+        throw new Error('Invalid backup: movies data is malformed');
+      }
+
       // Use Dexie bulkPut to merge (insert or update)
       await db.transaction('rw', db.shows, db.movies, db.episodes, db.collections, db.tags, db.activity, async () => {
         if (shows?.length) await db.shows.bulkPut(shows);
@@ -394,9 +409,13 @@ function bindEvents() {
       // Clear DB
       await clearAllData();
       
-      // Clear LocalStorage settings (including TMDB key)
-      localStorage.removeItem('showdeck_tmdb_key');
-      localStorage.removeItem('showdeck_theme');
+      // Clear all ShowDeck localStorage keys (S-4)
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('showdeck')) keysToRemove.push(key);
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
       
       toast('All data has been deleted.', 'success');
       setTimeout(() => window.location.hash = '#/home', 1500);

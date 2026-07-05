@@ -6,6 +6,8 @@
 import { Router } from './router.js';
 import { Sidebar } from './components/sidebar.js';
 
+export const APP_VERSION = '1.0.0';
+
 const router = new Router();
 let sidebar = null;
 
@@ -205,7 +207,7 @@ window.addEventListener('keydown', (e) => {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(
+    navigator.serviceWorker.register('./sw.js').then(
       (registration) => { console.log('ServiceWorker registration successful:', registration.scope); },
       (err) => { console.log('ServiceWorker registration failed:', err); }
     );

@@ -3,6 +3,19 @@
  */
 
 /**
+ * Escape HTML entities to prevent XSS.
+ */
+export function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/**
  * Create an element with attributes and children.
  */
 export function el(tag, attrs = {}, ...children) {
@@ -30,6 +43,31 @@ export function el(tag, attrs = {}, ...children) {
     }
   }
   return element;
+}
+
+/**
+ * Toggle a global invisible overlay to prevent clicks during sync.
+ */
+export function toggleGlobalLoading(isLoading) {
+  let overlay = document.getElementById('global-loading-overlay');
+  if (isLoading) {
+    if (!overlay) {
+      overlay = el('div', {
+        id: 'global-loading-overlay',
+        style: {
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          zIndex: 9999,
+          cursor: 'wait',
+          backgroundColor: 'rgba(0,0,0,0.1)'
+        }
+      });
+      document.body.appendChild(overlay);
+    }
+    overlay.style.display = 'block';
+  } else if (overlay) {
+    overlay.style.display = 'none';
+  }
 }
 
 /**
@@ -121,6 +159,29 @@ export function getRelativeTime(dateStr) {
 }
 
 /**
+ * Get relative time in the past (e.g. "2 hours ago")
+ */
+export function timeAgo(dateStr) {
+  if (!dateStr) return null;
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = now - date;
+  
+  if (diff < 60000) return 'Just now';
+  
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 60) return `${minutes}m ago`;
+  
+  const hours = Math.floor(diff / 3600000);
+  if (hours < 24) return `${hours}h ago`;
+  
+  const days = Math.floor(diff / 86400000);
+  if (days < 30) return `${days}d ago`;
+  
+  return formatDate(dateStr);
+}
+
+/**
  * Get star rating display.
  */
 export function starRating(rating, max = 5) {
@@ -138,7 +199,7 @@ export function interactiveStarRating(rating, max = 5) {
   const full = Math.floor(rating);
   for (let i = 1; i <= max; i++) {
     const char = i <= full ? '★' : (i - 1 < rating ? '½' : '☆');
-    html += `<span data-val="${i}" style="cursor:pointer;" class="star-interactive">${char}</span>`;
+    html += `<span data-val="${i}" style="cursor:pointer;" class="star-interactive" role="button" tabindex="0" aria-label="Rate ${i} stars">${char}</span>`;
   }
   return html;
 }

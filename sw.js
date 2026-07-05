@@ -3,7 +3,7 @@
  * Handles offline caching for static assets, API responses, and images.
  */
 
-const CACHE_NAME = 'showdeck-v1';
+const CACHE_NAME = 'showdeck-v2';
 const API_CACHE_NAME = 'showdeck-api-v1';
 const IMG_CACHE_NAME = 'showdeck-img-v1';
 
@@ -52,6 +52,14 @@ const STATIC_ASSETS = [
   // Lib (offline)
   '/js/lib/chart.umd.js',
   '/js/lib/jszip.min.js',
+  '/js/lib/dexie.mjs',
+  // Utils
+  '/js/utils/apiTracker.js',
+  // Pages (missing from v1)
+  '/js/pages/episode.js',
+  '/js/pages/enrich.js',
+  // Components (missing from v1)
+  '/js/components/enrich-modal.js',
   // Assets
   '/assets/icon-192.png',
   '/assets/icon-512.png',

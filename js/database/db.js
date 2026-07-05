@@ -5,7 +5,7 @@
  */
 
 // Import Dexie from CDN (no build step)
-import Dexie from 'https://cdn.jsdelivr.net/npm/dexie@4.0.11/+esm';
+import Dexie from '../lib/dexie.mjs';
 
 const db = new Dexie('ShowDeckDB');
 
@@ -51,7 +51,7 @@ export async function getDbStats() {
   const [shows, movies, episodes, collections, tags, activities] = await Promise.all([
     db.shows.count(),
     db.movies.count(),
-    db.episodes.where('watched').equals(1).count(),
+    db.episodes.filter(e => e.watched === true).count(),
     db.collections.count(),
     db.tags.count(),
     db.activity.count(),

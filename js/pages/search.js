@@ -100,7 +100,7 @@ export function init() {
     
     currentPage = 1;
     performSearch();
-  }, 350);
+  }, window.innerWidth < 768 ? 500 : 300);
 
   input?.addEventListener('input', (e) => doSearch(e.target.value));
 
