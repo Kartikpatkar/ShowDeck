@@ -221,7 +221,7 @@ export async function deleteShowEpisodes(showId) {
  * Get total watched episodes count (across all shows).
  */
 export async function getTotalWatchedEpisodes() {
-  return db.episodes.where('watched').equals(1).count();
+  return db.episodes.filter(e => e.watched).count();
 }
 
 /**
@@ -229,8 +229,7 @@ export async function getTotalWatchedEpisodes() {
  */
 export async function getRecentlyWatched(limit = 20) {
   return db.episodes
-    .where('watched')
-    .equals(1)
+    .filter(e => e.watched)
     .reverse()
     .sortBy('watchedAt')
     .then(eps => eps.slice(0, limit));

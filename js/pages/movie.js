@@ -27,6 +27,11 @@ export async function init(params) {
   const tmdbId = parseInt(params.id);
   const container = document.getElementById('movie-detail-container');
 
+  if (isNaN(tmdbId)) {
+    renderError(container, 'Invalid movie ID in URL.');
+    return;
+  }
+
   try {
     const localMovie = await getMovieByTmdbId(tmdbId);
     
@@ -45,14 +50,18 @@ export async function init(params) {
     
   } catch (err) {
     console.error('[MovieDetail] Error:', err);
-    container.innerHTML = `
-      <div class="empty-state" style="padding:var(--space-12) var(--space-4);">
-        <h3 class="empty-state-title">Failed to load movie</h3>
-        <p class="empty-state-text">Check your internet connection or API key.</p>
-        <button class="btn btn-primary" onclick="history.back()">Go Back</button>
-      </div>
-    `;
+    renderError(container, 'Check your internet connection or API key.');
   }
+}
+
+function renderError(container, text) {
+  container.innerHTML = `
+    <div class="empty-state" style="padding:var(--space-12) var(--space-4);">
+      <h3 class="empty-state-title">Failed to load movie</h3>
+      <p class="empty-state-text">${text}</p>
+      <button class="btn btn-primary" onclick="history.back()">Go Back</button>
+    </div>
+  `;
 }
 
 function renderContent(container) {

@@ -11,6 +11,8 @@ import { getTotalWatchedEpisodes } from '../database/episodes.js';
 import { getPosterUrl } from '../api/tmdb.js';
 import { formatDate, formatYear, truncate, statusBadge } from '../utils/dom.js';
 
+let viewMode = localStorage.getItem('showdeck-home-view') || 'grid';
+
 export async function init() {
   // Bind onboarding key save if it exists
   const homeSaveBtn = document.getElementById('home-save-key');
@@ -26,6 +28,16 @@ export async function init() {
       }
     });
   }
+
+  // View toggle
+  document.getElementById('home-view-toggle')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-view]');
+    if (!btn) return;
+    viewMode = btn.dataset.view;
+    localStorage.setItem('showdeck-home-view', viewMode);
+    // Reload to apply view mode quickly
+    import('../router.js').then(r => window.dispatchEvent(new Event('hashchange')));
+  });
 }
 
 export async function render() {
@@ -110,6 +122,28 @@ export async function render() {
       const route = isShow ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
       const year = formatYear(isShow ? item.firstAirDate : item.releaseDate);
 
+      if (viewMode === 'list') {
+        const typeLabel = isShow ? 'TV Show' : 'Movie';
+        const rating = item.rating ? `<span class="badge badge-warning" style="margin-top:var(--space-1);">★ ${item.rating}</span>` : '';
+        return `
+          <div class="library-list-item card" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);">
+            <a href="${route}" style="flex-shrink:0;">
+              ${posterUrl
+                ? `<img src="${posterUrl}" alt="${item.title}" style="width:56px;height:84px;object-fit:cover;border-radius:var(--radius-sm);" loading="lazy">`
+                : `<div style="width:56px;height:84px;background:var(--surface-3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;">🎬</span></div>`
+              }
+            </a>
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--space-1);">
+              <a href="${route}" style="text-decoration:none;">
+                <div style="font-weight:var(--weight-medium);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</div>
+                <div style="font-size:var(--text-xs);color:var(--text-tertiary);">${year} • ${typeLabel}</div>
+              </a>
+              ${rating}
+            </div>
+          </div>
+        `;
+      }
+
       return `
         <a href="${route}" class="poster-card" id="recent-${isShow ? 'show' : 'movie'}-${item.id}">
           ${posterUrl
@@ -123,7 +157,12 @@ export async function render() {
         </a>
       `;
     });
-    recentlyAddedHTML = `<div class="grid-posters stagger-children">${cards.join('')}</div>`;
+    
+    if (viewMode === 'list') {
+      recentlyAddedHTML = `<div class="library-list stagger-children">${cards.join('')}</div>`;
+    } else {
+      recentlyAddedHTML = `<div class="grid-posters stagger-children">${cards.join('')}</div>`;
+    }
   } else {
     recentlyAddedHTML = `
       <div class="empty-state" style="padding:var(--space-8) var(--space-4);">
@@ -207,7 +246,17 @@ export async function render() {
       <!-- Recently Added -->
       <div class="section">
         <div class="section-header">
-          <h2 class="section-title">Recently Added</h2>
+          <div style="display:flex;align-items:center;gap:var(--space-4);">
+            <h2 class="section-title" style="margin:0;">Recently Added</h2>
+            <div class="view-toggle" id="home-view-toggle" role="group">
+              <button class="btn btn-icon btn-sm ${viewMode === 'grid' ? 'btn-primary' : 'btn-ghost'}" data-view="grid">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/></svg>
+              </button>
+              <button class="btn btn-icon btn-sm ${viewMode === 'list' ? 'btn-primary' : 'btn-ghost'}" data-view="list">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
           ${recentItems.length > 0 ? '<a href="#/library" class="section-action">View All</a>' : ''}
         </div>
         ${recentlyAddedHTML}

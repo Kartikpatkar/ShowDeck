@@ -44,9 +44,12 @@ export function render() {
           </div>
           
           <div style="display:flex;flex-direction:column;gap:var(--space-3);">
-            <label style="font-weight:var(--weight-medium);display:flex;justify-content:space-between;">
+            <label style="font-weight:var(--weight-medium);display:flex;justify-content:space-between;align-items:center;">
               <span>TMDB API Key</span>
-              <span class="badge badge-primary">Required for Movies</span>
+              <div style="display:flex;gap:var(--space-2);align-items:center;">
+                <span id="api-status-badge" class="badge" style="display:none;"></span>
+                <span class="badge badge-primary">Required for Movies</span>
+              </div>
             </label>
             <input type="password" id="tmdb-key-input" class="input" placeholder="Enter your TMDB API Key (v3 auth)" value="${currentKey}">
             <p class="text-tertiary" style="font-size:var(--text-xs);">
@@ -125,6 +128,35 @@ export function render() {
 
 export function init() {
   bindEvents();
+  checkApiStatus();
+}
+
+async function checkApiStatus() {
+  const badge = document.getElementById('api-status-badge');
+  if (!badge) return;
+  const key = localStorage.getItem('showdeck_tmdb_key');
+  if (!key) {
+    badge.style.display = 'none';
+    return;
+  }
+  
+  badge.style.display = 'inline-flex';
+  badge.className = 'badge badge-warning';
+  badge.textContent = 'Checking...';
+  
+  try {
+    const res = await fetch(`https://api.themoviedb.org/3/configuration?api_key=${key}`);
+    if (res.ok) {
+      badge.className = 'badge badge-success';
+      badge.textContent = 'Active (Green)';
+    } else {
+      badge.className = 'badge badge-error';
+      badge.textContent = 'Invalid (Red)';
+    }
+  } catch (err) {
+    badge.className = 'badge badge-error';
+    badge.textContent = 'Network Error (Red)';
+  }
 }
 
 function bindEvents() {
@@ -141,16 +173,17 @@ function bindEvents() {
     }
   });
 
-  // TMDB Key
   const saveKeyBtn = document.getElementById('save-key-btn');
   saveKeyBtn?.addEventListener('click', () => {
     const key = document.getElementById('tmdb-key-input').value.trim();
     if (key) {
       localStorage.setItem('showdeck_tmdb_key', key);
       toast('API Key saved successfully', 'success');
+      checkApiStatus();
     } else {
       localStorage.removeItem('showdeck_tmdb_key');
       toast('API Key removed', 'warning');
+      checkApiStatus();
     }
   });
 

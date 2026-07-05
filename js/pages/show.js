@@ -32,6 +32,11 @@ export async function init(params) {
   const tmdbId = parseInt(params.id);
   const container = document.getElementById('detail-container');
 
+  if (isNaN(tmdbId)) {
+    renderError(container, 'Invalid show ID in URL.');
+    return;
+  }
+
   try {
     // 1. Check if in DB
     const localShow = await getShowByTmdbId(tmdbId);
@@ -62,14 +67,18 @@ export async function init(params) {
     
   } catch (err) {
     console.error('[ShowDetail] Error:', err);
-    container.innerHTML = `
-      <div class="empty-state" style="padding:var(--space-12) var(--space-4);">
-        <h3 class="empty-state-title">Failed to load show</h3>
-        <p class="empty-state-text">Check your internet connection or API key.</p>
-        <button class="btn btn-primary" onclick="history.back()">Go Back</button>
-      </div>
-    `;
+    renderError(container, 'Check your internet connection or API key.');
   }
+}
+
+function renderError(container, text) {
+  container.innerHTML = `
+    <div class="empty-state" style="padding:var(--space-12) var(--space-4);">
+      <h3 class="empty-state-title">Failed to load show</h3>
+      <p class="empty-state-text">${text}</p>
+      <button class="btn btn-primary" onclick="history.back()">Go Back</button>
+    </div>
+  `;
 }
 
 async function fetchAndSaveEpisodes(tmdbId, tvmazeId, totalSeasons, localId) {
@@ -135,6 +144,7 @@ function renderContent(container) {
                 <option value="${val}" ${showData.trackingStatus === val ? 'selected' : ''}>${label}</option>
               `).join('')}
             </select>
+            <button class="btn btn-secondary btn-sm" id="mark-all-btn">Mark All ✓</button>
             <div class="rating-stars" id="rating-control" style="display:flex;align-items:center;gap:4px;font-size:24px;cursor:pointer;color:var(--color-warning);">
               ${interactiveStarRating(showData.rating || 0)}
             </div>
@@ -195,7 +205,10 @@ function renderContent(container) {
                   <div class="episode-number">${ep.season}x${String(ep.episode).padStart(2, '0')}</div>
                   <div class="episode-title">${ep.title}</div>
                 </div>
-                <div class="episode-date">${formatDate(ep.airDate)}</div>
+                <div class="episode-actions" style="display:flex;align-items:center;gap:var(--space-2);">
+                  ${ep.watched ? `<button class="btn btn-secondary btn-sm add-watch-btn" data-ep-id="${ep.id}" style="padding:0 var(--space-2);height:24px;min-height:24px;font-size:12px;" title="Add another watch">+1${ep.watchCount && ep.watchCount > 1 ? ` (${ep.watchCount})` : ''}</button>` : ''}
+                  <div class="episode-date">${formatDate(ep.airDate)}</div>
+                </div>
               </div>
             `;
           }).join('')}
@@ -257,6 +270,45 @@ function bindEvents() {
       await updateTrackingStatus(currentShowId, e.target.value);
       showData.trackingStatus = e.target.value;
       toast('Status updated');
+    });
+  }
+
+  // Mark All Watched
+  const markAllBtn = document.getElementById('mark-all-btn');
+  if (markAllBtn) {
+    markAllBtn.addEventListener('click', async () => {
+      const { confirmModal } = await import('../components/modal.js');
+      const ok = await confirmModal('Mark All Watched', 'Are you sure you want to mark all episodes in all seasons as watched?');
+      if (!ok) return;
+
+      markAllBtn.disabled = true;
+      markAllBtn.textContent = 'Marking...';
+      try {
+        const { db } = await import('../database/db.js');
+        const now = new Date();
+        const epsToUpdate = episodesData.filter(e => !e.watched);
+        
+        await db.transaction('rw', db.episodes, async () => {
+          for (const ep of epsToUpdate) {
+            await db.episodes.update(ep.id, { watched: true, watchedAt: now, watchCount: (ep.watchCount || 0) + 1 });
+            ep.watched = true;
+          }
+        });
+
+        // Trigger auto-complete check
+        const { updateTrackingStatus } = await import('../database/shows.js');
+        await updateTrackingStatus(currentShowId, 'completed');
+        showData.trackingStatus = 'completed';
+
+        toast('All episodes marked as watched', 'success');
+        renderContent(container);
+        bindEvents();
+      } catch (err) {
+        console.error(err);
+        toast('Failed to update episodes', 'error');
+        markAllBtn.disabled = false;
+        markAllBtn.textContent = 'Mark All ✓';
+      }
     });
   }
 
@@ -323,14 +375,74 @@ function bindEvents() {
         const ep = episodesData.find(e => e.id === epId);
         if (ep) ep.watched = false;
       } else {
+        const ep = episodesData.find(e => e.id === epId);
+        let bulkUpdated = false;
+
+        if (ep) {
+          const prevUnwatched = episodesData.filter(e => e.season === ep.season && e.episode < ep.episode && !e.watched);
+          if (prevUnwatched.length > 0) {
+            const { confirmModal } = await import('../components/modal.js');
+            const ok = await confirmModal('Mark Previous?', `You're marking Episode ${ep.episode} watched, but ${prevUnwatched.length} previous episodes are unwatched. Mark them as watched too?`);
+            if (ok) {
+              const { db } = await import('../database/db.js');
+              const now = new Date();
+              await db.transaction('rw', db.episodes, async () => {
+                for (const p of prevUnwatched) {
+                  await db.episodes.update(p.id, { watched: true, watchedAt: now, watchCount: (p.watchCount || 0) + 1 });
+                  p.watched = true;
+                }
+              });
+              bulkUpdated = true;
+            }
+          }
+        }
+        
         await markWatched(epId);
         checkbox.classList.add('checked');
         checkbox.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
         item.classList.add('watched');
-        
-        // update local state
-        const ep = episodesData.find(e => e.id === epId);
         if (ep) ep.watched = true;
+
+        // Auto-complete logic
+        const allWatched = episodesData.every(e => e.watched);
+        if (allWatched && showData.trackingStatus !== 'completed') {
+          const { updateTrackingStatus } = await import('../database/shows.js');
+          await updateTrackingStatus(currentShowId, 'completed');
+          showData.trackingStatus = 'completed';
+          toast('Show completed!', 'success');
+          bulkUpdated = true; // force re-render for status dropdown
+        }
+
+        if (bulkUpdated) {
+          const tabsContainer = document.getElementById('season-tabs');
+          const scrollPos = tabsContainer ? tabsContainer.scrollLeft : 0;
+          renderContent(container);
+          bindEvents();
+          const newTabs = document.getElementById('season-tabs');
+          if (newTabs) newTabs.scrollLeft = scrollPos;
+        }
+      }
+    });
+  });
+
+  // +1 Watch Count Buttons
+  const addWatchBtns = container.querySelectorAll('.add-watch-btn');
+  addWatchBtns.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation(); // prevent triggering the episode row click
+      const epId = parseInt(btn.dataset.epId);
+      if (!epId) return;
+
+      const ep = episodesData.find(e => e.id === epId);
+      if (ep) {
+        const { db } = await import('../database/db.js');
+        const now = new Date();
+        const newCount = (ep.watchCount || 1) + 1;
+        await db.episodes.update(epId, { watchCount: newCount, watchedAt: now });
+        ep.watchCount = newCount;
+        
+        btn.textContent = `+1 (${newCount})`;
+        toast(`Marked as watched again! (x${newCount})`, 'success');
       }
     });
   });
@@ -349,9 +461,14 @@ function bindEvents() {
         await markSeasonWatched(currentShowId, currentSeason);
         episodesData.forEach(e => { if (e.season === currentSeason) e.watched = true; });
       }
+      const tabsContainer = document.getElementById('season-tabs');
+      const scrollPos = tabsContainer ? tabsContainer.scrollLeft : 0;
       
       renderContent(container);
       bindEvents();
+
+      const newTabs = document.getElementById('season-tabs');
+      if (newTabs) newTabs.scrollLeft = scrollPos;
     });
   }
 }

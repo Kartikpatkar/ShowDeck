@@ -4,6 +4,16 @@
 
 import { db } from './db.js';
 
+const GENRE_MAP = {
+  12: 'Adventure', 14: 'Fantasy', 16: 'Animation', 18: 'Drama', 27: 'Horror',
+  28: 'Action', 35: 'Comedy', 36: 'History', 37: 'Western', 53: 'Thriller',
+  80: 'Crime', 99: 'Documentary', 878: 'Sci-Fi', 9648: 'Mystery',
+  10402: 'Music', 10749: 'Romance', 10751: 'Family', 10752: 'War',
+  10759: 'Action/Adventure', 10762: 'Kids', 10763: 'News', 10764: 'Reality',
+  10765: 'Sci-Fi/Fantasy', 10766: 'Soap', 10767: 'Talk', 10768: 'War/Politics',
+  10770: 'TV Movie'
+};
+
 /**
  * Get comprehensive stats.
  */
@@ -28,7 +38,12 @@ export async function getFullStats() {
   const genreMap = {};
   [...shows, ...movies].forEach(item => {
     (item.genres || []).forEach(g => {
-      genreMap[g] = (genreMap[g] || 0) + 1;
+      let name = g;
+      // If it's a number (or string number), map it
+      if (!isNaN(g) && GENRE_MAP[g]) {
+        name = GENRE_MAP[g];
+      }
+      genreMap[name] = (genreMap[name] || 0) + 1;
     });
   });
   const genres = Object.entries(genreMap)
