@@ -300,6 +300,7 @@ export async function getTrendingMovies(timeWindow = 'week') {
 function mapShowResult(item) {
   return {
     tmdbId: item.id,
+    mediaType: 'show',
     title: item.name,
     originalTitle: item.original_name,
     posterPath: item.poster_path,
@@ -315,6 +316,7 @@ function mapShowResult(item) {
 function mapMovieResult(item) {
   return {
     tmdbId: item.id,
+    mediaType: 'movie',
     title: item.title,
     originalTitle: item.original_title,
     posterPath: item.poster_path,
