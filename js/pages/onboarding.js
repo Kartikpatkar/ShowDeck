@@ -50,7 +50,7 @@ export function render() {
           <h1 style="font-size: var(--text-2xl); font-weight: var(--weight-bold); margin-bottom: var(--space-2);">Connect Data Sources</h1>
           <div style="text-align: left; margin-bottom: var(--space-8);">
             <label style="display:block; margin-bottom: var(--space-2); font-weight: var(--weight-medium);">TMDB API Key (Optional)</label>
-            <input type="password" id="onboarding-tmdb-key" class="input" placeholder="Enter TMDB API Key" style="width: 100%;" />
+            <input type="text" autocomplete="off" spellcheck="false" id="onboarding-tmdb-key" class="input" placeholder="Enter TMDB API Key" style="width: 100%;" />
           </div>
           
           <div style="display: flex; gap: var(--space-4);">
@@ -115,6 +115,8 @@ export function init() {
       
       if (selectedTheme !== 'custom') {
         document.body.dataset.theme = selectedTheme;
+        localStorage.setItem('showdeck_accent_theme', selectedTheme);
+        localStorage.removeItem('showdeck_custom_color');
         applyCustomTheme(null);
       }
     });
@@ -127,6 +129,8 @@ export function init() {
     customHex = e.target.value;
     customColorPreview.style.background = customHex;
     document.body.dataset.theme = 'custom';
+    localStorage.setItem('showdeck_accent_theme', 'custom');
+    localStorage.setItem('showdeck_custom_color', customHex);
     applyCustomTheme(customHex);
   });
 

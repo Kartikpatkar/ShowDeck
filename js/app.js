@@ -156,8 +156,6 @@ router.onNotFound(() => {
   }
 });
 
-router.start();
-
   // Check onboarding on initial load
   const onboarded = localStorage.getItem('showdeck_onboarded');
   if (!onboarded && window.location.hash !== '#/onboarding') {
@@ -165,6 +163,8 @@ router.start();
   } else if (!window.location.hash) {
     window.location.hash = '#/home';
   }
+
+router.start();
 
 // ── Update sidebar active state on route change ──
 router.afterEach = (route) => {

@@ -25,7 +25,9 @@ export async function init() {
         localStorage.setItem('showdeck_tmdb_key', key);
         if (name) localStorage.setItem('showdeck_user_name', name);
         import('../components/toast.js').then(m => m.toast('Settings saved! Enjoy ShowDeck. 🎉', 'success'));
-        setTimeout(() => window.location.reload(), 1000);
+        setTimeout(() => {
+          import('../router.js').then(r => window.dispatchEvent(new Event('hashchange')));
+        }, 1000);
       }
     });
   }
@@ -297,7 +299,7 @@ export async function render() {
       <div style="display:flex; flex-direction:column; gap:var(--space-3);">
         ${!userName ? `<input type="text" id="home-user-name" class="input" placeholder="What should we call you? (Optional)" style="width:100%; max-width:400px;">` : ''}
         <div style="display:flex; gap:var(--space-2);">
-          <input type="password" id="home-api-key" class="input" placeholder="Enter TMDB API Key" style="flex:1;">
+          <input type="text" autocomplete="off" spellcheck="false" id="home-api-key" class="input" placeholder="Enter TMDB API Key" style="flex:1;">
           <button class="btn btn-primary" id="home-save-key">Save & Connect</button>
         </div>
       </div>

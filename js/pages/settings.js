@@ -67,7 +67,7 @@ export function render() {
                 <span class="badge badge-primary">Required for Movies</span>
               </div>
             </label>
-            <input type="password" id="tmdb-key-input" class="input" placeholder="Enter your TMDB API Key (v3 auth)" value="${currentKey}">
+            <input type="text" autocomplete="off" spellcheck="false" id="tmdb-key-input" class="input" placeholder="Enter your TMDB API Key (v3 auth)" value="${currentKey}">
             <p class="text-tertiary" style="font-size:var(--text-xs);">
               Your key is stored locally on this device and never sent to our servers. <a href="https://developer.themoviedb.org/docs" target="_blank" style="color:var(--color-primary);">Get a free key here.</a>
             </p>
@@ -551,6 +551,12 @@ function bindEvents() {
         if (key?.startsWith('showdeck')) keysToRemove.push(key);
       }
       keysToRemove.forEach(k => localStorage.removeItem(k));
+      
+      // Clear Service Worker Caches
+      if ('caches' in window) {
+        const cacheKeys = await caches.keys();
+        await Promise.all(cacheKeys.map(k => caches.delete(k)));
+      }
       
       toast('All data has been deleted.', 'success');
       setTimeout(() => window.location.hash = '#/home', 1500);
