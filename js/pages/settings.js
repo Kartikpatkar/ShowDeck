@@ -39,11 +39,15 @@ export function render() {
 
           <div style="display:flex;flex-direction:column;gap:var(--space-3);margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--border-color);">
             <label style="font-weight:var(--weight-medium);">Accent Color</label>
-            <div style="display:flex;gap:var(--space-3);" id="theme-color-picker">
-              <button class="btn btn-ghost" data-theme="purple" style="width:40px;height:40px;border-radius:50%;background:hsl(245, 58%, 51%);border:2px solid transparent;" aria-label="Purple"></button>
-              <button class="btn btn-ghost" data-theme="blue" style="width:40px;height:40px;border-radius:50%;background:hsl(210, 100%, 50%);border:2px solid transparent;" aria-label="Blue"></button>
-              <button class="btn btn-ghost" data-theme="green" style="width:40px;height:40px;border-radius:50%;background:hsl(152, 55%, 42%);border:2px solid transparent;" aria-label="Green"></button>
-              <button class="btn btn-ghost" data-theme="red" style="width:40px;height:40px;border-radius:50%;background:hsl(0, 72%, 51%);border:2px solid transparent;" aria-label="Red"></button>
+            <div style="display:flex;gap:var(--space-3);align-items:center;" id="theme-color-picker">
+              <button class="btn btn-ghost color-preset" data-theme="purple" style="width:40px;height:40px;border-radius:50%;background:hsl(245, 58%, 51%);border:2px solid transparent;" aria-label="Purple"></button>
+              <button class="btn btn-ghost color-preset" data-theme="blue" style="width:40px;height:40px;border-radius:50%;background:hsl(210, 100%, 50%);border:2px solid transparent;" aria-label="Blue"></button>
+              <button class="btn btn-ghost color-preset" data-theme="green" style="width:40px;height:40px;border-radius:50%;background:hsl(152, 55%, 42%);border:2px solid transparent;" aria-label="Green"></button>
+              <button class="btn btn-ghost color-preset" data-theme="red" style="width:40px;height:40px;border-radius:50%;background:hsl(0, 72%, 51%);border:2px solid transparent;" aria-label="Red"></button>
+              <div style="position: relative; width: 40px; height: 40px;">
+                <input type="color" id="settings-custom-color" value="${localStorage.getItem('showdeck_custom_color') || '#ffffff'}" style="opacity: 0; position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2;" />
+                <div class="color-preset" id="settings-custom-color-preview" data-theme="custom" style="width: 40px; height: 40px; border-radius: 50%; background: ${localStorage.getItem('showdeck_custom_color') || 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)'}; border: 2px solid transparent; pointer-events: none; position: absolute; inset: 0;"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -215,20 +219,45 @@ function bindEvents() {
 
   // Setup theme picker
   const currentTheme = localStorage.getItem('showdeck_accent_theme') || 'purple';
-  const themeButtons = document.querySelectorAll('#theme-color-picker button');
+  const themeButtons = document.querySelectorAll('#theme-color-picker .color-preset');
+  
+  const updateThemeVisuals = (theme) => {
+    themeButtons.forEach(b => b.style.borderColor = 'transparent');
+    const activeBtn = document.querySelector(`#theme-color-picker [data-theme="${theme}"]`);
+    if (activeBtn) activeBtn.style.borderColor = 'var(--text-primary)';
+  };
+  
+  updateThemeVisuals(currentTheme);
+
   themeButtons.forEach(btn => {
-    if (btn.dataset.theme === currentTheme) {
-      btn.style.borderColor = 'var(--text-primary)';
-    }
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const theme = btn.dataset.theme;
-      document.body.dataset.theme = theme;
-      localStorage.setItem('showdeck_accent_theme', theme);
-      
-      themeButtons.forEach(b => b.style.borderColor = 'transparent');
-      btn.style.borderColor = 'var(--text-primary)';
+      if (theme !== 'custom') {
+        document.body.dataset.theme = theme;
+        localStorage.setItem('showdeck_accent_theme', theme);
+        localStorage.removeItem('showdeck_custom_color');
+        const { applyCustomTheme } = await import('../utils/dom.js');
+        applyCustomTheme(null);
+        updateThemeVisuals(theme);
+      }
     });
   });
+
+  const customColorInput = document.getElementById('settings-custom-color');
+  const customColorPreview = document.getElementById('settings-custom-color-preview');
+  
+  if (customColorInput) {
+    customColorInput.addEventListener('input', async (e) => {
+      const hex = e.target.value;
+      customColorPreview.style.background = hex;
+      document.body.dataset.theme = 'custom';
+      localStorage.setItem('showdeck_accent_theme', 'custom');
+      localStorage.setItem('showdeck_custom_color', hex);
+      const { applyCustomTheme } = await import('../utils/dom.js');
+      applyCustomTheme(hex);
+      updateThemeVisuals('custom');
+    });
+  }
 
   const saveKeyBtn = document.getElementById('save-key-btn');
   saveKeyBtn?.addEventListener('click', () => {

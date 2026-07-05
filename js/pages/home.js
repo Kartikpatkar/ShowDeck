@@ -19,7 +19,8 @@ export async function init() {
   if (homeSaveBtn) {
     homeSaveBtn.addEventListener('click', () => {
       const key = document.getElementById('home-api-key').value.trim();
-      const name = document.getElementById('home-user-name').value.trim();
+      const nameInput = document.getElementById('home-user-name');
+      const name = nameInput ? nameInput.value.trim() : null;
       if (key) {
         localStorage.setItem('showdeck_tmdb_key', key);
         if (name) localStorage.setItem('showdeck_user_name', name);
@@ -289,19 +290,19 @@ export async function render() {
   
   const onboardingHtml = !apiKey ? `
     <div class="card" style="margin-bottom:var(--space-8); border: 2px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); padding: var(--space-6);">
-      <h2 style="margin-bottom:var(--space-2);">Welcome to ShowDeck! 🎬</h2>
+      <h2 style="margin-bottom:var(--space-2);">Action Required: Missing API Key 🔌</h2>
       <p style="margin-bottom:var(--space-4); color:var(--text-secondary);">
-        ShowDeck is a free, local-first tracker. To enable search and rich movie metadata, you need to provide your own free TMDB API key.
+        ShowDeck requires a free TMDB API key to search for and track shows. Your key is stored securely on your device.
       </p>
       <div style="display:flex; flex-direction:column; gap:var(--space-3);">
-        <input type="text" id="home-user-name" class="input" placeholder="What should we call you?" style="width:100%; max-width:400px;">
+        ${!userName ? `<input type="text" id="home-user-name" class="input" placeholder="What should we call you? (Optional)" style="width:100%; max-width:400px;">` : ''}
         <div style="display:flex; gap:var(--space-2);">
           <input type="password" id="home-api-key" class="input" placeholder="Enter TMDB API Key" style="flex:1;">
-          <button class="btn btn-primary" id="home-save-key">Save & Start</button>
+          <button class="btn btn-primary" id="home-save-key">Save & Connect</button>
         </div>
       </div>
       <p style="margin-top:var(--space-2); font-size:var(--text-xs); color:var(--text-tertiary);">
-        <a href="https://developer.themoviedb.org/docs" target="_blank" style="color:var(--color-primary); text-decoration:underline;">Get a free key here</a>. Your key never leaves your device.
+        <a href="https://developer.themoviedb.org/docs" target="_blank" style="color:var(--color-primary); text-decoration:underline;">Get a free key here</a>. 
       </p>
     </div>
   ` : '';
@@ -316,8 +317,6 @@ export async function render() {
       </div>
 
       ${onboardingHtml}
-
-      </div>
 
       <!-- Continue Watching -->
       <div class="section">

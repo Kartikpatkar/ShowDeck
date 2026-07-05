@@ -145,12 +145,26 @@ router
   .on('/help', (params) => {
     loadPage(() => import('./pages/help.js'), params);
   })
-  .onNotFound(() => {
-    const container = getPageContainer();
-    if (container) {
-      container.innerHTML = renderNotFound();
-    }
+  .on('/onboarding', (params) => {
+    loadPage(() => import('./pages/onboarding.js'), params);
   });
+
+router.onNotFound(() => {
+  const container = getPageContainer();
+  if (container) {
+    container.innerHTML = renderNotFound();
+  }
+});
+
+router.start();
+
+  // Check onboarding on initial load
+  const onboarded = localStorage.getItem('showdeck_onboarded');
+  if (!onboarded && window.location.hash !== '#/onboarding') {
+    window.location.hash = '#/onboarding';
+  } else if (!window.location.hash) {
+    window.location.hash = '#/home';
+  }
 
 // ── Update sidebar active state on route change ──
 router.afterEach = (route) => {
@@ -236,6 +250,7 @@ if ('serviceWorker' in navigator) {
 function initTheme() {
   const theme = localStorage.getItem('showdeck_theme') || 'dark';
   const accent = localStorage.getItem('showdeck_accent_theme') || 'purple';
+  const customColor = localStorage.getItem('showdeck_custom_color');
   
   if (theme === 'system') {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -246,6 +261,11 @@ function initTheme() {
     document.body.classList.add(`theme-${theme}`);
   }
   
+  if (accent === 'custom' && customColor) {
+    import('./utils/dom.js').then(module => {
+      module.applyCustomTheme(customColor);
+    });
+  }
   document.body.dataset.theme = accent;
 }
 

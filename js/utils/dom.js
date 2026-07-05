@@ -223,3 +223,64 @@ export function statusBadge(status) {
   const s = STATUS_MAP[status] || STATUS_MAP.plan;
   return `<span class="badge badge-${s.color}">${s.icon} ${s.label}</span>`;
 }
+
+/** Convert HEX color to HSL object */
+export function hexToHsl(hex) {
+  hex = hex.replace(/^#/, '');
+  if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+  const r = parseInt(hex.substring(0,2), 16) / 255;
+  const g = parseInt(hex.substring(2,4), 16) / 255;
+  const b = parseInt(hex.substring(4,6), 16) / 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+}
+
+/** Apply a custom HSL theme by injecting a style tag */
+export function applyCustomTheme(hex) {
+  let styleTag = document.getElementById('custom-theme-style');
+  if (!styleTag) {
+    styleTag = document.createElement('style');
+    styleTag.id = 'custom-theme-style';
+    document.head.appendChild(styleTag);
+  }
+  
+  if (!hex || hex === 'default') {
+    styleTag.innerHTML = '';
+    return;
+  }
+
+  const { h, s, l } = hexToHsl(hex);
+  
+  const l_light = Math.min(l + 15, 85);
+  const l_dark = Math.max(l - 20, 20);
+  
+  styleTag.innerHTML = `
+    :root, [data-theme="custom"] {
+      --color-primary: hsl(${h}, ${s}%, ${l}%);
+      --color-primary-light: hsl(${h}, ${s}%, ${l_light}%);
+      --color-primary-dark: hsl(${h}, ${s}%, ${l_dark}%);
+      --color-primary-subtle: hsl(${h}, ${s}%, 95%);
+      --color-primary-ghost: hsl(${h}, ${s}%, 97%);
+    }
+    .dark-mode [data-theme="custom"] {
+      --color-primary-subtle: hsl(${h}, ${s}%, 15%);
+      --color-primary-ghost: hsl(${h}, ${s}%, 12%);
+    }
+  `;
+}
