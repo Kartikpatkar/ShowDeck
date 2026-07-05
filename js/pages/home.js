@@ -202,6 +202,7 @@ export async function render() {
       <div class="section">
         <div class="section-header">
           <h2 class="section-title">Upcoming</h2>
+          <a href="#/library?status=upcoming" class="section-action">View All</a>
         </div>
         <div class="grid-posters stagger-children">${cards.join('')}</div>
       </div>

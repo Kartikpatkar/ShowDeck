@@ -62,7 +62,7 @@ export async function init(params) {
     richEpData = seasonResp.find(e => e.episode === episodeNum) || null;
     
     if (!richEpData) {
-      container.innerHTML = '<div class="empty-state"><h3>Episode Not Found</h3><a href="javascript:history.back()" class="btn btn-primary">Go Back</a></div>';
+      container.innerHTML = `<div class="empty-state"><h3>Episode Not Found</h3><a href="javascript:window.appRouter.goBack()" class="btn btn-primary">Go Back</a></div>`;
       return;
     }
     
@@ -83,7 +83,7 @@ export async function init(params) {
     
   } catch (err) {
     console.error('[Episode Detail] Error:', err);
-    container.innerHTML = '<div class="empty-state"><h3>Failed to load</h3><a href="javascript:history.back()" class="btn btn-primary">Go Back</a></div>';
+    container.innerHTML = `<div class="empty-state"><h3>Failed to load</h3><a href="javascript:window.appRouter.goBack()" class="btn btn-primary">Go Back</a></div>`;
   }
 }
 
@@ -94,10 +94,10 @@ function renderContent(container) {
   container.innerHTML = `
     <!-- Back Button -->
     <div style="padding:var(--space-4) var(--space-4) 0; position:relative; z-index:10;">
-      <a href="#/show/${showTmdbId}" class="btn btn-ghost" style="padding:var(--space-2); margin-left:-var(--space-2); font-weight:var(--weight-medium);text-decoration:none;display:inline-flex;">
+      <button id="back-btn" class="btn btn-ghost" style="padding:var(--space-2); margin-left:-var(--space-2); font-weight:var(--weight-medium);text-decoration:none;display:inline-flex; border:none; background:none; cursor:pointer;">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="m15 18-6-6 6-6"/></svg>
         Back to ${showData.title}
-      </a>
+      </button>
     </div>
 
     <!-- Hero -->
@@ -157,6 +157,10 @@ function renderContent(container) {
 function bindEvents() {
   const container = document.getElementById('ep-container');
   
+  document.getElementById('back-btn')?.addEventListener('click', () => {
+    window.appRouter.goBack();
+  });
+
   const trackShowBtn = document.getElementById('track-show-btn');
   if (trackShowBtn) {
     trackShowBtn.addEventListener('click', async () => {

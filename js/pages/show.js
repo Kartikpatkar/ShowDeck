@@ -394,8 +394,11 @@ function renderContent(container) {
             if (ep.stillPath) {
               const src = ep.stillPath.startsWith('http') ? ep.stillPath : getPosterUrl(ep.stillPath, 'backdropSmall');
               imgHtml = `<img src="${src}" class="episode-image" loading="lazy" style="width:120px;height:68px;object-fit:cover;border-radius:var(--radius-sm);margin:0 var(--space-3);flex-shrink:0;">`;
+            } else if (showData.backdropPath) {
+              const src = getPosterUrl(showData.backdropPath, 'backdropSmall');
+              imgHtml = `<img src="${src}" class="episode-image" loading="lazy" style="width:120px;height:68px;object-fit:cover;border-radius:var(--radius-sm);margin:0 var(--space-3);flex-shrink:0;">`;
             } else {
-              imgHtml = `<div class="episode-image skeleton" style="width:120px;height:68px;border-radius:var(--radius-sm);margin:0 var(--space-3);flex-shrink:0;"></div>`;
+              imgHtml = `<div class="episode-image" style="width:120px;height:68px;border-radius:var(--radius-sm);margin:0 var(--space-3);flex-shrink:0;background:var(--surface-3);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;font-size:24px;">📺</span></div>`;
             }
             
             const countdown = getRelativeTime(ep.airDate);
@@ -465,12 +468,9 @@ function bindEvents() {
   const container = document.getElementById('detail-container');
   if (!container) return;
 
-  const backBtn = document.getElementById('back-btn');
-  if (backBtn) {
-    backBtn.addEventListener('click', () => {
-      window.history.length > 1 ? window.history.back() : window.location.hash = '#/home';
-    });
-  }
+  document.getElementById('back-btn')?.addEventListener('click', () => {
+    window.appRouter.goBack();
+  });
 
   // Track button (if not in library)
   const trackBtn = document.getElementById('track-btn');

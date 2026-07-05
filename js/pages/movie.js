@@ -202,12 +202,9 @@ function bindEvents() {
   const container = document.getElementById('movie-detail-container');
   if (!container) return;
 
-  const backBtn = document.getElementById('back-btn');
-  if (backBtn) {
-    backBtn.addEventListener('click', () => {
-      window.history.length > 1 ? window.history.back() : window.location.hash = '#/home';
-    });
-  }
+  document.getElementById('back-btn')?.addEventListener('click', () => {
+    window.appRouter.goBack();
+  });
 
   const trackBtn = document.getElementById('movie-track-btn');
   if (trackBtn) {

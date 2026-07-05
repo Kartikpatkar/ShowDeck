@@ -12,6 +12,8 @@ export class Router {
     this.afterEach = null;
     this._currentRoute = null;
     this._currentParams = {};
+    this.historyStack = [];
+    window.appRouter = this;
 
     this._onHashChange = this._onHashChange.bind(this);
   }
@@ -68,6 +70,19 @@ export class Router {
   }
 
   /**
+   * Go back using the internal history stack.
+   */
+  goBack() {
+    if (this.historyStack.length > 1) {
+      this.historyStack.pop(); // Remove current
+      const prev = this.historyStack.pop(); // Get previous
+      window.location.hash = prev; // Will be pushed again by hashchange
+    } else {
+      window.location.hash = '/home';
+    }
+  }
+
+  /**
    * Get current route info.
    */
   get current() {
@@ -84,6 +99,13 @@ export class Router {
     const hash = window.location.hash.slice(1) || '/';
     const path = hash.startsWith('/') ? hash : `/${hash}`;
     const pathWithoutQuery = path.split('?')[0];
+
+    // Maintain history stack
+    if (this.historyStack.length > 1 && this.historyStack[this.historyStack.length - 2] === hash) {
+      this.historyStack.pop();
+    } else {
+      this.historyStack.push(hash);
+    }
 
     for (const [routePath, route] of this.routes) {
       const match = pathWithoutQuery.match(route.pattern);

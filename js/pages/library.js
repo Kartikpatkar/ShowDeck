@@ -64,6 +64,7 @@ export function render() {
         <select class="input" id="filter-status" style="width:auto;min-width:140px;" aria-label="Filter by status">
           <option value="">All Status</option>
           <option value="watching">Watching</option>
+          <option value="upcoming">Upcoming</option>
           <option value="completed">Completed</option>
           <option value="paused">Paused</option>
           <option value="dropped">Dropped</option>
@@ -193,7 +194,18 @@ function getFilteredItems() {
   if (filterType === 'movies') items = items.filter(i => i.itemType === 'movie');
 
   // Status filter
-  if (filterStatus) items = items.filter(i => i.trackingStatus === filterStatus);
+  if (filterStatus) {
+    if (filterStatus === 'upcoming') {
+      const now = new Date();
+      items = items.filter(i => {
+        const dateStr = i.firstAirDate || i.releaseDate;
+        if (!dateStr) return false;
+        return new Date(dateStr) > now;
+      });
+    } else {
+      items = items.filter(i => i.trackingStatus === filterStatus);
+    }
+  }
 
   // Search
   if (searchTerm) {

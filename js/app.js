@@ -287,7 +287,7 @@ function updateOnlineStatus() {
     switch (e.key) {
       case 'Escape':
         if (document.getElementById('enrich-modal')) return; // handled by modal
-        window.history.length > 1 ? window.history.back() : window.location.hash = '#/home';
+        window.appRouter.goBack();
         break;
       case 's':
       case 'S':

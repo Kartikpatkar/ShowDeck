@@ -27,7 +27,7 @@ export function render() {
           </div>
           
           <!-- New Collection Form (Hidden by default) -->
-          <div id="new-collection-form" class="card hidden" style="margin-bottom:var(--space-4);">
+          <div id="new-collection-form" class="card hidden" style="margin-bottom:var(--space-4); padding:var(--space-4);">
             <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-3);">
               <input type="text" id="col-name" class="input" placeholder="Collection Name" style="flex:1;">
               <input type="text" id="col-icon" class="input" placeholder="Icon (e.g. 🍿)" style="width:100px;">
@@ -51,7 +51,7 @@ export function render() {
           </div>
           
           <!-- New Tag Form (Hidden by default) -->
-          <div id="new-tag-form" class="card hidden" style="margin-bottom:var(--space-4);">
+          <div id="new-tag-form" class="card hidden" style="margin-bottom:var(--space-4); padding:var(--space-4);">
             <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-3);">
               <input type="text" id="tag-name" class="input" placeholder="Tag Name" style="flex:1;">
             </div>
