@@ -154,3 +154,29 @@ export async function getMovieStatusCounts() {
   }
   return counts;
 }
+
+/**
+ * Manually sync a movie to update its metadata.
+ */
+export async function syncMovie(id) {
+  const movie = await getMovie(id);
+  if (!movie || !movie.tmdbId) return null;
+  
+  const provider = await import('../api/provider.js');
+  const newData = await provider.getMovieDetails(movie.tmdbId);
+  
+  const now = new Date();
+  await db.movies.update(id, {
+    title: newData.title,
+    posterPath: newData.posterPath,
+    backdropPath: newData.backdropPath,
+    overview: newData.overview,
+    status: newData.status,
+    releaseDate: newData.releaseDate,
+    runtime: newData.runtime,
+    updatedAt: now,
+    cachedAt: now
+  });
+
+  return await getMovie(id);
+}

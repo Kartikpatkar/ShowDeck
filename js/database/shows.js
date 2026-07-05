@@ -228,3 +228,31 @@ export async function getShowStatusCounts() {
   }
   return counts;
 }
+
+/**
+ * Manually sync a show to update its metadata and episodes.
+ */
+export async function syncShow(id) {
+  const show = await getShow(id);
+  if (!show || !show.tmdbId) return null;
+  
+  const provider = await import('../api/provider.js');
+  const newData = await provider.getShowDetails(show.tmdbId, show.tvmazeId);
+  
+  const now = new Date();
+  await db.shows.update(id, {
+    title: newData.title,
+    posterPath: newData.posterPath,
+    backdropPath: newData.backdropPath,
+    overview: newData.overview,
+    status: newData.status,
+    totalSeasons: newData.totalSeasons,
+    totalEpisodes: newData.totalEpisodes,
+    network: newData.network,
+    runtime: newData.runtime,
+    updatedAt: now,
+    cachedAt: now
+  });
+  
+  return await getShow(id);
+}

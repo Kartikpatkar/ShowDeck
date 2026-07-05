@@ -3,6 +3,7 @@
  * Handles all communication with The Movie Database API.
  * https://developer.themoviedb.org/docs
  */
+import { logApiUsage } from '../utils/apiTracker.js';
 
 /**
  * Get the user's TMDB API Key from localStorage.
@@ -62,6 +63,8 @@ async function tmdbFetch(endpoint, params = {}) {
   url.searchParams.set('api_key', apiKey);
   url.searchParams.set('language', 'en-US');
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+
+  logApiUsage('tmdb');
 
   try {
     const response = await fetch(url.toString());

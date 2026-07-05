@@ -3,6 +3,7 @@
  * Handles communication with TVMaze API (no API key required).
  * https://www.tvmaze.com/api
  */
+import { logApiUsage } from '../utils/apiTracker.js';
 
 const BASE_URL = 'https://api.tvmaze.com';
 
@@ -12,6 +13,8 @@ const BASE_URL = 'https://api.tvmaze.com';
 async function tvmazeFetch(endpoint, params = {}) {
   const url = new URL(`${BASE_URL}${endpoint}`);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+
+  logApiUsage('tvmaze');
 
   const response = await fetch(url.toString());
   if (!response.ok) {

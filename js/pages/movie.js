@@ -87,12 +87,20 @@ function renderContent(container) {
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="m15 18-6-6 6-6"/></svg>
         Back
       </button>
-      ${imdbUrl ? `
-        <a href="${imdbUrl}" target="_blank" class="btn btn-sm btn-ghost" style="color:var(--color-warning);">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          IMDb
-        </a>
-      ` : ''}
+      <div style="display:flex;gap:var(--space-2);">
+        ${isTracked ? `
+          <button class="btn btn-sm btn-ghost" id="sync-movie-btn" style="color:var(--text-secondary);" title="Sync with TMDB">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            Sync
+          </button>
+        ` : ''}
+        ${imdbUrl ? `
+          <a href="${imdbUrl}" target="_blank" class="btn btn-sm btn-ghost" style="color:var(--color-warning);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            IMDb
+          </a>
+        ` : ''}
+      </div>
     </div>
     <!-- Hero -->
     <div class="detail-hero">
@@ -232,6 +240,26 @@ function bindEvents() {
       } catch (err) {
         console.error('Failed to remove movie:', err);
         toast('Failed to remove movie', 'error');
+      }
+    });
+  }
+
+  // Sync button
+  const syncBtn = document.getElementById('sync-movie-btn');
+  if (syncBtn && isTracked) {
+    syncBtn.addEventListener('click', async () => {
+      syncBtn.disabled = true;
+      syncBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></div> Syncing...';
+      try {
+        const { syncMovie } = await import('../database/movies.js');
+        await syncMovie(currentMovieId);
+        toast('Movie synced successfully!', 'success');
+        init({ id: movieData.tmdbId });
+      } catch (err) {
+        console.error('Failed to sync movie:', err);
+        toast('Failed to sync', 'error');
+        syncBtn.disabled = false;
+        syncBtn.textContent = 'Sync';
       }
     });
   }

@@ -6,6 +6,7 @@
 import { db, clearAllData } from '../database/db.js';
 import { toast } from '../components/toast.js';
 import { el } from '../utils/dom.js';
+import { getApiUsage } from '../utils/apiTracker.js';
 
 export function render() {
   const currentKey = localStorage.getItem('showdeck_tmdb_key') || '';
@@ -56,6 +57,19 @@ export function render() {
               Your key is stored locally on this device and never sent to our servers. <a href="https://developer.themoviedb.org/docs" target="_blank" style="color:var(--color-primary);">Get a free key here.</a>
             </p>
             <button class="btn btn-primary" id="save-key-btn">Save Key</button>
+
+            <hr style="border:0;border-top:1px solid var(--border-subtle);margin:var(--space-4) 0;">
+            <label style="font-weight:var(--weight-medium);">Daily API Usage (Local Tracker)</label>
+            <div style="display:flex;flex-direction:column;gap:var(--space-2);">
+              <div style="display:flex;justify-content:space-between;font-size:var(--text-sm);">
+                <span>TMDB Requests</span>
+                <span class="text-tertiary">${getApiUsage().tmdb} / ~20,000</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:var(--text-sm);">
+                <span>TVMaze Requests</span>
+                <span class="text-tertiary">${getApiUsage().tvmaze} / ~2,000</span>
+              </div>
+            </div>
           </div>
         </div>
 
