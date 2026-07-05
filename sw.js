@@ -43,7 +43,18 @@ const STATIC_ASSETS = [
   '/js/pages/movie.js',
   '/js/pages/collections.js',
   '/js/pages/stats.js',
-  '/js/pages/settings.js'
+  '/js/pages/settings.js',
+  // Components
+  '/js/components/modal.js',
+  // Services
+  '/js/services/tvtime-import.js',
+  '/js/services/theme.js',
+  // Lib (offline)
+  '/js/lib/chart.umd.js',
+  '/js/lib/jszip.min.js',
+  // Assets
+  '/assets/icon-192.png',
+  '/assets/icon-512.png',
 ];
 
 self.addEventListener('install', (e) => {

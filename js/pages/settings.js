@@ -56,8 +56,8 @@ export function render() {
           </div>
         </div>
 
-        <!-- Danger Zone -->
-        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);border-color:var(--color-error);padding:var(--space-6);">
+        <!-- Data Portability -->
+        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-6);">
           <div>
             <h3 class="section-title" style="margin:0;">Data Management</h3>
             <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">Backup or restore your library.</p>
@@ -75,9 +75,41 @@ export function render() {
             </button>
             <input type="file" id="import-file" accept=".json" style="display:none;">
           </div>
+        </div>
+
+        <!-- TV Time Import -->
+        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-6);border-color:var(--color-primary);">
+          <div>
+            <h3 class="section-title" style="margin:0;">
+              <span style="margin-right:var(--space-2);">📺</span>Import from TV Time
+            </h3>
+            <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">
+              Import your watch history from a TV Time GDPR data export (.zip).
+            </p>
+          </div>
           
-          <hr style="border:none;border-top:1px solid var(--border-subtle);margin:var(--space-2) 0;">
-          
+          <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+            <button class="btn btn-primary" id="tvtime-import-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+              Select TV Time ZIP File
+            </button>
+            <input type="file" id="tvtime-file" accept=".zip" style="display:none;">
+            
+            <div id="tvtime-progress" class="hidden" style="display:flex;flex-direction:column;gap:var(--space-2);">
+              <div style="height:6px;background:var(--surface-3);border-radius:var(--radius-full);overflow:hidden;">
+                <div id="tvtime-progress-bar" style="height:100%;width:0%;background:var(--color-primary);border-radius:var(--radius-full);transition:width 0.3s ease;"></div>
+              </div>
+              <p id="tvtime-progress-text" class="text-tertiary" style="font-size:var(--text-xs);"></p>
+            </div>
+          </div>
+
+          <p class="text-tertiary" style="font-size:var(--text-xs);">
+            Request your data from TV Time via Settings → Privacy → Download my data. Your file is processed entirely on this device.
+          </p>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);border-color:var(--color-error);padding:var(--space-6);">
           <div>
             <h4 style="color:var(--color-error);margin-bottom:var(--space-2);">Danger Zone</h4>
             <button class="btn btn-ghost text-error" id="clear-data-btn" style="width:100%;justify-content:center;border:1px solid var(--color-error);">
@@ -209,6 +241,86 @@ function bindEvents() {
       toast(err.message === 'Invalid backup file format' ? err.message : 'Import failed', 'error');
     } finally {
       fileInput.value = '';
+    }
+  });
+
+  // TV Time Import
+  const tvtimeBtn = document.getElementById('tvtime-import-btn');
+  const tvtimeFile = document.getElementById('tvtime-file');
+  const tvtimeProgress = document.getElementById('tvtime-progress');
+  const tvtimeBar = document.getElementById('tvtime-progress-bar');
+  const tvtimeText = document.getElementById('tvtime-progress-text');
+
+  tvtimeBtn?.addEventListener('click', () => tvtimeFile.click());
+
+  tvtimeFile?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Check it's a ZIP
+    if (!file.name.endsWith('.zip')) {
+      toast('Please select a .zip file from TV Time', 'error');
+      tvtimeFile.value = '';
+      return;
+    }
+
+    // Check TMDB API key exists
+    if (!localStorage.getItem('showdeck_tmdb_key')) {
+      toast('Please set your TMDB API Key first — it is needed to resolve show metadata.', 'error');
+      tvtimeFile.value = '';
+      return;
+    }
+
+    tvtimeBtn.disabled = true;
+    tvtimeBtn.textContent = 'Importing...';
+    tvtimeProgress.classList.remove('hidden');
+    tvtimeProgress.style.display = 'flex';
+
+    try {
+      const { importTVTimeData } = await import('../services/tvtime-import.js');
+
+      const summary = await importTVTimeData(file, (stage, current, total, detail) => {
+        const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+        tvtimeBar.style.width = `${pct}%`;
+        
+        if (stage === 'importing') {
+          tvtimeText.textContent = `[${current}/${total}] Importing: ${detail}`;
+        } else if (stage === 'movies') {
+          tvtimeText.textContent = `[${current}/${total}] Movies: ${detail}`;
+        } else {
+          tvtimeText.textContent = detail;
+        }
+      });
+
+      // Show summary
+      const { alertModal } = await import('../components/modal.js');
+      const lines = [
+        `✅ Shows imported: ${summary.showsImported}`,
+        `⏭️ Shows skipped (already exist): ${summary.showsSkipped}`,
+        `❌ Shows not found on TMDB: ${summary.showsNotFound}`,
+        `📺 Episodes marked as watched: ${summary.episodesImported}`,
+        `🎬 Movies imported: ${summary.moviesImported}`,
+        `⏭️ Movies skipped: ${summary.moviesSkipped}`,
+      ];
+      if (summary.errors.length > 0) {
+        lines.push(`\n⚠️ Errors: ${summary.errors.length}`);
+      }
+      if (summary.notFoundShows.length > 0) {
+        lines.push(`\nShows not found:\n• ${summary.notFoundShows.slice(0, 10).join('\n• ')}`);
+        if (summary.notFoundShows.length > 10) lines.push(`...and ${summary.notFoundShows.length - 10} more`);
+      }
+
+      await alertModal('TV Time Import Complete', lines.join('\n'));
+      toast('Import complete!', 'success');
+
+    } catch (err) {
+      console.error('[TV Time Import]', err);
+      toast(`Import failed: ${err.message}`, 'error');
+    } finally {
+      tvtimeBtn.disabled = false;
+      tvtimeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg> Select TV Time ZIP File';
+      tvtimeProgress.classList.add('hidden');
+      tvtimeFile.value = '';
     }
   });
 
