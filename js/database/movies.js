@@ -165,6 +165,10 @@ export async function syncMovie(id) {
   const provider = await import('../api/provider.js');
   const newData = await provider.getMovieDetails(movie.tmdbId);
   
+  if (!newData) {
+    throw new Error('Failed to fetch updated movie details');
+  }
+
   const now = new Date();
   await db.movies.update(id, {
     title: newData.title,

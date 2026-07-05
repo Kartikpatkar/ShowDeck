@@ -1,6 +1,7 @@
 {
   "name": "ShowDeck",
   "short_name": "ShowDeck",
+  "version": "1.0.0",
   "description": "Your personal entertainment tracker. Track TV shows, movies, and more. Privacy-first, offline-first.",
   "start_url": "./index.html",
   "display": "standalone",

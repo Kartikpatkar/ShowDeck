@@ -239,6 +239,10 @@ export async function syncShow(id) {
   const provider = await import('../api/provider.js');
   const newData = await provider.getShowDetails(show.tmdbId, show.tvmazeId);
   
+  if (!newData) {
+    throw new Error('Failed to fetch updated show details');
+  }
+
   const now = new Date();
   await db.shows.update(id, {
     title: newData.title,
