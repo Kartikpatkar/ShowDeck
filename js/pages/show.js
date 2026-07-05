@@ -101,7 +101,7 @@ function renderError(container, text) {
     <div class="empty-state" style="padding:var(--space-12) var(--space-4);">
       <h3 class="empty-state-title">Failed to load show</h3>
       <p class="empty-state-text">${text}</p>
-      <button class="btn btn-primary" onclick="history.back()">Go Back</button>
+      <button class="btn btn-primary" id="back-btn">Go Back</button>
     </div>
   `;
 }
@@ -241,7 +241,7 @@ function renderContent(container) {
   container.innerHTML = `
     <!-- Back Button -->
     <div style="padding:var(--space-4) var(--space-4) 0; position:relative; z-index:10; display:flex; justify-content:space-between; align-items:center;">
-      <button class="btn btn-ghost" onclick="window.history.length > 1 ? window.history.back() : window.location.hash='#/home'" style="padding:var(--space-2); margin-left:calc(-1 * var(--space-2)); font-weight:var(--weight-medium);">
+      <button class="btn btn-ghost" id="back-btn" style="padding:var(--space-2); margin-left:calc(-1 * var(--space-2)); font-weight:var(--weight-medium);">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="m15 18-6-6 6-6"/></svg>
         Back
       </button>
@@ -453,6 +453,13 @@ function renderContent(container) {
 function bindEvents() {
   const container = document.getElementById('detail-container');
   if (!container) return;
+
+  const backBtn = document.getElementById('back-btn');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      window.history.length > 1 ? window.history.back() : window.location.hash = '#/home';
+    });
+  }
 
   // Track button (if not in library)
   const trackBtn = document.getElementById('track-btn');

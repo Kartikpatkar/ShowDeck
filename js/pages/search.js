@@ -29,7 +29,7 @@ export function render() {
       <!-- Search Bar -->
       <div class="section">
         <div class="search-container">
-          <form onsubmit="event.preventDefault(); document.getElementById('search-input').blur();" class="input-group" style="position:relative;">
+          <form id="search-form" class="input-group" style="position:relative;">
             <span class="input-group-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             </span>
@@ -78,9 +78,17 @@ export function render() {
 }
 
 export function init() {
-  const input = document.getElementById('search-input');
+  const searchInput = document.getElementById('search-input');
+  const searchForm = document.getElementById('search-form');
   const clearBtn = document.getElementById('search-clear-btn');
   const filtersEl = document.getElementById('search-type-filters');
+
+  if (searchForm && searchInput) {
+    searchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      searchInput.blur();
+    });
+  }
 
   const doSearch = debounce((query) => {
     currentQuery = query.trim();
@@ -102,12 +110,12 @@ export function init() {
     performSearch();
   }, window.innerWidth < 768 ? 500 : 300);
 
-  input?.addEventListener('input', (e) => doSearch(e.target.value));
+  searchInput?.addEventListener('input', (e) => doSearch(e.target.value));
 
   clearBtn?.addEventListener('click', () => {
-    if (input) {
-      input.value = '';
-      input.focus();
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.focus();
       doSearch('');
     }
   });
