@@ -1,0 +1,356 @@
+/**
+ * ShowDeck — Home / Dashboard Page
+ * Live dashboard with stats from DB, continue watching, recently added.
+ */
+
+import { db } from '../database/db.js';
+import { getRecentShows, getShowsByStatus } from '../database/shows.js';
+import { getRecentMovies, getAllMovies } from '../database/movies.js';
+import { getShowProgress, getNextEpisode } from '../database/episodes.js';
+import { getPosterUrl } from '../api/tmdb.js';
+import { formatDate, formatYear, truncate, statusBadge } from '../utils/dom.js';
+import { openEnrichModal } from '../components/enrich-modal.js';
+
+let viewMode = localStorage.getItem('showdeck-home-view') || 'grid';
+
+export async function init() {
+  // Bind onboarding key save if it exists
+  const homeSaveBtn = document.getElementById('home-save-key');
+  if (homeSaveBtn) {
+    homeSaveBtn.addEventListener('click', () => {
+      const key = document.getElementById('home-api-key').value.trim();
+      const nameInput = document.getElementById('home-user-name');
+      const name = nameInput ? nameInput.value.trim() : null;
+      if (key) {
+        localStorage.setItem('showdeck_tmdb_key', key);
+        if (name) localStorage.setItem('showdeck_user_name', name);
+        import('../components/toast.js').then(m => m.toast('Settings saved! Enjoy ShowDeck. 🎉', 'success'));
+        setTimeout(() => {
+          import('../router.js').then(r => window.dispatchEvent(new Event('hashchange')));
+        }, 1000);
+      }
+    });
+  }
+
+  // View toggle
+  document.getElementById('home-view-toggle')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-view]');
+    if (!btn) return;
+    viewMode = btn.dataset.view;
+    localStorage.setItem('showdeck-home-view', viewMode);
+    // Reload to apply view mode quickly
+    import('../router.js').then(r => window.dispatchEvent(new Event('hashchange')));
+  });
+
+  // Enrich Modal Triggers
+  document.querySelectorAll('.enrich-trigger').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = parseInt(el.dataset.id);
+      const type = el.dataset.type;
+      const title = decodeURIComponent(el.dataset.title);
+      openEnrichModal(id, type, title, () => {
+        import('../router.js').then(r => window.dispatchEvent(new Event('hashchange')));
+      });
+    });
+  });
+}
+
+export async function render() {
+  // Fetch data
+  const [
+    watchingShows,
+    planToWatchShows,
+    planToWatchMovies,
+    recentShows,
+    recentMovies,
+    allShows,
+    allMovies
+  ] = await Promise.all([
+    getShowsByStatus('watching'),
+    getShowsByStatus('plan'),
+    getAllMovies({ trackingStatus: 'plan' }),
+    getRecentShows(8),
+    getRecentMovies(8),
+    db.shows.toArray(),
+    db.movies.toArray()
+  ]);
+
+  // Build continue watching cards with progress
+  let continueWatchingHTML = '';
+  if (watchingShows.length > 0) {
+    const cards = [];
+    for (const show of watchingShows.slice(0, 6)) {
+      const progress = await getShowProgress(show.id);
+      const next = await getNextEpisode(show.id);
+      const posterUrl = getPosterUrl(show.posterPath, 'posterMedium');
+      const nextLabel = next
+        ? `S${String(next.season).padStart(2, '0')}E${String(next.episode).padStart(2, '0')}${next.title && !next.title.toLowerCase().startsWith('episode') ? ` - ${next.title}` : ''}`
+        : '';
+
+      cards.push(`
+        <a href="#/show/${show.tmdbId}" class="poster-card" id="cw-${show.id}">
+          ${posterUrl
+            ? `<img class="poster-card-image" src="${posterUrl}" alt="${show.title}" loading="lazy">`
+            : `<div class="poster-card-image skeleton"></div>`
+          }
+          <div class="poster-card-overlay">
+            <div class="poster-card-title">${show.title}</div>
+            <div class="poster-card-meta">${nextLabel} • ${progress.percentage}%</div>
+          </div>
+          <div class="progress" style="position:absolute;bottom:0;left:0;right:0;border-radius:0;">
+            <div class="progress-bar" style="width:${progress.percentage}%"></div>
+          </div>
+        </a>
+      `);
+    }
+    continueWatchingHTML = `<div class="grid-posters stagger-children">${cards.join('')}</div>`;
+  } else {
+
+    continueWatchingHTML = `
+      <div class="empty-state" style="padding:var(--space-8) var(--space-4);">
+        <div class="empty-state-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+        </div>
+        <h3 class="empty-state-title">Nothing playing</h3>
+        <p class="empty-state-text">Start tracking a show to see it here.</p>
+        <a href="#/search" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          Search Shows
+        </a>
+      </div>
+    `;
+  }
+
+  // Build Plan to Watch section
+  const planItems = [...planToWatchShows, ...planToWatchMovies]
+    .sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt))
+    .slice(0, 8);
+    
+  let planToWatchHTML = '';
+  if (planItems.length > 0) {
+    const cards = planItems.map(item => {
+      const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
+      const isShow = item.totalSeasons !== undefined;
+      const route = isShow ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
+      const year = formatYear(isShow ? item.firstAirDate : item.releaseDate);
+      return `
+        <a href="${route}" class="poster-card" style="position:relative;">
+          ${posterUrl
+            ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
+            : `<div class="poster-card-image skeleton"></div>`
+          }
+          <div class="poster-card-overlay">
+            <div class="poster-card-title">${item.title}</div>
+            <div class="poster-card-meta">${year} • ${isShow ? 'TV Show' : 'Movie'}</div>
+          </div>
+        </a>
+      `;
+    });
+    planToWatchHTML = `
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Plan to Watch</h2>
+          <a href="#/library?status=plan" class="section-action">View All</a>
+        </div>
+        <div class="grid-posters stagger-children">${cards.join('')}</div>
+      </div>
+    `;
+  }
+
+  // Build Upcoming section
+  const now = new Date();
+  const upcomingItems = [...allShows, ...allMovies]
+    .filter(item => {
+      const dateStr = item.firstAirDate || item.releaseDate;
+      if (!dateStr) return false;
+      const date = new Date(dateStr);
+      return date > now;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.firstAirDate || a.releaseDate);
+      const dateB = new Date(b.firstAirDate || b.releaseDate);
+      return dateA - dateB; // Sort nearest upcoming first
+    })
+    .slice(0, 8);
+    
+  let upcomingHTML = '';
+  if (upcomingItems.length > 0) {
+    const cards = upcomingItems.map(item => {
+      const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
+      const isShow = item.totalSeasons !== undefined;
+      const route = isShow ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
+      const dateStr = item.firstAirDate || item.releaseDate;
+      const dateObj = new Date(dateStr);
+      // Format as Month DD, YYYY
+      const formattedDate = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      
+      return `
+        <a href="${route}" class="poster-card" style="position:relative;">
+          ${posterUrl
+            ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
+            : `<div class="poster-card-image skeleton"></div>`
+          }
+          <div class="poster-card-overlay">
+            <div class="poster-card-title">${item.title}</div>
+            <div class="poster-card-meta" style="color:var(--color-primary);font-weight:bold;">${formattedDate}</div>
+          </div>
+        </a>
+      `;
+    });
+    upcomingHTML = `
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Upcoming</h2>
+          <a href="#/library?status=upcoming" class="section-action">View All</a>
+        </div>
+        <div class="grid-posters stagger-children">${cards.join('')}</div>
+      </div>
+    `;
+  }
+
+  // Recently added
+  const recentItems = [...recentShows, ...recentMovies]
+    .sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt))
+    .slice(0, 8);
+
+  let recentlyAddedHTML = '';
+  if (recentItems.length > 0) {
+    const cards = recentItems.map(item => {
+      const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
+      const isShow = item.totalSeasons !== undefined;
+      const typeStr = isShow ? 'show' : 'movie';
+      const isMissing = item.tmdbId === null;
+      
+      const route = isMissing ? 'javascript:void(0)' : (isShow ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`);
+      const triggerClass = isMissing ? 'enrich-trigger' : '';
+      const triggerAttrs = isMissing ? `data-id="${item.id}" data-type="${typeStr}" data-title="${encodeURIComponent(item.title)}"` : '';
+      
+      const year = formatYear(isShow ? item.firstAirDate : item.releaseDate);
+      const missingBadge = isMissing ? `<div style="position:absolute;top:4px;right:4px;background:var(--color-error);color:white;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:bold;">Fix Match</div>` : '';
+
+      if (viewMode === 'list') {
+        const typeLabel = isShow ? 'TV Show' : 'Movie';
+        const rating = item.rating ? `<span class="badge badge-warning" style="margin-top:var(--space-1);">★ ${item.rating}</span>` : '';
+        return `
+          <div class="library-list-item card" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);position:relative;">
+            ${missingBadge}
+            <a href="${route}" class="${triggerClass}" ${triggerAttrs} style="flex-shrink:0;">
+              ${posterUrl
+                ? `<img src="${posterUrl}" alt="${item.title}" style="width:56px;height:84px;object-fit:cover;border-radius:var(--radius-sm);" loading="lazy">`
+                : `<div style="width:56px;height:84px;background:var(--surface-3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;">🎬</span></div>`
+              }
+            </a>
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--space-1);">
+              <a href="${route}" class="${triggerClass}" ${triggerAttrs} style="text-decoration:none;">
+                <div style="font-weight:var(--weight-medium);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</div>
+                <div style="font-size:var(--text-xs);color:var(--text-tertiary);">${year} • ${typeLabel}</div>
+              </a>
+              ${rating}
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <a href="${route}" class="poster-card ${triggerClass}" ${triggerAttrs} id="recent-${isShow ? 'show' : 'movie'}-${item.id}" style="position:relative;">
+          ${missingBadge}
+          ${posterUrl
+            ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
+            : `<div class="poster-card-image skeleton"></div>`
+          }
+          <div class="poster-card-info">
+            <div class="poster-card-info-title">${item.title}</div>
+            <div class="poster-card-info-sub">${year} • ${isShow ? 'TV Show' : 'Movie'}</div>
+          </div>
+        </a>
+      `;
+    });
+    
+    if (viewMode === 'list') {
+      recentlyAddedHTML = `<div class="library-list stagger-children">${cards.join('')}</div>`;
+    } else {
+      recentlyAddedHTML = `<div class="grid-posters stagger-children">${cards.join('')}</div>`;
+    }
+  } else {
+    recentlyAddedHTML = `
+      <div class="empty-state" style="padding:var(--space-8) var(--space-4);">
+        <div class="empty-state-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
+        </div>
+        <h3 class="empty-state-title">Library is empty</h3>
+        <p class="empty-state-text">Add shows and movies to start building your collection.</p>
+        <a href="#/search" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          Add Content
+        </a>
+      </div>
+    `;
+  }
+
+  const apiKey = localStorage.getItem('showdeck_tmdb_key');
+  const userName = localStorage.getItem('showdeck_user_name') || '';
+  
+  const onboardingHtml = !apiKey ? `
+    <div class="card" style="margin-bottom:var(--space-8); border: 2px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); padding: var(--space-6);">
+      <h2 style="margin-bottom:var(--space-2);">Action Required: Missing API Key 🔌</h2>
+      <p style="margin-bottom:var(--space-4); color:var(--text-secondary);">
+        ShowDeck requires a free TMDB API key to search for and track shows. Your key is stored securely on your device.
+      </p>
+      <div style="display:flex; flex-direction:column; gap:var(--space-3);">
+        ${!userName ? `<input type="text" id="home-user-name" class="input" placeholder="What should we call you? (Optional)" style="width:100%; max-width:400px;">` : ''}
+        <div style="display:flex; gap:var(--space-2);">
+          <input type="text" autocomplete="off" spellcheck="false" id="home-api-key" class="input" placeholder="Enter TMDB API Key" style="flex:1;">
+          <button class="btn btn-primary" id="home-save-key">Save & Connect</button>
+        </div>
+      </div>
+      <p style="margin-top:var(--space-2); font-size:var(--text-xs); color:var(--text-tertiary);">
+        <a href="https://developer.themoviedb.org/docs" target="_blank" style="color:var(--color-primary); text-decoration:underline;">Get a free key here</a>. 
+      </p>
+    </div>
+  ` : '';
+
+  return `
+    <div class="page-container animate-fade-in">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1 class="page-title">Welcome back${userName ? `, ${userName}` : ''} 👋</h1>
+          <p class="page-subtitle">Here's what's happening with your entertainment.</p>
+        </div>
+      </div>
+
+      ${onboardingHtml}
+
+      <!-- Continue Watching -->
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Watching</h2>
+          ${watchingShows.length > 0 ? '<a href="#/library?status=watching" class="section-action">View All</a>' : ''}
+        </div>
+        ${continueWatchingHTML}
+      </div>
+
+      ${planToWatchHTML}
+      ${upcomingHTML}
+
+      <!-- Recently Added -->
+      <div class="section">
+        <div class="section-header">
+          <div style="display:flex;align-items:center;gap:var(--space-4);">
+            <h2 class="section-title" style="margin:0;">Recently Added</h2>
+            <div class="view-toggle" id="home-view-toggle" role="group">
+              <button class="btn btn-icon btn-sm ${viewMode === 'grid' ? 'btn-primary' : 'btn-ghost'}" data-view="grid">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/></svg>
+              </button>
+              <button class="btn btn-icon btn-sm ${viewMode === 'list' ? 'btn-primary' : 'btn-ghost'}" data-view="list">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+          ${recentItems.length > 0 ? '<a href="#/library" class="section-action">View All</a>' : ''}
+        </div>
+        ${recentlyAddedHTML}
+      </div>
+    </div>
+  `;
+}

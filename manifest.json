@@ -1,0 +1,26 @@
+{
+  "name": "ShowDeck",
+  "short_name": "ShowDeck",
+  "version": "1.0.0",
+  "description": "Your personal entertainment tracker. Track TV shows, movies, and more. Privacy-first, offline-first.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8f9fb",
+  "theme_color": "#5b4dc7",
+  "orientation": "any",
+  "categories": ["entertainment", "lifestyle", "productivity"],
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

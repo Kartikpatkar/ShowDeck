@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://image.tmdb.org data: blob:; connect-src 'self' https://api.themoviedb.org https://api.tvmaze.com https://ipapi.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self';">
+  <meta name="description" content="ShowDeck — Your personal entertainment tracker. Track TV shows, movies, and more. Privacy-first, offline-first, local-first.">
+  <meta name="theme-color" content="#5b4dc7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="ShowDeck">
+  <meta name="robots" content="index, follow">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  
+  <!-- Open Graph / SEO -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ShowDeck — Personal Entertainment Tracker">
+  <meta property="og:description" content="Track TV shows and movies. Privacy-first, offline-first, local-first.">
+  <meta property="og:site_name" content="ShowDeck">
+  <meta name="twitter:card" content="summary">
+
+  <title>ShowDeck — Personal Entertainment Tracker</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/utilities.css">
+  <link rel="stylesheet" href="css/pages/pages.css">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+</head>
+<body>
+  <!-- App Shell -->
+  <div class="app" id="app">
+    <!-- Offline Indicator -->
+    <div id="offline-banner" class="hidden" style="background:var(--color-error);color:white;text-align:center;padding:var(--space-2);font-size:var(--text-sm);font-weight:var(--weight-medium);z-index:9999;">
+      You are offline. Showing cached data.
+    </div>
+
+    <!-- Sidebar injected by JS -->
+
+    <!-- Main Content Area -->
+    <main class="main">
+      <div class="main-content" id="main-content">
+        <div id="page-content" class="page-enter">
+          <!-- Pages rendered here by router -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Chart.js (Offline) -->
+  <script src="js/lib/chart.umd.js"></script>
+
+  <!-- JSZip (Offline — for TV Time import) -->
+  <script src="js/lib/jszip.min.js"></script>
+
+  <!-- App Script -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
