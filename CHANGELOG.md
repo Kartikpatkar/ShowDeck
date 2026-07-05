@@ -5,6 +5,7 @@ All notable changes to ShowDeck will be documented in this file.
 ## [1.0.0] - 2026-07-05
 
 ### Added
+- **Library "Upcoming" Filter**: Added a dedicated status filter for viewing unreleased library items, seamlessly linked from the Home Dashboard.
 - **Multiple Accent Themes**: Added Purple, Blue, Green, and Red themes in Settings, plus a Custom Hex Color picker.
 - **User Onboarding**: Implemented a welcoming onboarding flow to set up user profile, themes, and API connection.
 - **Export to CSV**: Added ability to export library data to CSV.
@@ -28,6 +29,10 @@ All notable changes to ShowDeck will be documented in this file.
 - Fixed a CSP violation blocking `ipapi.co` geolocation lookups for local release dates.
 - Fixed mobile search grid overflowing UI text and buttons.
 - Fixed localStorage theme race conditions by refactoring `window.location.reload()` calls into seamless SPA `hashchange` events.
+- Fixed critical Single Page App navigation bug where native browser `history.back()` trapped users in endless navigation loops. Replaced with custom internal router stack.
+- Fixed UI padding and alignment for New Tag and New Collection forms in Settings.
+- Fixed API mapping bug in `search.js` where clicking Trending TV Shows routed to Movie details due to missing `mediaType` payload bindings.
+- Improved UX of Episode pages by replacing endless loading skeletons with graceful fallbacks to Show backdrops when individual episode stills are unavailable.
 
 ### Changed
 - Refactored DOM utility functions into a centralized `utils/dom.js`.
