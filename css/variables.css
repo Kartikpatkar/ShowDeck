@@ -1,10 +1,37 @@
-:root {
+:root, [data-theme="purple"] {
   /* ── Brand Colors ── */
   --color-primary: hsl(245, 58%, 51%);
   --color-primary-light: hsl(245, 58%, 62%);
   --color-primary-dark: hsl(245, 58%, 42%);
   --color-primary-subtle: hsl(245, 58%, 95%);
   --color-primary-ghost: hsl(245, 58%, 97%);
+}
+
+[data-theme="blue"] {
+  --color-primary: hsl(210, 100%, 50%);
+  --color-primary-light: hsl(210, 100%, 65%);
+  --color-primary-dark: hsl(210, 100%, 40%);
+  --color-primary-subtle: hsl(210, 100%, 95%);
+  --color-primary-ghost: hsl(210, 100%, 97%);
+}
+
+[data-theme="green"] {
+  --color-primary: hsl(152, 55%, 42%);
+  --color-primary-light: hsl(152, 55%, 55%);
+  --color-primary-dark: hsl(152, 55%, 32%);
+  --color-primary-subtle: hsl(152, 55%, 94%);
+  --color-primary-ghost: hsl(152, 55%, 97%);
+}
+
+[data-theme="red"] {
+  --color-primary: hsl(0, 72%, 51%);
+  --color-primary-light: hsl(0, 72%, 65%);
+  --color-primary-dark: hsl(0, 72%, 40%);
+  --color-primary-subtle: hsl(0, 72%, 95%);
+  --color-primary-ghost: hsl(0, 72%, 97%);
+}
+
+:root {
 
   --color-accent: hsl(330, 65%, 55%);
   --color-accent-light: hsl(330, 65%, 68%);

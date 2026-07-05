@@ -7,7 +7,7 @@ import { getShowByTmdbId, addShow } from '../database/shows.js';
 import { db } from '../database/db.js';
 import { markWatched, markUnwatched } from '../database/episodes.js';
 import { getPosterUrl, getBackdropUrl } from '../api/tmdb.js';
-import { formatDate, interactiveStarRating } from '../utils/dom.js';
+import { formatDate, interactiveStarRating, escapeHtml } from '../utils/dom.js';
 import { toast } from '../components/toast.js';
 
 let showTmdbId = null;
@@ -143,6 +143,13 @@ function renderContent(container) {
       <p class="detail-overview" style="font-size:1.1rem;line-height:1.6;color:var(--text-secondary);">
         ${richEpData.overview || 'No overview available for this episode.'}
       </p>
+
+      ${localShow ? `
+        <div style="margin-top:var(--space-8);">
+          <h3 class="section-title">My Notes</h3>
+          <textarea id="episode-notes" class="input" rows="4" placeholder="Add personal notes for this episode... (saves automatically)" style="width:100%;resize:vertical;">${escapeHtml(localEp?.notes || '')}</textarea>
+        </div>
+      ` : ''}
     </div>
   `;
 }
@@ -189,6 +196,19 @@ function bindEvents() {
       }
       renderContent(container);
       bindEvents();
+    });
+  }
+
+  // Notes
+  const notesArea = document.getElementById('episode-notes');
+  if (notesArea && localEp) {
+    notesArea.addEventListener('blur', async (e) => {
+      const val = e.target.value.trim();
+      if (val !== localEp.notes) {
+        await db.episodes.update(localEp.id, { notes: val });
+        localEp.notes = val;
+        toast('Notes saved', 'success');
+      }
     });
   }
 }

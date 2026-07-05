@@ -139,6 +139,9 @@ router
   .on('/enrich', (params) => {
     loadPage(() => import('./pages/enrich.js'), params);
   })
+  .on('/share', (params) => {
+    loadPage(() => import('./pages/share.js'), params);
+  })
   .onNotFound(() => {
     const container = getPageContainer();
     if (container) {
@@ -214,6 +217,22 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+function initTheme() {
+  const theme = localStorage.getItem('showdeck_theme') || 'dark';
+  const accent = localStorage.getItem('showdeck_accent_theme') || 'purple';
+  
+  if (theme === 'system') {
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.body.classList.remove('theme-dark', 'theme-light');
+    document.body.classList.add(isDark ? 'theme-dark' : 'theme-light');
+  } else {
+    document.body.classList.remove('theme-dark', 'theme-light');
+    document.body.classList.add(`theme-${theme}`);
+  }
+  
+  document.body.dataset.theme = accent;
+}
+
 function updateOnlineStatus() {
   const banner = document.getElementById('offline-banner');
   if (banner) {
@@ -223,6 +242,28 @@ function updateOnlineStatus() {
       banner.classList.remove('hidden');
     }
   }
+
+  // Keyboard Navigation
+  window.addEventListener('keydown', (e) => {
+    // Ignore if typing in an input
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+
+    switch (e.key) {
+      case 'Escape':
+        if (document.getElementById('enrich-modal')) return; // handled by modal
+        window.history.length > 1 ? window.history.back() : window.location.hash = '#/home';
+        break;
+      case 's':
+      case 'S':
+        document.getElementById('sync-show-btn')?.click();
+        document.getElementById('sync-movie-btn')?.click();
+        break;
+      case 'w':
+      case 'W':
+        document.getElementById('toggle-watch-btn')?.click();
+        break;
+    }
+  });
 }
 
 window.addEventListener('online', updateOnlineStatus);

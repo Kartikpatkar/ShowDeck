@@ -36,6 +36,16 @@ export function render() {
               <button class="btn btn-secondary" id="save-name-btn">Save</button>
             </div>
           </div>
+
+          <div style="display:flex;flex-direction:column;gap:var(--space-3);margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--border-color);">
+            <label style="font-weight:var(--weight-medium);">Accent Color</label>
+            <div style="display:flex;gap:var(--space-3);" id="theme-color-picker">
+              <button class="btn btn-ghost" data-theme="purple" style="width:40px;height:40px;border-radius:50%;background:hsl(245, 58%, 51%);border:2px solid transparent;" aria-label="Purple"></button>
+              <button class="btn btn-ghost" data-theme="blue" style="width:40px;height:40px;border-radius:50%;background:hsl(210, 100%, 50%);border:2px solid transparent;" aria-label="Blue"></button>
+              <button class="btn btn-ghost" data-theme="green" style="width:40px;height:40px;border-radius:50%;background:hsl(152, 55%, 42%);border:2px solid transparent;" aria-label="Green"></button>
+              <button class="btn btn-ghost" data-theme="red" style="width:40px;height:40px;border-radius:50%;background:hsl(0, 72%, 51%);border:2px solid transparent;" aria-label="Red"></button>
+            </div>
+          </div>
         </div>
         
         <!-- API Keys -->
@@ -92,6 +102,16 @@ export function render() {
               Restore Backup
             </button>
             <input type="file" id="import-file" accept=".json" style="display:none;">
+
+            <button class="btn btn-secondary" id="export-csv-btn" style="width:100%;justify-content:center;margin-top:var(--space-2);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              Export to CSV
+            </button>
+            
+            <button class="btn btn-primary" id="share-library-btn" style="width:100%;justify-content:center;margin-top:var(--space-2);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              Share Library Link
+            </button>
           </div>
         </div>
 
@@ -188,14 +208,26 @@ function bindEvents() {
   // User Name
   const saveNameBtn = document.getElementById('save-name-btn');
   saveNameBtn?.addEventListener('click', () => {
-    const name = document.getElementById('user-name-input').value.trim();
-    if (name) {
-      localStorage.setItem('showdeck_user_name', name);
-      toast('Name saved', 'success');
-    } else {
-      localStorage.removeItem('showdeck_user_name');
-      toast('Name removed', 'success');
+    const nameInput = document.getElementById('user-name-input');
+    localStorage.setItem('showdeck_user_name', nameInput.value.trim());
+    toast('Name saved successfully', 'success');
+  });
+
+  // Setup theme picker
+  const currentTheme = localStorage.getItem('showdeck_accent_theme') || 'purple';
+  const themeButtons = document.querySelectorAll('#theme-color-picker button');
+  themeButtons.forEach(btn => {
+    if (btn.dataset.theme === currentTheme) {
+      btn.style.borderColor = 'var(--text-primary)';
     }
+    btn.addEventListener('click', () => {
+      const theme = btn.dataset.theme;
+      document.body.dataset.theme = theme;
+      localStorage.setItem('showdeck_accent_theme', theme);
+      
+      themeButtons.forEach(b => b.style.borderColor = 'transparent');
+      btn.style.borderColor = 'var(--text-primary)';
+    });
   });
 
   const saveKeyBtn = document.getElementById('save-key-btn');
@@ -248,6 +280,80 @@ function bindEvents() {
     } finally {
       exportBtn.disabled = false;
       exportBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> Export Backup (JSON)';
+    }
+  });
+
+  // Export CSV
+  const exportCsvBtn = document.getElementById('export-csv-btn');
+  exportCsvBtn?.addEventListener('click', async () => {
+    try {
+      exportCsvBtn.disabled = true;
+      exportCsvBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></div> Exporting...';
+      
+      const { db } = await import('../database/db.js');
+      const shows = await db.shows.toArray();
+      const movies = await db.movies.toArray();
+      const episodes = await db.episodes.where('watched').equals(1).toArray();
+      
+      let csvContent = 'Type,Title,Status,Rating,WatchedEpisodes\n';
+      
+      shows.forEach(s => {
+        const epCount = episodes.filter(e => e.showId === s.id).length;
+        csvContent += `Show,"${s.title.replace(/"/g, '""')}",${s.trackingStatus},${s.rating || ''},${epCount}\n`;
+      });
+      
+      movies.forEach(m => {
+        csvContent += `Movie,"${m.title.replace(/"/g, '""')}",${m.trackingStatus},${m.rating || ''},N/A\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `showdeck_export_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      toast('CSV exported successfully', 'success');
+    } catch (err) {
+      console.error(err);
+      toast('CSV Export failed', 'error');
+    } finally {
+      exportCsvBtn.disabled = false;
+      exportCsvBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Export to CSV';
+    }
+  });
+
+  // Share Library
+  const shareBtn = document.getElementById('share-library-btn');
+  shareBtn?.addEventListener('click', async () => {
+    try {
+      shareBtn.disabled = true;
+      shareBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></div> Generating...';
+      
+      const { db } = await import('../database/db.js');
+      const shows = await db.shows.filter(s => s.trackingStatus !== 'Plan to Watch').toArray();
+      const movies = await db.movies.filter(m => m.trackingStatus !== 'Plan to Watch').toArray();
+      const episodes = await db.episodes.filter(e => e.watched).toArray();
+      
+      const stats = {
+        sc: shows.length, // show count
+        mc: movies.length, // movie count
+        ec: episodes.length, // episode count
+        ts: shows.sort((a,b)=> (b.rating||0) - (a.rating||0)).slice(0,3).map(s=>s.title) // top 3 shows
+      };
+      
+      const base64 = btoa(encodeURIComponent(JSON.stringify(stats)));
+      const shareUrl = `${window.location.origin}${window.location.pathname}#/share?data=${base64}`;
+      
+      await navigator.clipboard.writeText(shareUrl);
+      toast('Share link copied to clipboard!', 'success');
+    } catch (err) {
+      console.error(err);
+      toast('Failed to generate share link', 'error');
+    } finally {
+      shareBtn.disabled = false;
+      shareBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share Library Link';
     }
   });
 
