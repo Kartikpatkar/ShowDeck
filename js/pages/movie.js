@@ -100,6 +100,7 @@ function renderContent(container) {
           <span>•</span>
           <span>${movieData.runtime ? `${Math.floor(movieData.runtime/60)}h ${movieData.runtime%60}m` : 'Unknown runtime'}</span>
           ${movieData.genres && movieData.genres.length > 0 ? `<span>•</span><span>${movieData.genres.slice(0,3).join(', ')}</span>` : ''}
+          ${movieData.voteAverage ? `<span>•</span><span style="color:var(--color-warning);font-weight:var(--weight-semibold);">★ ${(movieData.voteAverage).toFixed(1)}</span>` : ''}
         </div>
         
         <!-- Controls -->
@@ -127,6 +128,17 @@ function renderContent(container) {
       <h3 class="section-title">Overview</h3>
       <p class="detail-overview">${movieData.overview || 'No overview available.'}</p>
     </div>
+
+    ${movieData.watchProviders && movieData.watchProviders.flatrate ? `
+      <div style="margin-top:var(--space-8);">
+        <h3 class="section-title" style="font-size:var(--text-sm);color:var(--text-tertiary);margin-bottom:var(--space-2);">Stream On</h3>
+        <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;">
+          ${movieData.watchProviders.flatrate.map(p => `
+            <img src="${getPosterUrl(p.logo_path, 'posterSmall')}" alt="${p.provider_name}" title="${p.provider_name}" style="width:40px;height:40px;border-radius:var(--radius-sm);">
+          `).join('')}
+        </div>
+      </div>
+    ` : ''}
 
     ${movieData.cast && movieData.cast.length > 0 ? `
       <!-- Cast -->

@@ -69,14 +69,28 @@ export async function getFullStats() {
     ? Math.round((completedShows / shows.length) * 100)
     : 0;
 
-  // Activity by date (for heatmap)
+  // Activity by date (for heatmap) - Backfilled from actual watch dates
   const activityByDate = {};
-  activity
-    .filter(a => a.type === 'watched')
-    .forEach(a => {
-      const date = new Date(a.date).toISOString().split('T')[0];
+  
+  // Add episodes
+  watchedEpisodes.forEach(ep => {
+    if (ep.watchedAt) {
+      const date = new Date(ep.watchedAt).toISOString().split('T')[0];
       activityByDate[date] = (activityByDate[date] || 0) + 1;
-    });
+    }
+  });
+
+  // Add movies
+  movies.forEach(m => {
+    if (m.trackingStatus === 'completed' || m.watched) {
+      // Use updatedAt or addedAt as proxy for watch date if watchedAt is missing
+      const timestamp = m.updatedAt || m.addedAt;
+      if (timestamp) {
+        const date = new Date(timestamp).toISOString().split('T')[0];
+        activityByDate[date] = (activityByDate[date] || 0) + 1;
+      }
+    }
+  });
 
   // Streak calculation
   const { currentStreak, longestStreak } = calculateStreaks(activityByDate);

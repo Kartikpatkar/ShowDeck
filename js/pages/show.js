@@ -61,9 +61,23 @@ export async function init(params) {
       // Fetch episodes (in memory only, not saved to DB)
       episodesData = await provider.getAllEpisodes(tmdbId, null, showData.totalSeasons);
     }
+    
+    // Set initial season if not set
+    if (episodesData.length > 0) {
+      const seasonsList = Array.from(new Set(episodesData.map(e => e.season))).sort((a,b) => a-b);
+      if (!seasonsList.includes(currentSeason)) {
+        currentSeason = seasonsList[0];
+      }
+    }
 
     renderContent(container);
     bindEvents();
+    
+    // Async enrich current season (fetches description/rating)
+    enrichSeasonEpisodes(currentSeason).then(() => {
+      renderContent(container);
+      bindEvents();
+    });
     
   } catch (err) {
     console.error('[ShowDetail] Error:', err);
@@ -85,6 +99,69 @@ async function fetchAndSaveEpisodes(tmdbId, tvmazeId, totalSeasons, localId) {
   const eps = await provider.getAllEpisodes(tmdbId, tvmazeId, totalSeasons);
   if (eps.length > 0) {
     await addEpisodes(localId, eps);
+  }
+}
+
+async function enrichSeasonEpisodes(season) {
+  if (!showData || !showData.tmdbId) return;
+  try {
+    const { getSeasonEpisodes } = await import('../api/tmdb.js');
+    const richEps = await getSeasonEpisodes(showData.tmdbId, season);
+    
+    let updated = false;
+    let newEpisodesToInsert = [];
+    richEps.forEach(rich => {
+      const local = episodesData.find(e => e.season === season && e.episode === rich.episode);
+      if (local) {
+        if (!local.overview) {
+          local.overview = rich.overview;
+          local.voteAverage = rich.voteAverage;
+          if (rich.stillPath) local.stillPath = rich.stillPath;
+          updated = true;
+        }
+      } else {
+        // Missing episode (e.g., from TVTime import), add it to DB
+        newEpisodesToInsert.push({
+          showId: currentShowId,
+          tmdbId: rich.tmdbId || null,
+          season: rich.season,
+          episode: rich.episode,
+          title: rich.title || `Episode ${rich.episode}`,
+          overview: rich.overview || '',
+          airDate: rich.airDate || null,
+          runtime: rich.runtime || null,
+          stillPath: rich.stillPath || null,
+          voteAverage: rich.voteAverage || 0,
+          watched: false,
+          watchedAt: null,
+          favorite: false,
+          skipped: false,
+        });
+      }
+    });
+    
+    const { db } = await import('../database/db.js');
+    
+    if (newEpisodesToInsert.length > 0 && currentShowId) {
+      await db.episodes.bulkAdd(newEpisodesToInsert);
+      const allSeasonEps = await db.episodes.where({showId: currentShowId, season: season}).toArray();
+      episodesData = episodesData.filter(e => e.season !== season).concat(allSeasonEps);
+      updated = true;
+    }
+    
+    // If it's a tracked show and we updated data, let's persist the overview and rating so we don't have to fetch next time
+    if (updated && currentShowId) {
+      const epsToUpdate = episodesData.filter(e => e.season === season);
+      await db.transaction('rw', db.episodes, async () => {
+        for (const ep of epsToUpdate) {
+          if (ep.id) {
+            await db.episodes.update(ep.id, { overview: ep.overview, voteAverage: ep.voteAverage, stillPath: ep.stillPath });
+          }
+        }
+      });
+    }
+  } catch(e) {
+    console.warn('Failed to enrich season episodes', e);
   }
 }
 
@@ -134,6 +211,7 @@ function renderContent(container) {
           <span>${showData.status}</span>
           ${showData.network ? `<span>•</span><span>${showData.network}</span>` : ''}
           ${showData.genres && showData.genres.length > 0 ? `<span>•</span><span>${showData.genres.slice(0,3).join(', ')}</span>` : ''}
+          ${showData.voteAverage ? `<span>•</span><span style="color:var(--color-warning);font-weight:var(--weight-semibold);">★ ${(showData.voteAverage).toFixed(1)}</span>` : ''}
         </div>
         
         <!-- Controls -->
@@ -162,6 +240,17 @@ function renderContent(container) {
       <h3 class="section-title">Overview</h3>
       <p class="detail-overview">${showData.overview || 'No overview available.'}</p>
     </div>
+
+    ${showData.watchProviders && showData.watchProviders.flatrate ? `
+      <div style="margin-top:var(--space-8);">
+        <h3 class="section-title" style="font-size:var(--text-sm);color:var(--text-tertiary);margin-bottom:var(--space-2);">Stream On</h3>
+        <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;">
+          ${showData.watchProviders.flatrate.map(p => `
+            <img src="${getPosterUrl(p.logo_path, 'posterSmall')}" alt="${p.provider_name}" title="${p.provider_name}" style="width:40px;height:40px;border-radius:var(--radius-sm);">
+          `).join('')}
+        </div>
+      </div>
+    ` : ''}
 
     ${episodesData.length > 0 ? `
       <!-- Episodes Section -->
@@ -196,20 +285,21 @@ function renderContent(container) {
             }
 
             return `
-              <div class="episode-item ${ep.watched ? 'watched' : ''}" data-ep-id="${ep.id || ''}" data-ep-index="${ep.episode}" style="display:flex;align-items:center;">
-                <div class="episode-checkbox ${ep.watched ? 'checked' : ''}">
+              <a href="#/episode/${showData.tmdbId}/${ep.season}/${ep.episode}" class="episode-item ${ep.watched ? 'watched' : ''}" data-ep-id="${ep.id || ''}" data-ep-index="${ep.episode}" style="display:flex;align-items:center;text-decoration:none;color:inherit;padding:var(--space-2) 0;border-bottom:1px solid var(--border-subtle);">
+                <div class="episode-checkbox ${ep.watched ? 'checked' : ''}" style="margin:0 var(--space-3);" data-action="toggle-watch">
                   ${ep.watched ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
                 </div>
                 ${imgHtml}
-                <div class="episode-info" style="flex:1;">
-                  <div class="episode-number">${ep.season}x${String(ep.episode).padStart(2, '0')}</div>
-                  <div class="episode-title">${ep.title}</div>
+                <div class="episode-info" style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;">
+                  <div class="episode-number" style="font-size:var(--text-xs);color:var(--text-tertiary);">${ep.season}x${String(ep.episode).padStart(2, '0')}</div>
+                  <div class="episode-title" style="font-weight:var(--weight-medium);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ep.title}</div>
                 </div>
-                <div class="episode-actions" style="display:flex;align-items:center;gap:var(--space-2);">
-                  ${ep.watched ? `<button class="btn btn-secondary btn-sm add-watch-btn" data-ep-id="${ep.id}" style="padding:0 var(--space-2);height:24px;min-height:24px;font-size:12px;" title="Add another watch">+1${ep.watchCount && ep.watchCount > 1 ? ` (${ep.watchCount})` : ''}</button>` : ''}
-                  <div class="episode-date">${formatDate(ep.airDate)}</div>
+                <div class="episode-actions" style="display:flex;align-items:center;gap:var(--space-2);margin-right:var(--space-3);">
+                  ${ep.watched ? `<button class="btn btn-secondary btn-sm add-watch-btn" data-ep-id="${ep.id}" data-action="add-watch" style="padding:0 var(--space-2);height:24px;min-height:24px;font-size:12px;" title="Add another watch">+1${ep.watchCount && ep.watchCount > 1 ? ` (${ep.watchCount})` : ''}</button>` : ''}
+                  <div class="episode-date" style="font-size:var(--text-xs);color:var(--text-tertiary);">${formatDate(ep.airDate)}</div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-tertiary);margin-left:var(--space-2);"><path d="m9 18 6-6-6-6"/></svg>
                 </div>
-              </div>
+              </a>
             `;
           }).join('')}
         </div>
@@ -347,38 +437,61 @@ function bindEvents() {
       currentSeason = parseInt(tab.dataset.season);
       renderContent(container);
       bindEvents(); // re-bind since we re-rendered innerHTML
+      
+      enrichSeasonEpisodes(currentSeason).then(() => {
+        renderContent(container);
+        bindEvents();
+      });
     });
   }
 
-  // Episode Checkboxes
-  const episodeItems = container.querySelectorAll('.episode-item');
-  episodeItems.forEach(item => {
-    item.addEventListener('click', async () => {
+  // Episode List Actions (+1 button, checkbox)
+  const episodeListContainer = container.querySelector('.card[style="padding:0;"]');
+  if (episodeListContainer) {
+    episodeListContainer.addEventListener('click', async (e) => {
+      const target = e.target.closest('[data-action]');
+      if (!target) return;
+      
+      e.preventDefault();
+      e.stopPropagation();
+
       if (!isTracked) {
         toast('Add show to library first to track episodes', 'warning');
         return;
       }
-      
+
+      const item = target.closest('.episode-item');
+      if (!item) return;
+
       const epId = parseInt(item.dataset.epId);
       if (!epId) return;
+      
+      const ep = episodesData.find(e => e.id === epId);
+      if (!ep) return;
 
-      const checkbox = item.querySelector('.episode-checkbox');
-      const isWatched = checkbox.classList.contains('checked');
+      const action = target.dataset.action;
 
-      if (isWatched) {
-        await markUnwatched(epId);
-        checkbox.classList.remove('checked');
-        checkbox.innerHTML = '';
-        item.classList.remove('watched');
+      if (action === 'add-watch') {
+        const { db } = await import('../database/db.js');
+        ep.watchCount = (ep.watchCount || 1) + 1;
+        ep.watchedAt = new Date();
+        await db.episodes.update(epId, { watchCount: ep.watchCount, watchedAt: ep.watchedAt });
+        toast('Added another watch', 'success');
+        renderContent(container);
+        bindEvents();
+        return;
+      }
+
+      if (action === 'toggle-watch') {
+        const isWatched = target.classList.contains('checked');
         
-        // update local state
-        const ep = episodesData.find(e => e.id === epId);
-        if (ep) ep.watched = false;
-      } else {
-        const ep = episodesData.find(e => e.id === epId);
-        let bulkUpdated = false;
-
-        if (ep) {
+        if (isWatched) {
+          await markUnwatched(epId);
+          ep.watched = false;
+          renderContent(container);
+          bindEvents();
+        } else {
+          let bulkUpdated = false;
           const prevUnwatched = episodesData.filter(e => e.season === ep.season && e.episode < ep.episode && !e.watched);
           if (prevUnwatched.length > 0) {
             const { confirmModal } = await import('../components/modal.js');
@@ -395,57 +508,26 @@ function bindEvents() {
               bulkUpdated = true;
             }
           }
-        }
-        
-        await markWatched(epId);
-        checkbox.classList.add('checked');
-        checkbox.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-        item.classList.add('watched');
-        if (ep) ep.watched = true;
+          
+          await markWatched(epId);
+          ep.watched = true;
 
-        // Auto-complete logic
-        const allWatched = episodesData.every(e => e.watched);
-        if (allWatched && showData.trackingStatus !== 'completed') {
-          const { updateTrackingStatus } = await import('../database/shows.js');
-          await updateTrackingStatus(currentShowId, 'completed');
-          showData.trackingStatus = 'completed';
-          toast('Show completed!', 'success');
-          bulkUpdated = true; // force re-render for status dropdown
-        }
-
-        if (bulkUpdated) {
-          const tabsContainer = document.getElementById('season-tabs');
-          const scrollPos = tabsContainer ? tabsContainer.scrollLeft : 0;
+          // Auto-complete logic
+          const allWatched = episodesData.every(e => e.watched);
+          if (allWatched && showData.trackingStatus !== 'completed') {
+            const { updateTrackingStatus } = await import('../database/shows.js');
+            await updateTrackingStatus(currentShowId, 'completed');
+            showData.trackingStatus = 'completed';
+            toast('Show completed!', 'success');
+            bulkUpdated = true; // force re-render for status dropdown
+          }
+          
           renderContent(container);
           bindEvents();
-          const newTabs = document.getElementById('season-tabs');
-          if (newTabs) newTabs.scrollLeft = scrollPos;
         }
       }
     });
-  });
-
-  // +1 Watch Count Buttons
-  const addWatchBtns = container.querySelectorAll('.add-watch-btn');
-  addWatchBtns.forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      e.stopPropagation(); // prevent triggering the episode row click
-      const epId = parseInt(btn.dataset.epId);
-      if (!epId) return;
-
-      const ep = episodesData.find(e => e.id === epId);
-      if (ep) {
-        const { db } = await import('../database/db.js');
-        const now = new Date();
-        const newCount = (ep.watchCount || 1) + 1;
-        await db.episodes.update(epId, { watchCount: newCount, watchedAt: now });
-        ep.watchCount = newCount;
-        
-        btn.textContent = `+1 (${newCount})`;
-        toast(`Marked as watched again! (x${newCount})`, 'success');
-      }
-    });
-  });
+  }
 
   // Mark Season
   const markSeasonBtn = document.getElementById('mark-season-btn');

@@ -5,7 +5,7 @@
 
 import { db } from '../database/db.js';
 import { getRecentShows, getShowsByStatus } from '../database/shows.js';
-import { getRecentMovies } from '../database/movies.js';
+import { getRecentMovies, getAllMovies } from '../database/movies.js';
 import { getShowProgress, getNextEpisode } from '../database/episodes.js';
 import { getTotalWatchedEpisodes } from '../database/episodes.js';
 import { getPosterUrl } from '../api/tmdb.js';
@@ -61,15 +61,23 @@ export async function render() {
     movieCount,
     episodeCount,
     watchingShows,
+    planToWatchShows,
+    planToWatchMovies,
     recentShows,
     recentMovies,
+    allShows,
+    allMovies
   ] = await Promise.all([
     db.shows.count(),
     db.movies.count(),
     getTotalWatchedEpisodes(),
     getShowsByStatus('watching'),
+    getShowsByStatus('plan'),
+    getAllMovies({ trackingStatus: 'plan' }),
     getRecentShows(8),
     getRecentMovies(8),
+    db.shows.toArray(),
+    db.movies.toArray()
   ]);
 
   // Calculate hours (rough estimate)
@@ -87,7 +95,7 @@ export async function render() {
       const next = await getNextEpisode(show.id);
       const posterUrl = getPosterUrl(show.posterPath, 'posterMedium');
       const nextLabel = next
-        ? `S${String(next.season).padStart(2, '0')}E${String(next.episode).padStart(2, '0')}`
+        ? `S${String(next.season).padStart(2, '0')}E${String(next.episode).padStart(2, '0')}${next.title && !next.title.toLowerCase().startsWith('episode') ? ` - ${next.title}` : ''}`
         : '';
 
       cards.push(`
@@ -108,6 +116,7 @@ export async function render() {
     }
     continueWatchingHTML = `<div class="grid-posters stagger-children">${cards.join('')}</div>`;
   } else {
+
     continueWatchingHTML = `
       <div class="empty-state" style="padding:var(--space-8) var(--space-4);">
         <div class="empty-state-icon">
@@ -119,6 +128,92 @@ export async function render() {
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           Search Shows
         </a>
+      </div>
+    `;
+  }
+
+  // Build Plan to Watch section
+  const planItems = [...planToWatchShows, ...planToWatchMovies]
+    .sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt))
+    .slice(0, 8);
+    
+  let planToWatchHTML = '';
+  if (planItems.length > 0) {
+    const cards = planItems.map(item => {
+      const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
+      const isShow = item.totalSeasons !== undefined;
+      const route = isShow ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
+      const year = formatYear(isShow ? item.firstAirDate : item.releaseDate);
+      return `
+        <a href="${route}" class="poster-card" style="position:relative;">
+          ${posterUrl
+            ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
+            : `<div class="poster-card-image skeleton"></div>`
+          }
+          <div class="poster-card-overlay">
+            <div class="poster-card-title">${item.title}</div>
+            <div class="poster-card-meta">${year} • ${isShow ? 'TV Show' : 'Movie'}</div>
+          </div>
+        </a>
+      `;
+    });
+    planToWatchHTML = `
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Plan to Watch</h2>
+          <a href="#/library?status=plan" class="section-action">View All</a>
+        </div>
+        <div class="grid-posters stagger-children">${cards.join('')}</div>
+      </div>
+    `;
+  }
+
+  // Build Upcoming section
+  const now = new Date();
+  const upcomingItems = [...allShows, ...allMovies]
+    .filter(item => {
+      const dateStr = item.firstAirDate || item.releaseDate;
+      if (!dateStr) return false;
+      const date = new Date(dateStr);
+      return date > now;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.firstAirDate || a.releaseDate);
+      const dateB = new Date(b.firstAirDate || b.releaseDate);
+      return dateA - dateB; // Sort nearest upcoming first
+    })
+    .slice(0, 8);
+    
+  let upcomingHTML = '';
+  if (upcomingItems.length > 0) {
+    const cards = upcomingItems.map(item => {
+      const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
+      const isShow = item.totalSeasons !== undefined;
+      const route = isShow ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
+      const dateStr = item.firstAirDate || item.releaseDate;
+      const dateObj = new Date(dateStr);
+      // Format as Month DD, YYYY
+      const formattedDate = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      
+      return `
+        <a href="${route}" class="poster-card" style="position:relative;">
+          ${posterUrl
+            ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
+            : `<div class="poster-card-image skeleton"></div>`
+          }
+          <div class="poster-card-overlay">
+            <div class="poster-card-title">${item.title}</div>
+            <div class="poster-card-meta" style="color:var(--color-primary);font-weight:bold;">${formattedDate}</div>
+          </div>
+        </a>
+      `;
+    });
+    upcomingHTML = `
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Upcoming</h2>
+        </div>
+        <div class="grid-posters stagger-children">${cards.join('')}</div>
       </div>
     `;
   }
@@ -260,11 +355,14 @@ export async function render() {
       <!-- Continue Watching -->
       <div class="section">
         <div class="section-header">
-          <h2 class="section-title">Continue Watching</h2>
+          <h2 class="section-title">Watching</h2>
           ${watchingShows.length > 0 ? '<a href="#/library?status=watching" class="section-action">View All</a>' : ''}
         </div>
         ${continueWatchingHTML}
       </div>
+
+      ${planToWatchHTML}
+      ${upcomingHTML}
 
       <!-- Recently Added -->
       <div class="section">

@@ -122,6 +122,9 @@ router
   .on('/movie/:id', (params) => {
     loadPage(() => import('./pages/movie.js'), params);
   })
+  .on('/episode/:showId/:season/:episode', (params) => {
+    loadPage(() => import('./pages/episode.js'), params);
+  })
   .on('/collections', (params) => {
     loadPage(() => import('./pages/collections.js'), params);
   })
@@ -147,7 +150,7 @@ router.afterEach = (route) => {
     // Map route patterns to nav routes
     let navRoute = route;
     if (route === '/home') navRoute = '/';
-    if (route.startsWith('/show/') || route.startsWith('/movie/')) navRoute = '/library';
+    if (route.startsWith('/show/') || route.startsWith('/movie/') || route.startsWith('/episode/')) navRoute = '/library';
     if (route === '/enrich') navRoute = '/settings';
     sidebar.setActive(navRoute);
   }

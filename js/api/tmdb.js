@@ -128,12 +128,37 @@ export async function searchMulti(query, page = 1) {
 // ── Show Details ──
 
 /**
+ * Helper to get user country code based on IP (cached).
+ */
+export async function getUserCountryCode() {
+  let country = localStorage.getItem('showdeck_country');
+  if (!country) {
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      const data = await res.json();
+      if (data && data.country_code) {
+        country = data.country_code;
+        localStorage.setItem('showdeck_country', country);
+      } else {
+        country = 'US';
+      }
+    } catch(e) {
+      console.warn('Geolocation failed, defaulting to US', e);
+      country = 'US';
+    }
+  }
+  return country;
+}
+
+/**
  * Get full show details.
  */
 export async function getShowDetails(tmdbId) {
   const data = await tmdbFetch(`/tv/${tmdbId}`, {
     append_to_response: 'credits,external_ids,watch/providers,content_ratings',
   });
+
+  const country = await getUserCountryCode();
 
   return {
     tmdbId: data.id,
@@ -175,7 +200,7 @@ export async function getShowDetails(tmdbId) {
       posterPath: s.poster_path,
       overview: s.overview,
     })) || [],
-    watchProviders: data['watch/providers']?.results?.US || null,
+    watchProviders: data['watch/providers']?.results?.[country] || null,
     externalIds: data.external_ids || {},
   };
 }
@@ -209,6 +234,8 @@ export async function getMovieDetails(tmdbId) {
     append_to_response: 'credits,external_ids,watch/providers',
   });
 
+  const country = await getUserCountryCode();
+
   return {
     tmdbId: data.id,
     title: data.title,
@@ -240,7 +267,7 @@ export async function getMovieDetails(tmdbId) {
       job: c.job,
       profilePath: c.profile_path,
     })) || [],
-    watchProviders: data['watch/providers']?.results?.US || null,
+    watchProviders: data['watch/providers']?.results?.[country] || null,
     externalIds: data.external_ids || {},
   };
 }
