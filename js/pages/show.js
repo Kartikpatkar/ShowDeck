@@ -342,11 +342,11 @@ function renderContent(container) {
 
             return `
               <div class="episode-item ${ep.watched ? 'watched' : ''}" data-ep-id="${ep.id || ''}" data-ep-index="${ep.episode}" style="display:block;border-bottom:1px solid var(--border-subtle);">
-                <div style="display:flex;align-items:center;padding:var(--space-2) 0;">
+                <div class="episode-row" style="align-items:flex-start;">
                   <div class="episode-checkbox ${ep.watched ? 'checked' : ''}" style="margin:0 var(--space-3);cursor:pointer;" data-action="toggle-watch">
                     ${ep.watched ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
                   </div>
-                  <a href="#/episode/${showData.tmdbId}/${ep.season}/${ep.episode}" style="display:flex;align-items:center;text-decoration:none;color:inherit;flex:1;min-width:0;">
+                  <a href="#/episode/${showData.tmdbId}/${ep.season}/${ep.episode}" class="episode-link">
                     ${imgHtml}
                     <div class="episode-info" style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;">
                       <div class="episode-number" style="font-size:var(--text-xs);color:var(--text-tertiary);">${ep.season}x${String(ep.episode).padStart(2, '0')}</div>
@@ -354,7 +354,7 @@ function renderContent(container) {
                       ${countdown ? `<div style="font-size:10px;font-weight:bold;color:var(--color-primary);margin-top:2px;">${countdown}</div>` : ''}
                     </div>
                   </a>
-                  <div class="episode-actions" style="display:flex;align-items:center;gap:var(--space-2);margin-right:var(--space-3);">
+                  <div class="episode-actions-wrapper">
                     ${ep.watched ? `<button class="btn btn-secondary btn-sm add-watch-btn" data-ep-id="${ep.id}" data-action="add-watch" style="padding:0 var(--space-2);height:24px;min-height:24px;font-size:12px;" title="Add another watch">+1${ep.watchCount && ep.watchCount > 1 ? ` (${ep.watchCount})` : ''}</button>` : ''}
                     <div class="episode-date" style="font-size:var(--text-xs);color:var(--text-tertiary);text-align:right;">
                       <div>${formatDate(ep.airDate)}</div>
