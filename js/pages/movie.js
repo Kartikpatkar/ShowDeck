@@ -6,7 +6,7 @@
 import * as provider from '../api/provider.js';
 import { getMovieByTmdbId, updateMovieTrackingStatus, rateMovie, addMovie } from '../database/movies.js';
 import { getPosterUrl, getBackdropUrl } from '../api/tmdb.js';
-import { formatDate, formatYear, interactiveStarRating, formatVoteCount, getRelativeTime, STATUS_MAP, toggleGlobalLoading, timeAgo } from '../utils/dom.js';
+import { formatDate, formatYear, interactiveStarRating, formatVoteCount, getRelativeTime, STATUS_MAP, toggleGlobalLoading, timeAgo, escapeHtml } from '../utils/dom.js';
 import { toast } from '../components/toast.js';
 
 let currentMovieId = null; 
@@ -157,7 +157,12 @@ function renderContent(container) {
 
     <div style="margin-top:var(--space-8);">
       <h3 class="section-title">Overview</h3>
-      <p class="detail-overview">${movieData.overview || 'No overview available.'}</p>
+      <div style="position:relative;">
+        <p class="detail-overview season-overview-text" style="margin:0; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden;">${escapeHtml(movieData.overview || 'No overview available.')}</p>
+        ${movieData.overview && movieData.overview.length > 200 ? `
+          <button class="btn btn-ghost btn-sm" data-action="read-more" style="padding:0; height:auto; min-height:0; color:var(--color-primary); font-size:var(--text-sm); margin-top:var(--space-2);">Read More</button>
+        ` : ''}
+      </div>
     </div>
 
     ${movieData.watchProviders && movieData.watchProviders.flatrate ? `
@@ -250,6 +255,26 @@ function bindEvents() {
         toast('Failed to remove movie', 'error');
       }
     });
+  }
+
+  // Read More button for main overview
+  if (!container.dataset.readMoreBound) {
+    container.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action="read-more"]');
+      if (btn) {
+        const textNode = btn.previousElementSibling;
+        if (textNode && textNode.classList.contains('season-overview-text')) {
+          if (textNode.style.display === 'block') {
+            textNode.style.display = '-webkit-box';
+            btn.textContent = 'Read More';
+          } else {
+            textNode.style.display = 'block';
+            btn.textContent = 'Show Less';
+          }
+        }
+      }
+    });
+    container.dataset.readMoreBound = 'true';
   }
 
   // Sync button

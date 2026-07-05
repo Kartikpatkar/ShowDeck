@@ -7,7 +7,7 @@ import * as provider from '../api/provider.js';
 import { getShow, getShowByTmdbId, updateTrackingStatus, rateShow, addShow } from '../database/shows.js';
 import { getEpisodes, markWatched, markUnwatched, markSeasonWatched, markSeasonUnwatched, addEpisodes } from '../database/episodes.js';
 import { getPosterUrl, getBackdropUrl } from '../api/tmdb.js';
-import { formatYear, formatDate, starRating, interactiveStarRating, statusBadge, STATUS_MAP, formatVoteCount, getRelativeTime, toggleGlobalLoading, timeAgo } from '../utils/dom.js';
+import { formatYear, formatDate, starRating, interactiveStarRating, statusBadge, STATUS_MAP, formatVoteCount, getRelativeTime, toggleGlobalLoading, timeAgo, escapeHtml } from '../utils/dom.js';
 import { toast } from '../components/toast.js';
 
 let currentShowId = null; // Internal ID
@@ -317,7 +317,12 @@ function renderContent(container) {
 
     <div style="margin-top:var(--space-8);">
       <h3 class="section-title">Overview</h3>
-      <p class="detail-overview">${showData.overview || 'No overview available.'}</p>
+      <div style="position:relative;">
+        <p class="detail-overview season-overview-text" style="margin:0; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden;">${escapeHtml(showData.overview || 'No overview available.')}</p>
+        ${showData.overview && showData.overview.length > 200 ? `
+          <button class="btn btn-ghost btn-sm" data-action="read-more" style="padding:0; height:auto; min-height:0; color:var(--color-primary); font-size:var(--text-sm); margin-top:var(--space-2);">Read More</button>
+        ` : ''}
+      </div>
     </div>
 
     ${showData.watchProviders && showData.watchProviders.flatrate ? `
@@ -365,11 +370,18 @@ function renderContent(container) {
           if (!sData || (!sData.overview && !sData.posterPath)) return '';
           const sPosterUrl = sData.posterPath ? getPosterUrl(sData.posterPath, 'posterMedium') : null;
           return `
-            <div class="card" style="margin-bottom:var(--space-4); display:flex; gap:var(--space-4); align-items:flex-start;">
-              ${sPosterUrl ? `<img src="${sPosterUrl}" style="width:80px; border-radius:var(--radius-sm);">` : ''}
-              <div style="flex:1;">
-                <h4 style="margin-bottom:var(--space-1);">${sData.name || `Season ${currentSeason}`}</h4>
-                <p style="font-size:var(--text-sm); color:var(--text-secondary); margin:0;">${sData.overview || 'No overview available for this season.'}</p>
+            <div class="card" style="margin-bottom:var(--space-4); padding:var(--space-4); display:flex; gap:var(--space-4); align-items:flex-start;">
+              ${sPosterUrl ? `<img src="${sPosterUrl}" style="width:80px; border-radius:var(--radius-sm); flex-shrink:0;">` : ''}
+              <div style="flex:1; min-width:0;">
+                <h4 style="margin-bottom:var(--space-1);">${escapeHtml(sData.name || `Season ${currentSeason}`)}</h4>
+                <div class="season-overview-container" style="position:relative;">
+                  <p class="season-overview-text" style="font-size:var(--text-sm); color:var(--text-secondary); margin:0; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">
+                    ${escapeHtml(sData.overview || 'No overview available for this season.')}
+                  </p>
+                  ${sData.overview && sData.overview.length > 150 ? `
+                    <button class="btn btn-ghost btn-sm" data-action="read-more" style="padding:0; height:auto; min-height:0; color:var(--color-primary); font-size:var(--text-xs); margin-top:var(--space-1);">Read More</button>
+                  ` : ''}
+                </div>
               </div>
             </div>
           `;
@@ -396,25 +408,24 @@ function renderContent(container) {
                   </div>
                   <a href="#/episode/${showData.tmdbId}/${ep.season}/${ep.episode}" class="episode-link">
                     ${imgHtml}
-                    <div class="episode-info" style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;">
+                    <div class="episode-info" style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;padding-right:var(--space-2);">
                       <div class="episode-number" style="font-size:var(--text-xs);color:var(--text-tertiary);">${ep.season}x${String(ep.episode).padStart(2, '0')}</div>
-                      <div class="episode-title" style="font-weight:var(--weight-medium);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ep.title}</div>
+                      <div class="episode-title" style="font-weight:var(--weight-medium);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${ep.title}</div>
+                      
+                      <!-- Meta row -->
+                      <div class="episode-meta" style="font-size:11px;color:var(--text-tertiary);margin-top:2px;display:flex;gap:4px;flex-wrap:wrap;">
+                        ${ep.airDate ? `<span>${formatDate(ep.airDate)}</span>` : ''}
+                        ${ep.airDate && (ep.runtime || ep.voteAverage) ? '<span>•</span>' : ''}
+                        ${ep.runtime ? `<span>${ep.runtime}m</span>` : ''}
+                        ${ep.runtime && ep.voteAverage ? '<span>•</span>' : ''}
+                        ${ep.voteAverage ? `<span style="color:var(--color-warning);">★ ${ep.voteAverage.toFixed(1)}</span>` : ''}
+                      </div>
                       ${countdown ? `<div style="font-size:10px;font-weight:bold;color:var(--color-primary);margin-top:2px;">${countdown}</div>` : ''}
                     </div>
                   </a>
-                  <div class="episode-actions-wrapper">
-                    ${ep.watched ? `<button class="btn btn-secondary btn-sm add-watch-btn" data-ep-id="${ep.id}" data-action="add-watch" style="padding:0 var(--space-2);height:24px;min-height:24px;font-size:12px;" title="Add another watch">+1${ep.watchCount && ep.watchCount > 1 ? ` (${ep.watchCount})` : ''}</button>` : ''}
-                    <div class="episode-date" style="font-size:var(--text-xs);color:var(--text-tertiary);text-align:right;">
-                      <div>${formatDate(ep.airDate)}</div>
-                      ${ep.runtime || ep.voteAverage ? `
-                        <div style="margin-top:2px;">
-                          ${ep.runtime ? `<span>${ep.runtime} min</span>` : ''}
-                          ${ep.runtime && ep.voteAverage ? '<span> • </span>' : ''}
-                          ${ep.voteAverage ? `<span style="color:var(--color-warning);">★ ${ep.voteAverage.toFixed(1)}</span>` : ''}
-                        </div>
-                      ` : ''}
-                    </div>
-                    <button class="btn btn-icon btn-sm" data-action="toggle-overview" style="color:var(--text-tertiary);margin-left:var(--space-2);" title="Expand overview">
+                  <div class="episode-actions-wrapper" style="display:flex;align-items:center;gap:var(--space-1);margin-right:var(--space-2);">
+                    ${ep.watched ? `<button class="btn btn-secondary btn-sm add-watch-btn" data-ep-id="${ep.id}" data-action="add-watch" style="padding:0 var(--space-2);height:28px;min-height:28px;font-size:12px;border-radius:14px;" title="Add another watch">+1${ep.watchCount && ep.watchCount > 1 ? ` (${ep.watchCount})` : ''}</button>` : ''}
+                    <button class="btn btn-icon btn-sm" data-action="toggle-overview" style="color:var(--text-tertiary);padding:var(--space-1);" title="Expand overview">
                       <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s;"><path d="m6 9 6 6 6-6"/></svg>
                     </button>
                   </div>
@@ -772,5 +783,25 @@ function bindEvents() {
         }
       });
     });
+  }
+
+  // Read More button
+  if (!container.dataset.readMoreBound) {
+    container.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action="read-more"]');
+      if (btn) {
+        const textNode = btn.previousElementSibling;
+        if (textNode && textNode.classList.contains('season-overview-text')) {
+          if (textNode.style.display === 'block') {
+            textNode.style.display = '-webkit-box';
+            btn.textContent = 'Read More';
+          } else {
+            textNode.style.display = 'block';
+            btn.textContent = 'Show Less';
+          }
+        }
+      }
+    });
+    container.dataset.readMoreBound = 'true';
   }
 }

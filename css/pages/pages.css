@@ -228,26 +228,6 @@
 }
 
 @media (max-width: 600px) {
-  .episode-row {
-    flex-wrap: wrap;
-    padding: var(--space-3) 0;
-  }
-  .episode-link {
-    width: calc(100% - 50px);
-    flex: none;
-  }
-  .episode-info .episode-title {
-    white-space: normal;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
-  .episode-actions-wrapper {
-    width: 100%;
-    justify-content: flex-end;
-    margin-top: var(--space-2);
-    margin-right: var(--space-3);
-  }
   .episode-checkbox {
     margin-top: 18px; /* align with image */
   }
