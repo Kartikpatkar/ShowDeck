@@ -3,7 +3,7 @@
  * Track individual episode watch status.
  */
 
-import { db } from './db.js';
+import { db, Dexie } from './db.js';
 
 /**
  * Add episodes for a show (bulk insert from API data).
