@@ -161,7 +161,7 @@ export async function importTVTimeData(zipFile, onProgress = () => {}) {
           tmdbId: null,
           season: ep.season,
           episode: ep.episode,
-          title: '',
+          title: `Episode ${ep.episode}`,
           overview: '',
           airDate: '',
           stillPath: null,

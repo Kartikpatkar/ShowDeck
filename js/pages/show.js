@@ -113,12 +113,19 @@ async function enrichSeasonEpisodes(season) {
     richEps.forEach(rich => {
       const local = episodesData.find(e => e.season === season && e.episode === rich.episode);
       if (local) {
-        if (!local.overview) {
+        let changed = false;
+        if (!local.overview && rich.overview) {
           local.overview = rich.overview;
           local.voteAverage = rich.voteAverage;
           if (rich.stillPath) local.stillPath = rich.stillPath;
-          updated = true;
+          if (rich.runtime && !local.runtime) local.runtime = rich.runtime;
+          changed = true;
         }
+        if ((!local.title || local.title.toLowerCase().startsWith('episode ')) && rich.title && (!rich.title.toLowerCase().startsWith('episode ') || !local.title)) {
+          local.title = rich.title;
+          changed = true;
+        }
+        if (changed) updated = true;
       } else {
         // Missing episode (e.g., from TVTime import), add it to DB
         newEpisodesToInsert.push({
@@ -155,7 +162,7 @@ async function enrichSeasonEpisodes(season) {
       await db.transaction('rw', db.episodes, async () => {
         for (const ep of epsToUpdate) {
           if (ep.id) {
-            await db.episodes.update(ep.id, { overview: ep.overview, voteAverage: ep.voteAverage, stillPath: ep.stillPath });
+            await db.episodes.update(ep.id, { overview: ep.overview, voteAverage: ep.voteAverage, stillPath: ep.stillPath, title: ep.title, runtime: ep.runtime });
           }
         }
       });
@@ -218,10 +225,15 @@ function renderContent(container) {
         <div class="detail-actions">
           ${isTracked ? `
             <select class="input" id="status-select" style="width:180px;">
-              ${Object.entries(STATUS_MAP).map(([val, {label}]) => `
-                <option value="${val}" ${showData.trackingStatus === val ? 'selected' : ''}>${label}</option>
+              ${Object.entries(STATUS_MAP).map(([k,v]) => `
+                <option value="${k}" ${showData.trackingStatus === k ? 'selected' : ''}>
+                  ${v.icon} ${v.label}
+                </option>
               `).join('')}
             </select>
+            <button class="btn btn-ghost" id="remove-btn" style="color:var(--color-error);" title="Remove from Library">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            </button>
             <button class="btn btn-secondary btn-sm" id="mark-all-btn">Mark All ✓</button>
             <div class="rating-stars" id="rating-control" style="display:flex;align-items:center;gap:4px;font-size:24px;cursor:pointer;color:var(--color-warning);">
               ${interactiveStarRating(showData.rating || 0)}
@@ -296,7 +308,16 @@ function renderContent(container) {
                 </div>
                 <div class="episode-actions" style="display:flex;align-items:center;gap:var(--space-2);margin-right:var(--space-3);">
                   ${ep.watched ? `<button class="btn btn-secondary btn-sm add-watch-btn" data-ep-id="${ep.id}" data-action="add-watch" style="padding:0 var(--space-2);height:24px;min-height:24px;font-size:12px;" title="Add another watch">+1${ep.watchCount && ep.watchCount > 1 ? ` (${ep.watchCount})` : ''}</button>` : ''}
-                  <div class="episode-date" style="font-size:var(--text-xs);color:var(--text-tertiary);">${formatDate(ep.airDate)}</div>
+                  <div class="episode-date" style="font-size:var(--text-xs);color:var(--text-tertiary);text-align:right;">
+                    <div>${formatDate(ep.airDate)}</div>
+                    ${ep.runtime || ep.voteAverage ? `
+                      <div style="margin-top:2px;">
+                        ${ep.runtime ? `<span>${ep.runtime} min</span>` : ''}
+                        ${ep.runtime && ep.voteAverage ? '<span> • </span>' : ''}
+                        ${ep.voteAverage ? `<span style="color:var(--color-warning);">★ ${ep.voteAverage.toFixed(1)}</span>` : ''}
+                      </div>
+                    ` : ''}
+                  </div>
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-tertiary);margin-left:var(--space-2);"><path d="m9 18 6-6-6-6"/></svg>
                 </div>
               </a>
@@ -355,11 +376,32 @@ function bindEvents() {
 
   // Status select
   const statusSelect = document.getElementById('status-select');
-  if (statusSelect) {
+  if (statusSelect && isTracked) {
     statusSelect.addEventListener('change', async (e) => {
-      await updateTrackingStatus(currentShowId, e.target.value);
-      showData.trackingStatus = e.target.value;
+      const newStatus = e.target.value;
+      const { updateTrackingStatus } = await import('../database/shows.js');
+      await updateTrackingStatus(currentShowId, newStatus);
+      showData.trackingStatus = newStatus;
       toast('Status updated');
+      renderContent(container);
+      bindEvents();
+    });
+  }
+
+  // Remove button
+  const removeBtn = document.getElementById('remove-btn');
+  if (removeBtn && isTracked) {
+    removeBtn.addEventListener('click', async () => {
+      if (!confirm(`Are you sure you want to remove ${showData.title} from your library? All watch history will be lost.`)) return;
+      try {
+        const { deleteShow } = await import('../database/shows.js');
+        await deleteShow(currentShowId);
+        toast('Show removed from library');
+        window.history.length > 1 ? window.history.back() : window.location.hash = '#/home';
+      } catch (err) {
+        console.error('Failed to remove show:', err);
+        toast('Failed to remove show', 'error');
+      }
     });
   }
 

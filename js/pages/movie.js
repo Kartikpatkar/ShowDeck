@@ -110,7 +110,9 @@ function renderContent(container) {
               ${Object.entries(STATUS_MAP).map(([val, {label}]) => `
                 <option value="${val}" ${movieData.trackingStatus === val ? 'selected' : ''}>${label}</option>
               `).join('')}
-            </select>
+            <button class="btn btn-ghost" id="remove-btn" style="color:var(--color-error);" title="Remove from Library">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            </button>
             <div class="rating-stars" id="movie-rating" style="display:flex;align-items:center;gap:4px;font-size:24px;cursor:pointer;color:var(--color-warning);">
               ${interactiveStarRating(movieData.rating || 0)}
             </div>
@@ -185,11 +187,32 @@ function bindEvents() {
   }
 
   const statusSelect = document.getElementById('movie-status-select');
-  if (statusSelect) {
+  if (statusSelect && isTracked) {
     statusSelect.addEventListener('change', async (e) => {
-      await updateMovieTrackingStatus(currentMovieId, e.target.value);
-      movieData.trackingStatus = e.target.value;
+      const newStatus = e.target.value;
+      const { updateMovieStatus } = await import('../database/movies.js');
+      await updateMovieStatus(currentMovieId, newStatus);
+      movieData.trackingStatus = newStatus;
       toast('Status updated');
+      renderContent(container);
+      bindEvents();
+    });
+  }
+
+  // Remove button
+  const removeBtn = document.getElementById('remove-btn');
+  if (removeBtn && isTracked) {
+    removeBtn.addEventListener('click', async () => {
+      if (!confirm(`Are you sure you want to remove ${movieData.title} from your library?`)) return;
+      try {
+        const { deleteMovie } = await import('../database/movies.js');
+        await deleteMovie(currentMovieId);
+        toast('Movie removed from library');
+        window.history.length > 1 ? window.history.back() : window.location.hash = '#/home';
+      } catch (err) {
+        console.error('Failed to remove movie:', err);
+        toast('Failed to remove movie', 'error');
+      }
     });
   }
 

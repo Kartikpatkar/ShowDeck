@@ -171,8 +171,14 @@ async function loadLibrary() {
     getAllMovies(),
   ]);
 
+  const { getShowProgress } = await import('../database/episodes.js');
+  const showsWithProgress = await Promise.all(shows.map(async s => {
+    const progress = await getShowProgress(s.id);
+    return { ...s, progress, itemType: 'show' };
+  }));
+
   allItems = [
-    ...shows.map(s => ({ ...s, itemType: 'show' })),
+    ...showsWithProgress,
     ...movies.map(m => ({ ...m, itemType: 'movie' })),
   ];
 
@@ -280,9 +286,10 @@ function renderGridCard(item) {
         ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
         : `<div class="poster-card-image" style="display:flex;align-items:center;justify-content:center;background:var(--surface-3);"><span style="font-size:var(--text-3xl);opacity:0.3;">🎬</span></div>`
       }
+      ${item.progress && item.progress.percentage > 0 ? `<div style="position:absolute;bottom:0;left:0;height:4px;background:var(--color-primary);width:${item.progress.percentage}%;z-index:2;"></div>` : ''}
       <div class="poster-card-overlay">
         <div class="poster-card-title">${item.title}</div>
-        <div class="poster-card-meta">${year} • ${item.itemType === 'show' ? 'TV' : 'Movie'}</div>
+        <div class="poster-card-meta">${year} • ${item.itemType === 'show' ? 'TV' : 'Movie'}${item.progress ? ` • ${item.progress.percentage}%` : ''}</div>
       </div>
       <div style="position:absolute;top:var(--space-2);right:var(--space-2);">
         <span class="badge badge-${status.color}" style="font-size:10px;">${status.icon} ${status.label}</span>
@@ -311,7 +318,7 @@ function renderListItem(item) {
       }
       <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--space-1);">
         <div style="font-weight:var(--weight-medium);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</div>
-        <div style="font-size:var(--text-xs);color:var(--text-tertiary);">${year} • ${item.itemType === 'show' ? 'TV Show' : 'Movie'}${genres ? ` • ${genres}` : ''}</div>
+        <div style="font-size:var(--text-xs);color:var(--text-tertiary);">${year} • ${item.itemType === 'show' ? 'TV Show' : 'Movie'}${item.progress ? ` • ${item.progress.percentage}%` : ''}${genres ? ` • ${genres}` : ''}</div>
         <div style="display:flex;gap:var(--space-2);align-items:center;margin-top:var(--space-1);">
           ${statusBadge(item.trackingStatus)}
           ${item.rating ? `<span class="badge badge-warning">★ ${item.rating}</span>` : ''}
@@ -341,6 +348,7 @@ function renderCompactItem(item) {
       <span style="width:8px;height:8px;border-radius:var(--radius-full);background:var(--color-${status.color});flex-shrink:0;"></span>
       ${isMissing ? `<span style="font-size:10px;background:var(--color-error);color:white;padding:1px 4px;border-radius:4px;">Fix</span>` : ''}
       <span style="flex:1;font-size:var(--text-sm);font-weight:var(--weight-medium);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</span>
+      ${item.progress && item.progress.percentage > 0 ? `<span style="font-size:var(--text-xs);color:var(--color-primary);flex-shrink:0;">${item.progress.percentage}%</span>` : ''}
       <span style="font-size:var(--text-xs);color:var(--text-tertiary);flex-shrink:0;">${year}</span>
       <span style="font-size:var(--text-xs);color:var(--text-tertiary);flex-shrink:0;width:50px;">${item.itemType === 'show' ? 'TV' : 'Movie'}</span>
       ${item.rating ? `<span style="font-size:var(--text-xs);color:var(--color-warning);flex-shrink:0;">★ ${item.rating}</span>` : '<span style="width:30px;flex-shrink:0;"></span>'}
