@@ -3,66 +3,61 @@
  * Handles offline caching for static assets, API responses, and images.
  */
 
-const CACHE_NAME = 'showdeck-v13';
+const CACHE_NAME = 'showdeck-v14';
 const API_CACHE_NAME = 'showdeck-api-v1';
 const IMG_CACHE_NAME = 'showdeck-img-v1';
 
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/css/variables.css',
-  '/css/reset.css',
-  '/css/base.css',
-  '/css/layout.css',
-  '/css/components.css',
-  '/css/utilities.css',
-  '/css/pages/pages.css',
-  '/js/app.js',
-  '/js/router.js',
-  '/js/components/sidebar.js',
-  '/js/components/toast.js',
-  '/js/utils/dom.js',
-  // API Modules
-  '/js/api/tmdb.js',
-  '/js/api/tvmaze.js',
-  '/js/api/provider.js',
-  // DB Modules
-  '/js/database/db.js',
-  '/js/database/shows.js',
-  '/js/database/movies.js',
-  '/js/database/episodes.js',
-  '/js/database/collections.js',
-  '/js/database/tags.js',
-  '/js/database/stats.js',
-  // Page Modules
-  '/js/pages/home.js',
-  '/js/pages/search.js',
-  '/js/pages/library.js',
-  '/js/pages/show.js',
-  '/js/pages/movie.js',
-  '/js/pages/collections.js',
-  '/js/pages/stats.js',
-  '/js/pages/settings.js',
-  // Components
-  '/js/components/modal.js',
-  // Services
-  '/js/services/tvtime-import.js',
-  '/js/services/theme.js',
+  './',
+  './index.html',
+  './manifest.json',
+  // CSS
+  './css/variables.css',
+  './css/reset.css',
+  './css/base.css',
+  './css/layout.css',
+  './css/components.css',
+  './css/utilities.css',
+  './css/pages/pages.css',
+  // JS
+  './js/app.js',
+  './js/router.js',
+  './js/database/db.js',
+  './js/database/shows.js',
+  './js/database/movies.js',
+  './js/database/episodes.js',
+  './js/database/collections.js',
+  './js/database/tags.js',
+  './js/database/activity.js',
+  './js/api/tmdb.js',
+  './js/api/tvmaze.js',
+  './js/api/provider.js',
+  './js/utils/dom.js',
+  './js/utils/apiTracker.js',
+  './js/components/sidebar.js',
+  './js/components/toast.js',
+  './js/components/enrich-modal.js',
+  './js/pages/home.js',
+  './js/pages/search.js',
+  './js/pages/library.js',
+  './js/pages/show.js',
+  './js/pages/movie.js',
+  './js/pages/episode.js',
+  './js/pages/collections.js',
+  './js/pages/stats.js',
+  './js/pages/settings.js',
+  './js/pages/onboarding.js',
+  './js/pages/share.js',
+  './js/pages/enrich.js',
+  './js/services/tvtime-import.js',
+  './js/services/theme.js',
   // Lib (offline)
-  '/js/lib/chart.umd.js',
-  '/js/lib/jszip.min.js',
-  '/js/lib/dexie.mjs',
-  // Utils
-  '/js/utils/apiTracker.js',
-  // Pages (missing from v1)
-  '/js/pages/episode.js',
-  '/js/pages/enrich.js',
-  // Components (missing from v1)
-  '/js/components/enrich-modal.js',
+  './js/lib/chart.umd.js',
+  './js/lib/jszip.min.js',
+  './js/lib/dexie.mjs',
   // Assets
-  '/assets/icon-192.png',
-  '/assets/icon-512.png',
+  './assets/icon-192.png',
+  './assets/icon-512.png',
 ];
 
 self.addEventListener('install', (e) => {
