@@ -1,22 +1,31 @@
 # Changelog
 
-All notable changes to the ShowDeck project will be documented in this file.
+All notable changes to ShowDeck will be documented in this file.
 
-## [Unreleased] - Initial Launch Version
+## [1.0.0] - 2026-07-05
 
 ### Added
-- **TV Time Import Engine**: Users can now import their GDPR data export (`.zip`) from TV Time directly in the browser. Supports parsing TV Time CSVs and resolving TMDB IDs locally.
-- **Offline Mode Support**: Integrated local caching for `Chart.js` and `JSZip` to ensure the entire app functions without an internet connection.
-- **PWA Capabilities**: Added `manifest.json`, generated vector icons (`icon-192.png`, `icon-512.png`), and configured service workers (`sw.js`) for full PWA installation on mobile and desktop.
-- **Open Graph SEO**: Added proper meta tags to `index.html` for rich link previews when sharing.
-- **Search UI Enhancements**: Wrapped the search input in a form to handle mobile keyboard dismissal gracefully and added an instant "Clear Search" button.
-- **Image Fallbacks**: Implemented a global image error handler (`app.js`) to elegantly hide broken images from APIs.
-- **Settings & Data Management UI**: Cleaned up the settings page, introducing separated cards for Data Management (JSON backup/restore), TV Time Import, and a Danger Zone for data deletion.
+- **Multiple Accent Themes**: Added Purple, Blue, Green, and Red themes in Settings.
+- **Export to CSV**: Added ability to export library data to CSV.
+- **Share Library**: Generate a shareable, read-only link of your library stats (`#/share`).
+- **Episode Notes**: Added auto-saving "My Notes" textareas to episode pages.
+- **Keyboard Navigation**: Added `Esc` to go back, `s` to trigger manual sync, and `w` to toggle watched status on episodes.
+- **Offline Indicator**: Added "Last synced" timestamps that become visible when offline to indicate data freshness.
+- **Sync Overlay**: Added an invisible global loading overlay during database syncs to prevent concurrent state corruption.
+- **XSS Protection**: All dynamic API data is now sanitized via `escapeHtml()` utility.
+- **Security**: Added strict Content Security Policy (CSP) to `index.html`.
+- **Search Debounce**: Implemented responsive debouncing (500ms on mobile, 300ms on desktop) to optimize API usage.
 
 ### Fixed
-- Handled 401 Unauthorized API responses in `tmdb.js` with clear user-facing toast notifications.
-- Fixed sidebar brand icon styling and replaced SVG placeholder with actual PWA app icon.
-- Improved Dexie database schema mapping for activity logs and statistics.
+- Fixed critical Service Worker caching failure by ensuring all new assets are listed in `sw.js`.
+- Fixed Service Worker registration path scoping (`./sw.js`).
+- Fixed invalid `margin-left` CSS properties in movie and show list components.
+- Fixed a boolean casting error in database stats calculations.
+- Bundled Dexie.js locally to ensure the app boots without relying on a CDN.
+- Fixed iOS PWA installation by strictly resizing `icon-192.png` and `icon-512.png` to true PNGs.
+- Fixed a fatal crash in `syncShow` and `syncMovie` when TMDB returns null data (e.g., when offline).
 
-### Security & Privacy
-- Confirmed strictly local architecture. All parsing, importing, and database storage happens client-side with zero telemetrics.
+### Changed
+- Refactored DOM utility functions into a centralized `utils/dom.js`.
+- Made Star Rating component accessible to keyboard and screen-reader users (`tabindex`, `role="button"`, `aria-label`).
+- "Wipe Data" functionality now thoroughly scans and removes all `showdeck_` localStorage keys along with the IndexedDB deletion.

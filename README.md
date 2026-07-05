@@ -1,51 +1,48 @@
-# ShowDeck 🎬
+# ShowDeck
 
-ShowDeck is a fast, completely private, offline-first personal entertainment tracker for TV shows and movies. Built with Vanilla JavaScript, it runs entirely in your browser with no tracking, no accounts, and no data leaving your device (other than metadata fetches to TMDB).
+A privacy-first, offline-first, local-first personal entertainment tracker built as a Progressive Web App (PWA).
+
+ShowDeck allows you to track your favorite TV shows and movies, rate episodes, take personal notes, and view your watch statistics—all without creating an account or sending your data to a third-party server.
 
 ## Features
 
-- **Offline-First & PWA**: Install it on your phone or desktop. Works offline using a Service Worker and IndexedDB.
-- **Privacy First**: Your data lives in your browser. There is no backend server.
-- **BYOK (Bring Your Own Key)**: Connects to the TMDB API using your own API key.
-- **TV Time Import**: Easily migrate your data from a TV Time GDPR export `.zip` file. Processes locally!
-- **Library & Collections**: Track what you're watching, what you plan to watch, and build custom collections.
-- **Statistics**: Visualize your watching habits with beautiful, locally-rendered charts.
-- **Modern UI**: Smooth animations, dark mode, responsive design, and glassmorphism styling.
+- **Local-First Architecture:** All your data is stored locally on your device using IndexedDB (Dexie.js).
+- **Offline Support:** The app caches itself using a Service Worker, allowing you to view your library even without an internet connection.
+- **Direct API Connections:** ShowDeck connects directly to TMDB (The Movie Database) and TVMaze from your browser. You provide your own TMDB API key.
+- **Privacy Guaranteed:** No analytics, no tracking pixels, no backend servers. Your data never leaves your device unless you export it.
+- **Rich Organization:** Track status (Watching, Completed, Plan to Watch, etc.), rate shows out of 5 stars, and write personal notes for specific episodes.
+- **Customization:** Choose between Light and Dark mode, or customize the app's accent color (Purple, Blue, Green, Red).
+- **Data Portability:** Export your entire library to JSON or CSV for use in spreadsheets or to back up to another device. You can also generate a shareable link of your library stats.
+- **Import from TV Time:** Easily migrate your data from TV Time via a ZIP export.
+
+## Installation
+
+Since ShowDeck is a Progressive Web App (PWA), you can install it directly to your home screen or desktop:
+
+1. **iOS (Safari):** Tap the Share button, then select "Add to Home Screen".
+2. **Android (Chrome):** Tap the menu button, then select "Install app" or "Add to Home Screen".
+3. **Desktop (Chrome/Edge):** Click the installation icon on the right side of the URL bar.
 
 ## Getting Started
 
-Since ShowDeck is a static web app, you can run it with any basic web server, or simply host it on GitHub Pages, Vercel, Netlify, etc.
+1. Open ShowDeck and navigate to **Settings**.
+2. Under **API Providers**, enter a valid [TMDB API Key (v3 auth)](https://developer.themoviedb.org/docs). This key is stored securely on your device.
+3. Start searching for shows and movies!
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/showdeck.git
-   cd showdeck
-   ```
-2. Serve locally (using Node, Python, etc):
-   ```bash
-   npx serve .
-   ```
-3. Open `http://localhost:3000` in your browser.
-4. Go to **Settings** and enter your TMDB API Key.
+## Tech Stack
 
-## Data Portability
+ShowDeck is built using vanilla web technologies to ensure maximum performance, zero dependencies, and long-term stability:
 
-Because ShowDeck doesn't use a cloud backend, you own your data.
-Go to **Settings > Data Management** to:
-- Export your entire library to a JSON file.
-- Restore from a previous JSON backup.
-- Delete everything instantly.
+- **HTML5 & CSS3** (Vanilla CSS with custom properties for theming)
+- **Vanilla JavaScript** (ES Modules)
+- **Dexie.js** (IndexedDB wrapper for local storage)
+- **Chart.js** (For rendering statistics)
+- **JSZip** (For TV Time migrations)
 
-## Architecture & Tech Stack
+## Contributing
 
-- **Vanilla JS**: No React, Vue, or Angular.
-- **CSS**: Pure custom CSS with variables and a modular architecture.
-- **IndexedDB**: Handled elegantly via [Dexie.js](https://dexie.org/).
-- **Service Workers**: Caches static assets, images, and API responses for full offline support.
-- **Offline Dependencies**: Includes local versions of Chart.js and JSZip.
-
-For more detailed architectural notes, see `docs/ARCHITECTURE.md`.
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to ShowDeck.
 
 ## License
 
-MIT License. See `LICENSE` for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
