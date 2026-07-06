@@ -2,6 +2,16 @@
 
 All notable changes to ShowDeck will be documented in this file.
 
+## [1.0.1] - Hotfix Release
+
+### Fixed
+- Fixed bug where marking a Movie as "Completed" did not successfully save to the database.
+- Fixed an issue where the user's custom accent color reset to default upon reloading the app.
+- Fixed native back-button routing loops specifically on the "Failed to load movie/show" error pages.
+- Enforced strict "portrait" orientation lock in `manifest.json` to prevent unwanted device auto-rotation.
+- Added native Pull-to-Refresh gesture support for mobile devices.
+- Hardcoded `mediaType` injections into IndexedDB fetch cycles to permanently resolve UI routing collisions between movies and TV shows on the Home dashboard.
+
 ## [1.0.0] - 2026-07-05
 
 ### Added

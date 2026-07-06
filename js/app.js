@@ -6,7 +6,7 @@
 import { Router } from './router.js';
 import { Sidebar } from './components/sidebar.js';
 
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.0.1';
 
 const router = new Router();
 let sidebar = null;
@@ -190,6 +190,9 @@ function init() {
   // Create sidebar
   sidebar = new Sidebar(app, router);
 
+  // Apply saved theme
+  initTheme();
+
   // Start router
   router.start();
 
@@ -207,6 +210,34 @@ window.addEventListener('error', function(e) {
     e.target.style.display = 'none'; // Hide broken images globally
   }
 }, true);
+
+// ── Pull to Refresh ──
+let touchStartY = 0;
+let touchStartX = 0;
+let initialScrollTop = 0;
+
+document.addEventListener('touchstart', (e) => {
+  touchStartY = e.touches[0].clientY;
+  touchStartX = e.touches[0].clientX;
+  const content = document.querySelector('.main-content');
+  initialScrollTop = content ? content.scrollTop : 0;
+}, { passive: true });
+
+document.addEventListener('touchend', (e) => {
+  const touchEndY = e.changedTouches[0].clientY;
+  const touchEndX = e.changedTouches[0].clientX;
+  const content = document.querySelector('.main-content');
+  
+  if (content && initialScrollTop === 0 && content.scrollTop === 0) {
+    const yDiff = touchEndY - touchStartY;
+    const xDiff = Math.abs(touchEndX - touchStartX);
+    
+    // Trigger if pulled down > 150px and mostly vertical (prevent horizontal swipe trigger)
+    if (yDiff > 150 && xDiff < 100) {
+      window.location.reload();
+    }
+  }
+}, { passive: true });
 
 // ── Global Keyboard Shortcuts ──
 window.addEventListener('keydown', (e) => {
