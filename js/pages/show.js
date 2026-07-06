@@ -101,9 +101,12 @@ function renderError(container, text) {
     <div class="empty-state" style="padding:var(--space-12) var(--space-4);">
       <h3 class="empty-state-title">Failed to load show</h3>
       <p class="empty-state-text">${text}</p>
-      <button class="btn btn-primary" id="back-btn">Go Back</button>
+      <button class="btn btn-primary" id="back-btn-error">Go Back</button>
     </div>
   `;
+  document.getElementById('back-btn-error')?.addEventListener('click', () => {
+    window.appRouter.goBack();
+  });
 }
 
 async function fetchAndSaveEpisodes(tmdbId, tvmazeId, totalSeasons, localId) {
