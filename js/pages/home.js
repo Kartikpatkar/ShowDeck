@@ -341,7 +341,6 @@ export async function render() {
       </div>
 
       ${planToWatchHTML}
-      ${upcomingHTML}
 
       <!-- Recently Added -->
       <div class="section">
@@ -361,6 +360,8 @@ export async function render() {
         </div>
         ${recentlyAddedHTML}
       </div>
+
+      ${upcomingHTML}
     </div>
   `;
 }

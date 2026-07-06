@@ -210,7 +210,7 @@ export async function importTVTimeData(zipFile, onProgress = () => {}) {
         genres: [],
         releaseDate: movie.releaseDate || '',
         runtime: movie.runtime || 0,
-        trackingStatus: 'completed',
+        trackingStatus: movie.status,
         rating: 0,
         addedAt: movie.followedAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -306,7 +306,7 @@ function buildMovieList(records) {
   for (const row of records) {
     const type = row.type || row.entity_type || '';
     const name = row.movie_name;
-    if (type !== 'follow' || !name) continue;
+    if (!name || (type !== 'follow' && type !== 'watch' && type !== 'seen')) continue;
 
     if (!movieMap[name]) {
       movieMap[name] = {
@@ -314,7 +314,11 @@ function buildMovieList(records) {
         runtime: Math.round(parseInt(row.runtime || '0', 10) / 60),
         releaseDate: (row.release_date || '').split(' ')[0],
         followedAt: row.created_at || '',
+        status: (type === 'watch' || type === 'seen') ? 'completed' : 'plan'
       };
+    } else if (type === 'watch' || type === 'seen') {
+      // Upgrade status to completed if we find a watch record later
+      movieMap[name].status = 'completed';
     }
   }
 
