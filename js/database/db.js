@@ -33,6 +33,23 @@ db.version(1).stores({
   apiCache: '++id, &key, expiresAt',
 });
 
+// Schema version 2
+db.version(2).stores({
+  // Retain existing tables
+  shows: '++id, tmdbId, tvmazeId, title, trackingStatus, rating, addedAt, updatedAt, *tags, *genres',
+  movies: '++id, tmdbId, title, trackingStatus, rating, addedAt, updatedAt, *tags, *genres',
+  episodes: '++id, showId, [showId+season+episode], tmdbId, season, episode, watched, watchedAt, favorite',
+  collections: '++id, name, createdAt',
+  tags: '++id, &name',
+  activity: '++id, type, itemId, itemType, date, [itemType+itemId]',
+  apiCache: '++id, &key, expiresAt',
+
+  // New V2 Tables
+  goals: '++id, name, type, target, progress, createdAt',
+  backups: '++id, type, date, size',
+  smartCollections: '++id, name, rules, createdAt'
+});
+
 export { db, Dexie };
 
 // ── Helper: Clear all data ──
@@ -44,17 +61,21 @@ export async function clearAllData() {
   await db.tags.clear();
   await db.activity.clear();
   await db.apiCache.clear();
+  await db.goals.clear();
+  await db.backups.clear();
+  await db.smartCollections.clear();
 }
 
 // ── Helper: Get DB stats ──
 export async function getDbStats() {
-  const [shows, movies, episodes, collections, tags, activities] = await Promise.all([
+  const [shows, movies, episodes, collections, tags, activities, backups] = await Promise.all([
     db.shows.count(),
     db.movies.count(),
     db.episodes.filter(e => e.watched === true).count(),
     db.collections.count(),
     db.tags.count(),
     db.activity.count(),
+    db.backups.count()
   ]);
-  return { shows, movies, episodes, collections, tags, activities };
+  return { shows, movies, episodes, collections, tags, activities, backups };
 }

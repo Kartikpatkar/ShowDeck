@@ -25,19 +25,19 @@
   - `[x]` Query `db.episodes` for future air dates of tracked shows and plot them in a monthly/timeline view.
 
 ## Phase 3: Architecture Upgrades & Storage (Dexie v2 Schema)
-- `[ ]` **Database Migration Engine**
-  - `[ ]` Implement `db.version(2)` in `db.js`.
-  - `[ ]` Pre-define new schemas for `goals`, `backups`, and `smartCollections`.
-- `[ ]` **Feature 12: Versioned Backups (Robust & Fail-Safe)**
-  - `[ ]` Create backup worker logic with strict `try/catch` and IndexedDB transactions to prevent mid-write corruption.
-  - `[ ]` Implement a 3-tier rolling backup strategy (Daily, Weekly, Monthly) to manage storage limits.
-  - `[ ]` Build Restore UI in Settings with fallback warnings.
-- `[ ]` **Feature 6: Personal Goals**
-  - `[ ]` Build UI to define goals (e.g., "Watch 100 Movies").
-  - `[ ]` Link progress engine to `db.activity` to auto-update progress bars.
-- `[ ]` **Feature 15: Smart Collections**
-  - `[ ]` Build rule-engine logic (e.g., `Genre = Crime + Rating > 8`).
-  - `[ ]` Dynamically filter library contents based on saved rules.
+- `[x]` **Database Migration Engine**
+  - `[x]` Implement `db.version(2)` in `db.js`.
+  - `[x]` Pre-define new schemas for `goals`, `backups`, and `smartCollections`.
+- `[x]` **Feature 12: Versioned Backups (Robust & Fail-Safe)**
+  - `[x]` Create backup worker logic with strict `try/catch` and IndexedDB transactions to prevent mid-write corruption.
+  - `[x]` Implement a 3-tier rolling backup strategy (Daily, Weekly, Monthly) to manage storage limits.
+  - `[x]` Build Restore UI in Settings with fallback warnings.
+- `[x]` **Feature 6: Personal Goals**
+  - `[x]` Build UI to define goals (e.g., "Watch 100 Movies").
+  - `[x]` Link progress engine to `db.activity` to auto-update progress bars.
+- `[x]` **Feature 15: Smart Collections**
+  - `[x]` Build rule-engine logic (e.g., `Genre = Crime + Rating > 8`).
+  - `[x]` Dynamically filter library contents based on saved rules.
 
 ## Phase 4: Analytics & Gamification
 - `[ ]` **Feature 11: Advanced Statistics**

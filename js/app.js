@@ -145,6 +145,12 @@ router
   .on('/enrich', (params) => {
     loadPage(() => import('./pages/enrich.js'), params);
   })
+  .on('/goals', (params) => {
+    loadPage(() => import('./pages/goals.js'), params);
+  })
+  .on('/smart-collections', (params) => {
+    loadPage(() => import('./pages/smart_collections.js'), params);
+  })
   .on('/share', (params) => {
     loadPage(() => import('./pages/share.js'), params);
   })
