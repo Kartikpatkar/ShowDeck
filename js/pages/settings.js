@@ -239,6 +239,9 @@ function bindEvents() {
         const { applyCustomTheme } = await import('../utils/dom.js');
         applyCustomTheme(null);
         updateThemeVisuals(theme);
+        
+        const { initTheme } = await import('../app.js');
+        initTheme();
       }
     });
   });
@@ -255,6 +258,9 @@ function bindEvents() {
       localStorage.setItem('showdeck_custom_color', hex);
       const { applyCustomTheme } = await import('../utils/dom.js');
       applyCustomTheme(hex);
+      
+      const { initTheme } = await import('../app.js');
+      initTheme();
       updateThemeVisuals('custom');
     });
   }

@@ -3,7 +3,7 @@
  * Handles offline caching for static assets, API responses, and images.
  */
 
-const CACHE_NAME = 'showdeck-v15';
+const CACHE_NAME = 'showdeck-v16';
 const API_CACHE_NAME = 'showdeck-api-v1';
 const IMG_CACHE_NAME = 'showdeck-img-v1';
 

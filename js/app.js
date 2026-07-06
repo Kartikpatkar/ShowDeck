@@ -177,10 +177,24 @@ router.afterEach = (route) => {
     sidebar.setActive(navRoute);
   }
 
-  // Scroll content to top
+  // Scroll content to saved position or top
   const content = document.querySelector('.main-content');
-  if (content) content.scrollTop = 0;
+  if (content) {
+    const savedScroll = window.appScrollPositions?.get(window.location.hash) || 0;
+    // Delay slightly to let content render before scrolling
+    setTimeout(() => {
+      if (content) content.scrollTop = savedScroll;
+    }, 150);
+  }
 };
+
+// ── Track Scroll Positions ──
+window.appScrollPositions = new Map();
+document.addEventListener('scroll', (e) => {
+  if (e.target && e.target.classList && e.target.classList.contains('main-content')) {
+    window.appScrollPositions.set(window.location.hash, e.target.scrollTop);
+  }
+}, true);
 
 // ── Initialize App ──
 function init() {
@@ -215,12 +229,40 @@ window.addEventListener('error', function(e) {
 let touchStartY = 0;
 let touchStartX = 0;
 let initialScrollTop = 0;
+let ptrIndicator = null;
+let ptrIcon = null;
 
 document.addEventListener('touchstart', (e) => {
   touchStartY = e.touches[0].clientY;
   touchStartX = e.touches[0].clientX;
   const content = document.querySelector('.main-content');
   initialScrollTop = content ? content.scrollTop : 0;
+  
+  if (!ptrIndicator) {
+    ptrIndicator = document.getElementById('ptr-indicator');
+    ptrIcon = document.getElementById('ptr-icon');
+  }
+}, { passive: true });
+
+document.addEventListener('touchmove', (e) => {
+  const content = document.querySelector('.main-content');
+  if (content && initialScrollTop === 0 && content.scrollTop <= 0 && ptrIndicator) {
+    const yDiff = e.touches[0].clientY - touchStartY;
+    const xDiff = Math.abs(e.touches[0].clientX - touchStartX);
+    
+    if (yDiff > 0 && yDiff > xDiff) {
+      // Pulling down
+      const pullDist = Math.min(yDiff * 0.5, 100); // dampen pull
+      ptrIndicator.style.transition = 'none';
+      ptrIndicator.style.opacity = Math.min(pullDist / 60, 1);
+      ptrIndicator.style.transform = `translateY(${pullDist - 50}px)`;
+      
+      if (ptrIcon) {
+        ptrIcon.style.transition = 'none';
+        ptrIcon.style.transform = `rotate(${pullDist * 4}deg)`;
+      }
+    }
+  }
 }, { passive: true });
 
 document.addEventListener('touchend', (e) => {
@@ -228,14 +270,28 @@ document.addEventListener('touchend', (e) => {
   const touchEndX = e.changedTouches[0].clientX;
   const content = document.querySelector('.main-content');
   
-  if (content && initialScrollTop === 0 && content.scrollTop === 0) {
+  if (ptrIndicator) {
+    ptrIndicator.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+    if (ptrIcon) ptrIcon.style.transition = 'transform 0.3s ease-out';
+  }
+  
+  if (content && initialScrollTop === 0 && content.scrollTop <= 0) {
     const yDiff = touchEndY - touchStartY;
     const xDiff = Math.abs(touchEndX - touchStartX);
     
-    // Trigger if pulled down > 150px and mostly vertical (prevent horizontal swipe trigger)
-    if (yDiff > 150 && xDiff < 100) {
-      window.location.reload();
+    if (yDiff > 120 && xDiff < 100) {
+      if (ptrIcon) {
+        ptrIcon.style.transition = 'transform 1s linear infinite';
+        ptrIcon.style.transform = 'rotate(360deg)';
+      }
+      setTimeout(() => window.location.reload(), 300);
+    } else if (ptrIndicator) {
+      ptrIndicator.style.transform = 'translateY(-150%)';
+      ptrIndicator.style.opacity = '0';
     }
+  } else if (ptrIndicator) {
+    ptrIndicator.style.transform = 'translateY(-150%)';
+    ptrIndicator.style.opacity = '0';
   }
 }, { passive: true });
 
@@ -278,7 +334,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-function initTheme() {
+export function initTheme() {
   const theme = localStorage.getItem('showdeck_theme') || 'dark';
   const accent = localStorage.getItem('showdeck_accent_theme') || 'purple';
   const customColor = localStorage.getItem('showdeck_custom_color');
@@ -298,6 +354,16 @@ function initTheme() {
     });
   }
   document.body.dataset.theme = accent;
+  
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) {
+    if (accent === 'custom' && customColor) {
+      metaTheme.setAttribute('content', customColor);
+    } else {
+      const colors = { purple: '#5b4dc7', blue: '#0080ff', green: '#30a66d', red: '#de2323' };
+      metaTheme.setAttribute('content', colors[accent] || '#5b4dc7');
+    }
+  }
 }
 
 function updateOnlineStatus() {
