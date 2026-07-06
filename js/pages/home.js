@@ -76,6 +76,16 @@ export async function render() {
     db.movies.toArray()
   ]);
 
+  // Inject mediaType for routing
+  watchingShows.forEach(i => i.mediaType = 'show');
+  planToWatchShows.forEach(i => i.mediaType = 'show');
+  recentShows.forEach(i => i.mediaType = 'show');
+  allShows.forEach(i => i.mediaType = 'show');
+  
+  planToWatchMovies.forEach(i => i.mediaType = 'movie');
+  recentMovies.forEach(i => i.mediaType = 'movie');
+  allMovies.forEach(i => i.mediaType = 'movie');
+
   // Build continue watching cards with progress
   let continueWatchingHTML = '';
   if (watchingShows.length > 0) {
@@ -131,7 +141,7 @@ export async function render() {
   if (planItems.length > 0) {
     const cards = planItems.map(item => {
       const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
-      const isShow = item.totalSeasons !== undefined;
+      const isShow = item.mediaType === 'show';
       const route = isShow ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
       const year = formatYear(isShow ? item.firstAirDate : item.releaseDate);
       return `
@@ -178,7 +188,7 @@ export async function render() {
   if (upcomingItems.length > 0) {
     const cards = upcomingItems.map(item => {
       const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
-      const isShow = item.totalSeasons !== undefined;
+      const isShow = item.mediaType === 'show';
       const route = isShow ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
       const dateStr = item.firstAirDate || item.releaseDate;
       const dateObj = new Date(dateStr);
@@ -218,7 +228,7 @@ export async function render() {
   if (recentItems.length > 0) {
     const cards = recentItems.map(item => {
       const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
-      const isShow = item.totalSeasons !== undefined;
+      const isShow = item.mediaType === 'show';
       const typeStr = isShow ? 'show' : 'movie';
       const isMissing = item.tmdbId === null;
       

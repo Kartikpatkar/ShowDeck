@@ -67,9 +67,12 @@ function renderError(container, text) {
     <div class="empty-state" style="padding:var(--space-12) var(--space-4);">
       <h3 class="empty-state-title">Failed to load movie</h3>
       <p class="empty-state-text">${text}</p>
-      <button class="btn btn-primary" id="back-btn">Go Back</button>
+      <button class="btn btn-primary" id="back-btn-error">Go Back</button>
     </div>
   `;
+  document.getElementById('back-btn-error')?.addEventListener('click', () => {
+    window.appRouter.goBack();
+  });
 }
 
 function renderContent(container) {
@@ -228,8 +231,8 @@ function bindEvents() {
   if (statusSelect && isTracked) {
     statusSelect.addEventListener('change', async (e) => {
       const newStatus = e.target.value;
-      const { updateMovieStatus } = await import('../database/movies.js');
-      await updateMovieStatus(currentMovieId, newStatus);
+      const { updateMovieTrackingStatus } = await import('../database/movies.js');
+      await updateMovieTrackingStatus(currentMovieId, newStatus);
       movieData.trackingStatus = newStatus;
       toast('Status updated');
       renderContent(container);
