@@ -239,6 +239,10 @@ function renderContent(container) {
   const watchedCount = seasonEps.filter(e => e.watched).length;
   const isSeasonComplete = seasonEps.length > 0 && watchedCount === seasonEps.length;
 
+  const totalWatched = episodesData.filter(e => e.watched).length;
+  const totalEpisodesCount = episodesData.length;
+  const progressPercent = totalEpisodesCount > 0 ? Math.round((totalWatched / totalEpisodesCount) * 100) : 0;
+
   const imdbUrl = showData.externalIds?.imdb_id ? `https://www.imdb.com/title/${showData.externalIds.imdb_id}/` : null;
 
   container.innerHTML = `
@@ -290,6 +294,18 @@ function renderContent(container) {
           ${showData.genres && showData.genres.length > 0 ? `<span>•</span><span>${showData.genres.slice(0,3).join(', ')}</span>` : ''}
           ${showData.voteAverage ? `<span>•</span><span style="color:var(--color-warning);font-weight:var(--weight-semibold);">★ ${(showData.voteAverage).toFixed(1)} <span style="font-size:12px;color:var(--text-tertiary);font-weight:normal;">(${formatVoteCount(showData.voteCount)})</span></span>` : ''}
         </div>
+        
+        ${isTracked && totalEpisodesCount > 0 ? `
+          <div style="margin:var(--space-3) 0 var(--space-4);">
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" style="width: ${progressPercent}%;"></div>
+            </div>
+            <div class="progress-text">
+              <span>${totalWatched} of ${totalEpisodesCount} episodes</span>
+              <span>${progressPercent}%</span>
+            </div>
+          </div>
+        ` : '<div style="height:var(--space-4);"></div>'}
         
         <!-- Controls -->
         <div class="detail-actions">

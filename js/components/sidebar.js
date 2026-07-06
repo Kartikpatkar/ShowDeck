@@ -3,8 +3,6 @@
  * Renders the navigation sidebar with collapse, mobile toggle, and active state management.
  */
 
-import { theme } from '../services/theme.js';
-
 /**
  * Lucide icon SVGs (inline for no-dependency approach).
  * Only icons we need for nav.
@@ -94,10 +92,6 @@ export class Sidebar {
           <span class="nav-item-icon">${icons.settings}</span>
           <span class="nav-item-label">Settings</span>
         </a>
-        <button class="nav-item" id="theme-toggle" aria-label="Toggle theme">
-          <span class="nav-item-icon" id="theme-icon">${theme.current === 'dark' ? icons.sun : icons.moon}</span>
-          <span class="nav-item-label" id="theme-label">${theme.current === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-        </button>
       </div>
     `;
 
@@ -126,16 +120,6 @@ export class Sidebar {
     // Toggle collapse
     const toggleBtn = document.getElementById('sidebar-toggle');
     toggleBtn?.addEventListener('click', () => this.toggleCollapse());
-
-    // Theme toggle
-    const themeBtn = document.getElementById('theme-toggle');
-    themeBtn?.addEventListener('click', () => {
-      const newTheme = theme.toggle();
-      document.getElementById('theme-icon').innerHTML =
-        newTheme === 'dark' ? icons.sun : icons.moon;
-      document.getElementById('theme-label').textContent =
-        newTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
-    });
 
     // Mobile menu
     this.mobileBtnEl.addEventListener('click', () => this.toggleMobile());

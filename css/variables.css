@@ -150,7 +150,7 @@
 }
 
 /* ── Dark Theme ── */
-[data-theme="dark"] {
+.theme-dark {
   --surface-0: hsl(225, 25%, 8%);
   --surface-1: hsl(225, 22%, 11%);
   --surface-2: hsl(225, 20%, 15%);
@@ -180,4 +180,104 @@
   --shadow-xl: 0 20px 25px hsla(0, 0%, 0%, 0.35), 0 8px 10px hsla(0, 0%, 0%, 0.2);
   --shadow-card-hover: 0 8px 24px hsla(0, 0%, 0%, 0.3);
   --shadow-glow: 0 0 0 3px hsla(245, 58%, 51%, 0.25);
+}
+
+/* ── OLED Black ── */
+.theme-oled {
+  --surface-0: hsl(0, 0%, 0%);
+  --surface-1: hsl(0, 0%, 5%);
+  --surface-2: hsl(0, 0%, 9%);
+  --surface-3: hsl(0, 0%, 14%);
+  --surface-4: hsl(0, 0%, 18%);
+
+  --text-primary: hsl(0, 0%, 96%);
+  --text-secondary: hsl(0, 0%, 65%);
+  --text-tertiary: hsl(0, 0%, 50%);
+  --text-disabled: hsl(0, 0%, 35%);
+
+  --border-subtle: hsl(0, 0%, 12%);
+  --border-default: hsl(0, 0%, 18%);
+  --border-strong: hsl(0, 0%, 28%);
+
+  --color-primary-subtle: hsl(245, 40%, 18%);
+  --color-primary-ghost: hsl(245, 35%, 13%);
+  --color-accent-subtle: hsl(330, 40%, 16%);
+  --color-success-subtle: hsl(152, 35%, 14%);
+  --color-warning-subtle: hsl(38, 50%, 14%);
+  --color-error-subtle: hsl(0, 40%, 15%);
+}
+
+/* ── Dracula ── */
+.theme-dracula {
+  --surface-0: hsl(231, 15%, 18%);
+  --surface-1: hsl(231, 15%, 22%);
+  --surface-2: hsl(231, 15%, 26%);
+  --surface-3: hsl(231, 15%, 30%);
+  --surface-4: hsl(231, 15%, 35%);
+
+  --text-primary: hsl(60, 30%, 96%);
+  --text-secondary: hsl(225, 27%, 68%);
+  --text-tertiary: hsl(225, 27%, 55%);
+  --text-disabled: hsl(225, 27%, 40%);
+
+  --border-subtle: hsl(231, 15%, 25%);
+  --border-default: hsl(231, 15%, 32%);
+  --border-strong: hsl(231, 15%, 45%);
+
+  --color-primary-subtle: hsl(245, 40%, 25%);
+  --color-primary-ghost: hsl(245, 35%, 20%);
+}
+
+/* ── Nord ── */
+.theme-nord {
+  --surface-0: hsl(220, 16%, 22%);
+  --surface-1: hsl(222, 16%, 28%);
+  --surface-2: hsl(220, 16%, 32%);
+  --surface-3: hsl(220, 17%, 36%);
+  --surface-4: hsl(220, 17%, 40%);
+
+  --text-primary: hsl(218, 27%, 92%);
+  --text-secondary: hsl(218, 27%, 75%);
+  --text-tertiary: hsl(218, 27%, 60%);
+  --text-disabled: hsl(218, 27%, 45%);
+
+  --border-subtle: hsl(220, 16%, 30%);
+  --border-default: hsl(220, 16%, 36%);
+  --border-strong: hsl(220, 16%, 48%);
+}
+
+/* ── Catppuccin ── */
+.theme-catppuccin {
+  --surface-0: hsl(240, 21%, 15%);
+  --surface-1: hsl(240, 21%, 19%);
+  --surface-2: hsl(240, 21%, 23%);
+  --surface-3: hsl(240, 21%, 28%);
+  --surface-4: hsl(240, 21%, 32%);
+
+  --text-primary: hsl(226, 64%, 88%);
+  --text-secondary: hsl(227, 43%, 72%);
+  --text-tertiary: hsl(228, 24%, 55%);
+  --text-disabled: hsl(229, 15%, 40%);
+
+  --border-subtle: hsl(240, 21%, 22%);
+  --border-default: hsl(240, 21%, 28%);
+  --border-strong: hsl(240, 21%, 40%);
+}
+
+/* ── Tokyo Night ── */
+.theme-tokyo {
+  --surface-0: hsl(235, 19%, 13%);
+  --surface-1: hsl(235, 19%, 17%);
+  --surface-2: hsl(235, 19%, 21%);
+  --surface-3: hsl(235, 19%, 25%);
+  --surface-4: hsl(235, 19%, 30%);
+
+  --text-primary: hsl(220, 31%, 85%);
+  --text-secondary: hsl(220, 21%, 65%);
+  --text-tertiary: hsl(220, 15%, 50%);
+  --text-disabled: hsl(220, 10%, 35%);
+
+  --border-subtle: hsl(235, 19%, 20%);
+  --border-default: hsl(235, 19%, 26%);
+  --border-strong: hsl(235, 19%, 38%);
 }

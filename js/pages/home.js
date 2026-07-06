@@ -99,17 +99,17 @@ export async function render() {
         : '';
 
       cards.push(`
-        <a href="#/show/${show.tmdbId}" class="poster-card" id="cw-${show.id}">
+        <a href="#/show/${show.tmdbId}" class="poster-card" id="cw-${show.id}" style="position:relative;overflow:hidden;border-radius:var(--radius-md);">
           ${posterUrl
             ? `<img class="poster-card-image" src="${posterUrl}" alt="${show.title}" loading="lazy">`
             : `<div class="poster-card-image skeleton"></div>`
           }
-          <div class="poster-card-overlay">
-            <div class="poster-card-title">${show.title}</div>
-            <div class="poster-card-meta">${nextLabel} • ${progress.percentage}%</div>
+          <div class="poster-card-overlay" style="background:linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%); opacity:1; padding:var(--space-2); padding-bottom:12px; display:flex; flex-direction:column; justify-content:flex-end;">
+            <div style="font-weight:var(--weight-bold); color:white; font-size:var(--text-sm); line-height:1.2; text-shadow:0 1px 2px rgba(0,0,0,0.8);">${show.title}</div>
+            ${nextLabel ? `<div style="font-size:11px; color:hsla(0,0%,100%,0.8); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,0.8);">${nextLabel}</div>` : ''}
           </div>
-          <div class="progress" style="position:absolute;bottom:0;left:0;right:0;border-radius:0;">
-            <div class="progress-bar" style="width:${progress.percentage}%"></div>
+          <div class="progress-bar-container" style="position:absolute; bottom:0; left:0; width:100%; height:4px; margin:0; border-radius:0; background:rgba(255,255,255,0.25); z-index:3;">
+            <div class="progress-bar-fill" style="width:${progress.percentage}%; border-radius:0;"></div>
           </div>
         </a>
       `);
@@ -195,6 +195,25 @@ export async function render() {
       // Format as Month DD, YYYY
       const formattedDate = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
       
+      if (viewMode === 'list') {
+        return `
+          <div class="library-list-item card" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);position:relative;">
+            <a href="${route}" style="flex-shrink:0;">
+              ${posterUrl
+                ? `<img src="${posterUrl}" alt="${item.title}" style="width:56px;height:84px;object-fit:cover;border-radius:var(--radius-sm);" loading="lazy">`
+                : `<div style="width:56px;height:84px;background:var(--surface-3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;">🎬</span></div>`
+              }
+            </a>
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--space-1);">
+              <a href="${route}" style="text-decoration:none;">
+                <div style="font-weight:var(--weight-medium);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</div>
+                <div style="font-size:var(--text-xs);color:var(--color-primary);font-weight:bold;">${formattedDate}</div>
+              </a>
+            </div>
+          </div>
+        `;
+      }
+
       return `
         <a href="${route}" class="poster-card" style="position:relative;">
           ${posterUrl
@@ -208,13 +227,16 @@ export async function render() {
         </a>
       `;
     });
+    
+    let containerClass = viewMode === 'list' ? 'library-list stagger-children' : 'grid-posters stagger-children';
+
     upcomingHTML = `
       <div class="section">
         <div class="section-header">
           <h2 class="section-title">Upcoming</h2>
           <a href="#/library?status=upcoming" class="section-action">View All</a>
         </div>
-        <div class="grid-posters stagger-children">${cards.join('')}</div>
+        <div class="${containerClass}">${cards.join('')}</div>
       </div>
     `;
   }

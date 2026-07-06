@@ -100,6 +100,8 @@ export function init() {
       clearBtn?.classList.add('hidden');
     }
     
+    sessionStorage.setItem('showdeck-search-query', currentQuery);
+    
     // If empty, show trending
     if (!currentQuery) {
       loadTrending();
@@ -125,6 +127,7 @@ export function init() {
     const btn = e.target.closest('[data-type]');
     if (!btn) return;
     searchType = btn.dataset.type;
+    sessionStorage.setItem('showdeck-search-type', searchType);
     
     // Update active button
     document.querySelectorAll('#search-type-filters .btn').forEach(btn => {
@@ -174,9 +177,6 @@ export function init() {
     }
   });
 
-  // Load trending on init
-  loadTrending();
-
   // Result clicks (event delegation)
   document.getElementById('search-results')?.addEventListener('click', async (e) => {
     const addBtn = e.target.closest('[data-action="add"]');
@@ -186,6 +186,29 @@ export function init() {
       await handleAdd(addBtn);
     }
   });
+
+  // Restore state
+  const savedType = sessionStorage.getItem('showdeck-search-type');
+  if (savedType) {
+    searchType = savedType;
+    document.querySelectorAll('#search-type-filters .btn').forEach(btn => {
+      if (btn.hasAttribute('data-type')) {
+        btn.classList.toggle('btn-primary', btn.dataset.type === searchType);
+        btn.classList.toggle('btn-ghost', btn.dataset.type !== searchType);
+      }
+    });
+  }
+
+  const savedQuery = sessionStorage.getItem('showdeck-search-query');
+  if (savedQuery && searchInput) {
+    searchInput.value = savedQuery;
+    currentQuery = savedQuery;
+    clearBtn?.classList.remove('hidden');
+    currentPage = 1;
+    performSearch();
+  } else {
+    loadTrending();
+  }
 }
 
 async function loadTrending() {

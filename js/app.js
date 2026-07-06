@@ -339,12 +339,14 @@ export function initTheme() {
   const accent = localStorage.getItem('showdeck_accent_theme') || 'purple';
   const customColor = localStorage.getItem('showdeck_custom_color');
   
+  const allBaseThemes = ['theme-light', 'theme-dark', 'theme-oled', 'theme-dracula', 'theme-nord', 'theme-catppuccin', 'theme-tokyo'];
+  
   if (theme === 'system') {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.body.classList.remove('theme-dark', 'theme-light');
+    document.body.classList.remove(...allBaseThemes);
     document.body.classList.add(isDark ? 'theme-dark' : 'theme-light');
   } else {
-    document.body.classList.remove('theme-dark', 'theme-light');
+    document.body.classList.remove(...allBaseThemes);
     document.body.classList.add(`theme-${theme}`);
   }
   

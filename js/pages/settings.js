@@ -38,6 +38,20 @@ export function render() {
           </div>
 
           <div style="display:flex;flex-direction:column;gap:var(--space-3);margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--border-color);">
+            <label style="font-weight:var(--weight-medium);">Base Theme</label>
+            <select id="base-theme-select" class="input" style="width:100%;">
+              <option value="system">System Default</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+              <option value="oled">OLED Black</option>
+              <option value="dracula">Dracula</option>
+              <option value="nord">Nord</option>
+              <option value="catppuccin">Catppuccin</option>
+              <option value="tokyo">Tokyo Night</option>
+            </select>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:var(--space-3);margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--border-color);">
             <label style="font-weight:var(--weight-medium);">Accent Color</label>
             <div style="display:flex;gap:var(--space-3);align-items:center;" id="theme-color-picker">
               <button class="btn btn-ghost color-preset" data-theme="purple" style="width:40px;height:40px;border-radius:50%;background:hsl(245, 58%, 51%);border:2px solid transparent;" aria-label="Purple"></button>
@@ -217,7 +231,18 @@ function bindEvents() {
     toast('Name saved successfully', 'success');
   });
 
-  // Setup theme picker
+  // Base Theme
+  const baseThemeSelect = document.getElementById('base-theme-select');
+  if (baseThemeSelect) {
+    baseThemeSelect.value = localStorage.getItem('showdeck_theme') || 'system';
+    baseThemeSelect.addEventListener('change', async (e) => {
+      localStorage.setItem('showdeck_theme', e.target.value);
+      const { initTheme } = await import('../app.js');
+      initTheme();
+    });
+  }
+
+  // Setup accent theme picker
   const currentTheme = localStorage.getItem('showdeck_accent_theme') || 'purple';
   const themeButtons = document.querySelectorAll('#theme-color-picker .color-preset');
   
