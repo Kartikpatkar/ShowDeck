@@ -133,6 +133,12 @@ router
   .on('/stats', (params) => {
     loadPage(() => import('./pages/stats.js'), params);
   })
+  .on('/history', (params) => {
+    loadPage(() => import('./pages/history.js'), params);
+  })
+  .on('/calendar', (params) => {
+    loadPage(() => import('./pages/calendar.js'), params);
+  })
   .on('/settings', (params) => {
     loadPage(() => import('./pages/settings.js'), params);
   })
@@ -174,6 +180,8 @@ router.afterEach = (route) => {
     if (route === '/home') navRoute = '/';
     if (route.startsWith('/show/') || route.startsWith('/movie/') || route.startsWith('/episode/')) navRoute = '/library';
     if (route === '/enrich') navRoute = '/settings';
+    if (route === '/history') navRoute = '/history';
+    if (route === '/calendar') navRoute = '/calendar';
     sidebar.setActive(navRoute);
   }
 

@@ -1,28 +1,28 @@
 # ShowDeck V2 Task Tracker
 
 ## Phase 1: UI Polish & Core Enhancements (Low Risk)
-- `[ ]` **Feature 17: Premium Theme Collection**
-  - `[ ]` Add new CSS variable palettes (OLED Black, Dracula, Nord, Catppuccin, Tokyo Night).
-  - `[ ]` Update Settings UI to support the expanded list of themes.
-- `[ ]` **Feature 16: Better Progress Visualization**
-  - `[ ]` Replace text-only progress (e.g., "10/13") with visual CSS progress bars.
-  - `[ ]` Calculate and display percentage completion on show detail pages.
-- `[ ]` **Feature 2 & 14: Continue Watching 2.0 (Netflix-Style)**
-  - `[ ]` Update `home.js` Continue Watching cards to show progress bars.
-  - `[ ]` Add "Remaining Episodes" counter to cards.
-  - `[ ]` Display "Next Episode" title/number if data is available.
+- `[x]` **Feature 17: Premium Theme Collection**
+  - `[x]` Add new CSS variable palettes (OLED Black, Dracula, Nord, Catppuccin, Tokyo Night).
+  - `[x]` Update Settings UI to support the expanded list of themes.
+- `[x]` **Feature 16: Better Progress Visualization**
+  - `[x]` Replace text-only progress (e.g., "10/13") with visual CSS progress bars.
+  - `[x]` Calculate and display percentage completion on show detail pages.
+- `[x]` **Feature 2 & 14: Continue Watching 2.0 (Netflix-Style)**
+  - `[x]` Update `home.js` Continue Watching cards to show progress bars.
+  - `[x]` Add "Remaining Episodes" counter to cards.
+  - `[x]` Display "Next Episode" title/number if data is available.
 
 ## Phase 2: History & Calendar (Read-Only Data Presentation)
-- `[ ]` **Feature 1 & 10: Activity Timeline & Watch History**
-  - `[ ]` Build a new `history.js` page to act as the central activity diary.
-  - `[ ]` Query `db.activity`, group chronologically by date (Today, Yesterday, etc.).
-  - `[ ]` Add simple filters (TV vs. Movies) to the history view.
-- `[ ]` **Feature 8: Watching Heatmap**
-  - `[ ]` Implement a month-wise heatmap component on the Stats or History page.
-  - `[ ]` Filter logic: Only track data for items that exist in the user's library.
-- `[ ]` **Feature 4: Calendar**
-  - `[ ]` Build a new `calendar.js` view.
-  - `[ ]` Query `db.episodes` for future air dates of tracked shows and plot them in a monthly/timeline view.
+- `[x]` **Feature 1 & 10: Activity Timeline & Watch History**
+  - `[x]` Build a new `history.js` page to act as the central activity diary.
+  - `[x]` Query `db.activity`, group chronologically by date (Today, Yesterday, etc.).
+  - `[x]` Add simple filters (TV vs. Movies) to the history view.
+- `[x]` **Feature 8: Watching Heatmap**
+  - `[x]` Implement a month-wise heatmap component on the Stats or History page.
+  - `[x]` Filter logic: Only track data for items that exist in the user's library.
+- `[x]` **Feature 4: Calendar**
+  - `[x]` Build a new `calendar.js` view.
+  - `[x]` Query `db.episodes` for future air dates of tracked shows and plot them in a monthly/timeline view.
 
 ## Phase 3: Architecture Upgrades & Storage (Dexie v2 Schema)
 - `[ ]` **Database Migration Engine**

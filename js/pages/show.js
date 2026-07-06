@@ -420,13 +420,15 @@ function renderContent(container) {
               imgHtml = `<div class="episode-image" style="width:120px;height:68px;border-radius:var(--radius-sm);margin:0 var(--space-3);flex-shrink:0;background:var(--surface-3);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;font-size:24px;">📺</span></div>`;
             }
             
+            const epDate = ep.airDate ? new Date(ep.airDate) : null;
+            const isUnreleased = epDate ? epDate.getTime() > Date.now() : false;
             const countdown = getRelativeTime(ep.airDate);
 
             return `
               <div class="episode-item ${ep.watched ? 'watched' : ''}" data-ep-id="${ep.id || ''}" data-ep-index="${ep.episode}" style="display:block;border-bottom:1px solid var(--border-subtle);">
                 <div class="episode-row" style="align-items:flex-start;">
-                  <div class="episode-checkbox ${ep.watched ? 'checked' : ''}" style="margin:0 var(--space-3);cursor:pointer;" data-action="toggle-watch">
-                    ${ep.watched ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+                  <div class="episode-checkbox ${ep.watched ? 'checked' : ''}" style="margin:0 var(--space-3);cursor:${isUnreleased ? 'not-allowed' : 'pointer'};opacity:${isUnreleased ? '0.3' : '1'};" ${!isUnreleased ? 'data-action="toggle-watch"' : 'title="Not released yet"'}>
+                    ${ep.watched ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : (isUnreleased ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' : '')}
                   </div>
                   <a href="#/episode/${showData.tmdbId}/${ep.season}/${ep.episode}" class="episode-link">
                     ${imgHtml}
@@ -446,7 +448,7 @@ function renderContent(container) {
                     </div>
                   </a>
                   <div class="episode-actions-wrapper" style="display:flex;align-items:center;gap:var(--space-1);margin-right:var(--space-2);">
-                    ${ep.watched ? `<button class="btn btn-secondary btn-sm add-watch-btn" data-ep-id="${ep.id}" data-action="add-watch" style="padding:0 var(--space-2);height:28px;min-height:28px;font-size:12px;border-radius:14px;" title="Add another watch">+1${ep.watchCount && ep.watchCount > 1 ? ` (${ep.watchCount})` : ''}</button>` : ''}
+                    ${ep.watched && !isUnreleased ? `<button class="btn btn-secondary btn-sm add-watch-btn" data-ep-id="${ep.id}" data-action="add-watch" style="padding:0 var(--space-2);height:28px;min-height:28px;font-size:12px;border-radius:14px;" title="Add another watch">+1${ep.watchCount && ep.watchCount > 1 ? ` (${ep.watchCount})` : ''}</button>` : ''}
                     <button class="btn btn-icon btn-sm" data-action="toggle-overview" style="color:var(--text-tertiary);padding:var(--space-1);" title="Expand overview">
                       <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s;"><path d="m6 9 6 6 6-6"/></svg>
                     </button>
@@ -585,7 +587,14 @@ function bindEvents() {
       try {
         const { db } = await import('../database/db.js');
         const now = new Date();
-        const epsToUpdate = episodesData.filter(e => !e.watched);
+        const epsToUpdate = episodesData.filter(e => {
+          if (e.watched) return false;
+          if (e.airDate) {
+            const epDate = new Date(e.airDate);
+            if (epDate.getTime() > now.getTime()) return false;
+          }
+          return true;
+        });
         
         await db.transaction('rw', db.episodes, async () => {
           for (const ep of epsToUpdate) {
@@ -709,7 +718,14 @@ function bindEvents() {
           bindEvents();
         } else {
           let bulkUpdated = false;
-          const prevUnwatched = episodesData.filter(e => e.season === ep.season && e.episode < ep.episode && !e.watched);
+          const prevUnwatched = episodesData.filter(e => {
+            if (e.season !== ep.season || e.episode >= ep.episode || e.watched) return false;
+            if (e.airDate) {
+              const epDate = new Date(e.airDate);
+              if (epDate.getTime() > Date.now()) return false;
+            }
+            return true;
+          });
           if (prevUnwatched.length > 0) {
             const { confirmModal } = await import('../components/modal.js');
             const ok = await confirmModal('Mark Previous?', `You're marking Episode ${ep.episode} watched, but ${prevUnwatched.length} previous episodes are unwatched. Mark them as watched too?`);
