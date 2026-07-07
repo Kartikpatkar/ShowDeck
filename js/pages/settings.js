@@ -652,7 +652,16 @@ function bindEvents() {
   const tvtimeBar = document.getElementById('tvtime-progress-bar');
   const tvtimeText = document.getElementById('tvtime-progress-text');
 
-  tvtimeBtn?.addEventListener('click', () => tvtimeFile.click());
+  let activeImportController = null;
+  const originalHtml = tvtimeBtn?.innerHTML;
+
+  tvtimeBtn?.addEventListener('click', () => {
+    if (activeImportController) {
+      activeImportController.abort();
+      return;
+    }
+    tvtimeFile.click();
+  });
 
   tvtimeFile?.addEventListener('change', async (e) => {
     const file = e.target.files[0];
@@ -672,8 +681,9 @@ function bindEvents() {
       return;
     }
 
-    tvtimeBtn.disabled = true;
-    tvtimeBtn.textContent = 'Importing...';
+    activeImportController = new AbortController();
+    tvtimeBtn.classList.add('btn-error');
+    tvtimeBtn.textContent = 'Stop Import';
     tvtimeProgress.classList.remove('hidden');
     tvtimeProgress.style.display = 'flex';
 
@@ -691,7 +701,7 @@ function bindEvents() {
         } else {
           tvtimeText.textContent = detail;
         }
-      });
+      }, { abortSignal: activeImportController.signal });
 
       // Show summary
       const { alertModal } = await import('../components/modal.js');
@@ -716,10 +726,15 @@ function bindEvents() {
 
     } catch (err) {
       console.error('[TV Time Import]', err);
-      toast(`Import failed: ${err.message}`, 'error');
+      if (err.message === 'Import cancelled by user') {
+        toast('Import was stopped.', 'error');
+      } else {
+        toast(`Import failed: ${err.message}`, 'error');
+      }
     } finally {
-      tvtimeBtn.disabled = false;
-      tvtimeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg> Select TV Time ZIP File';
+      activeImportController = null;
+      tvtimeBtn.classList.remove('btn-error');
+      tvtimeBtn.innerHTML = originalHtml;
       tvtimeProgress.classList.add('hidden');
       tvtimeFile.value = '';
     }

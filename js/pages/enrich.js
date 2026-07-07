@@ -66,7 +66,7 @@ async function loadItems() {
         <div style="flex:1;min-width:0;">
           <h4 style="margin:0;font-size:var(--text-base);font-weight:var(--weight-medium);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</h4>
           <p class="text-tertiary" style="margin:var(--space-1) 0 0 0;font-size:var(--text-sm);">
-            ${item.type === 'show' ? 'TV Show' : 'Movie'} • Added ${new Date(item.addedAt).toLocaleDateString()}
+            ${item.type === 'show' ? 'TV Show' : 'Movie'} • ${item.type === 'show' ? formatYear(item.firstAirDate) : formatYear(item.releaseDate)}
           </p>
         </div>
         <button class="btn btn-primary btn-sm enrich-match-btn" data-id="${item.id}" data-type="${item.type}" data-title="${encodeURIComponent(item.title)}">
