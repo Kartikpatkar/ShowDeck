@@ -35,6 +35,11 @@ export function render() {
               <input type="text" id="user-name-input" class="input" placeholder="What should we call you?" value="${localStorage.getItem('showdeck_user_name') || ''}" style="flex:1;">
               <button class="btn btn-secondary" id="save-name-btn">Save</button>
             </div>
+            
+            <label style="display:flex; align-items:center; gap:var(--space-2); cursor:pointer; font-size:var(--text-sm); margin-top:var(--space-2);">
+              <input type="checkbox" id="adult-content-setting" style="width:16px;height:16px;accent-color:var(--color-primary);" ${localStorage.getItem('showdeck_include_adult') === 'true' ? 'checked' : ''}>
+              <span>Include Adult Content (PG-18+ results)</span>
+            </label>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:var(--space-3);margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--border-color);">
@@ -175,6 +180,17 @@ export function render() {
           </p>
         </div>
 
+        <!-- Storage Info -->
+        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-6);">
+          <div>
+            <h3 class="section-title" style="margin:0;">Storage Info</h3>
+            <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">Local browser storage space used by ShowDeck.</p>
+          </div>
+          <div id="storage-info-container" style="display:flex;flex-direction:column;gap:var(--space-2);">
+            <div class="spinner" style="width:16px;height:16px;border-width:2px;"></div>
+          </div>
+        </div>
+
         <!-- Danger Zone -->
         <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);border-color:var(--color-error);padding:var(--space-6);">
           <div>
@@ -198,6 +214,47 @@ export function init() {
   bindEvents();
   checkApiStatus();
   renderBackups();
+  renderStorageInfo();
+}
+
+async function renderStorageInfo() {
+  const container = document.getElementById('storage-info-container');
+  if (!container) return;
+
+  if (navigator.storage && navigator.storage.estimate) {
+    try {
+      const estimate = await navigator.storage.estimate();
+      
+      // Use indexedDB specific usage if available (Chrome/Edge), otherwise fallback to total origin usage
+      let usageBytes = estimate.usage;
+      let isTotalOrigin = true;
+      if (estimate.usageDetails && estimate.usageDetails.indexedDB !== undefined) {
+        usageBytes = estimate.usageDetails.indexedDB;
+        isTotalOrigin = false;
+      }
+
+      const usageMB = (usageBytes / (1024 * 1024)).toFixed(2);
+      const quotaMB = (estimate.quota / (1024 * 1024)).toFixed(0);
+      const percentage = Math.round((usageBytes / estimate.quota) * 100) || 0;
+      
+      const labelText = isTotalOrigin ? 'Data Collected (Domain Total)' : 'Data Collected';
+
+      container.innerHTML = `
+        <div style="display:flex;justify-content:space-between;font-size:var(--text-sm);">
+          <span>${labelText}</span>
+          <span class="text-primary font-medium">${usageMB} MB / ${quotaMB} MB</span>
+        </div>
+        <div style="height:6px;background:var(--surface-3);border-radius:var(--radius-full);overflow:hidden;margin-top:var(--space-1);">
+          <div style="height:100%;width:${percentage}%;background:var(--color-primary);border-radius:var(--radius-full);"></div>
+        </div>
+        ${isTotalOrigin ? '<div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;">*Includes all apps hosted on this domain (e.g. localhost).</div>' : ''}
+      `;
+    } catch (e) {
+      container.innerHTML = '<span class="text-tertiary" style="font-size:var(--text-sm);">Unable to estimate storage usage.</span>';
+    }
+  } else {
+    container.innerHTML = '<span class="text-tertiary" style="font-size:var(--text-sm);">Storage API not supported in this browser.</span>';
+  }
 }
 
 async function renderBackups() {
@@ -298,6 +355,15 @@ function bindEvents() {
       localStorage.setItem('showdeck_theme', e.target.value);
       const { initTheme } = await import('../app.js');
       initTheme();
+    });
+  }
+
+  // Adult Content Toggle
+  const adultSetting = document.getElementById('adult-content-setting');
+  if (adultSetting) {
+    adultSetting.addEventListener('change', (e) => {
+      localStorage.setItem('showdeck_include_adult', e.target.checked ? 'true' : 'false');
+      toast('Content preferences updated.', 'success');
     });
   }
 

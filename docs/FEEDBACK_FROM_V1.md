@@ -1,7 +1,6 @@
 Feedback:
-- in Home page, upcoming item is too simple make it like other section
-- in search page, if i search and go to details and come back search is getting reset.
-DONE---
+- in Home page, upcoming item is too simple make it like other section - DONE
+- in search page, if i search and go to details and come back search is getting reset. - DONE
 
 Feedback:
 - after a week if status is watch we can shift to pause 

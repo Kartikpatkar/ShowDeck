@@ -20,10 +20,12 @@ export async function init() {
     homeSaveBtn.addEventListener('click', () => {
       const key = document.getElementById('home-api-key').value.trim();
       const nameInput = document.getElementById('home-user-name');
+      const adultInput = document.getElementById('home-adult-content');
       const name = nameInput ? nameInput.value.trim() : null;
       if (key) {
         localStorage.setItem('showdeck_tmdb_key', key);
         if (name) localStorage.setItem('showdeck_user_name', name);
+        if (adultInput) localStorage.setItem('showdeck_include_adult', adultInput.checked ? 'true' : 'false');
         import('../components/toast.js').then(m => m.toast('Settings saved! Enjoy ShowDeck. 🎉', 'success'));
         setTimeout(() => {
           import('../router.js').then(r => window.dispatchEvent(new Event('hashchange')));
@@ -386,6 +388,10 @@ export async function render() {
       </p>
       <div style="display:flex; flex-direction:column; gap:var(--space-3);">
         ${!userName ? `<input type="text" id="home-user-name" class="input" placeholder="What should we call you? (Optional)" style="width:100%; max-width:400px;">` : ''}
+        <label style="display:flex; align-items:center; gap:var(--space-2); cursor:pointer; font-size:var(--text-sm); color:var(--text-secondary);">
+          <input type="checkbox" id="home-adult-content" style="width:16px;height:16px;accent-color:var(--color-primary);">
+          <span>Include Adult Content (PG-18+ results)</span>
+        </label>
         <div style="display:flex; gap:var(--space-2);">
           <input type="text" autocomplete="off" spellcheck="false" id="home-api-key" class="input" placeholder="Enter TMDB API Key" style="flex:1;">
           <button class="btn btn-primary" id="home-save-key">Save & Connect</button>
