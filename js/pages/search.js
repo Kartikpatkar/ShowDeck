@@ -9,6 +9,7 @@ import { showExists, addShow } from '../database/shows.js';
 import { movieExists, addMovie } from '../database/movies.js';
 import { debounce, formatYear, truncate, STATUS_MAP, escapeHtml } from '../utils/dom.js';
 import { toast } from '../components/toast.js';
+import '../components/web/media-card.js';
 
 let currentQuery = '';
 let currentPage = 1;
@@ -223,14 +224,12 @@ export function init() {
     }
   });
 
-  // Result clicks (event delegation)
-  document.getElementById('search-results')?.addEventListener('click', async (e) => {
-    const addBtn = e.target.closest('[data-action="add"]');
-    if (addBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      await handleAdd(addBtn);
-    }
+  // Result clicks (event delegation for old buttons, though mostly handled by component now)
+  document.getElementById('search-results')?.addEventListener('add-to-library', async (e) => {
+    e.preventDefault();
+    const item = e.detail;
+    const card = e.target;
+    await handleAddItem(item, card);
   });
 
   // Restore state
@@ -364,7 +363,7 @@ async function loadDiscover(append = false) {
     }
     
     const wrapperClass = viewMode === 'list' ? 'library-list stagger-children' : 'grid-posters stagger-children';
-    const cardsHtml = results.map(renderResultCard).join('');
+    const cardsHtml = results.map(item => `<media-card data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}' view-mode="${viewMode}"></media-card>`).join('');
     
     if (append) {
       const wrapper = container.querySelector('.grid-posters') || container.querySelector('.library-list');
@@ -440,7 +439,7 @@ async function performSearch(append = false) {
     }
 
     // Render
-    let cardsHTML = results.map(renderResultCard).join('');
+    let cardsHTML = results.map(item => `<media-card data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}' view-mode="${viewMode}"></media-card>`).join('');
     
     const wrapperClass = viewMode === 'list' ? 'library-list stagger-children' : 'grid-posters stagger-children';
     
@@ -472,127 +471,31 @@ async function performSearch(append = false) {
   }
 }
 
-function renderResultCard(item) {
-  const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
-  const year = formatYear(item.mediaType === 'show' ? item.firstAirDate : item.releaseDate);
-  const typeLabel = item.mediaType === 'show' ? 'TV Show' : 'Movie';
-  const rating = item.voteAverage ? `★ ${item.voteAverage.toFixed(1)}` : '';
-  const route = item.mediaType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
+async function handleAddItem(item, card) {
+  const { tmdbId, mediaType, title } = item;
 
-  if (viewMode === 'list') {
-    const genres = (item.genres || []).slice(0, 3).join(', ');
-    return `
-      <div class="library-list-item card" id="result-${item.mediaType}-${item.tmdbId}" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);text-decoration:none;">
-        <a href="${route}" style="flex-shrink:0;">
-          ${posterUrl
-            ? `<img src="${posterUrl}" alt="${item.title}" style="width:64px;height:96px;object-fit:cover;border-radius:var(--radius-sm);" loading="lazy">`
-            : `<div style="width:64px;height:96px;background:var(--surface-3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;">🎬</span></div>`
-          }
-        </a>
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--space-1);">
-          <a href="${route}" style="text-decoration:none;">
-            <div style="font-weight:var(--weight-medium);color:var(--text-primary);font-size:var(--text-lg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</div>
-            <div style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:2px;">${year} • ${typeLabel}${genres ? ` • ${genres}` : ''}</div>
-          </a>
-          <div style="display:flex;gap:var(--space-2);align-items:center;margin-top:var(--space-2);">
-            ${item.inLibrary
-              ? `<span class="badge badge-success">✓ In Library</span>`
-              : `<button class="btn btn-primary btn-sm"
-                  data-action="add"
-                  data-media-type="${item.mediaType}"
-                  data-tmdb-id="${item.tmdbId}"
-                  data-title="${item.title.replace(/"/g, '&quot;')}"
-                  id="add-${item.mediaType}-${item.tmdbId}">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                  Add
-                </button>`
-            }
-            ${rating ? `<span style="font-size:var(--text-sm);color:var(--color-warning);">★ ${item.voteAverage.toFixed(1)}</span>` : ''}
-          </div>
-        </div>
-      </div>
-    `;
+  const btn = card.querySelector('[data-action="add"]');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Adding...';
   }
-
-  return `
-    <div class="poster-card search-result-card" id="result-${item.mediaType}-${item.tmdbId}">
-      <a href="${route}">
-        ${posterUrl
-          ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
-          : `<div class="poster-card-image" style="display:flex;align-items:center;justify-content:center;background:var(--surface-3);aspect-ratio:var(--card-poster-ratio);"><span style="font-size:var(--text-3xl);opacity:0.3;">🎬</span></div>`
-        }
-      </a>
-      <div class="poster-card-info" style="display:flex;flex-direction:column;gap:var(--space-1);">
-        <div class="poster-card-info-title">${escapeHtml(item.title)}</div>
-        <div class="poster-card-info-sub" style="display:flex;align-items:center;justify-content:space-between;">
-          <span>${year} • ${typeLabel}</span>
-          ${rating ? `<span style="color:var(--color-warning);font-size:var(--text-xs);">${rating}</span>` : ''}
-        </div>
-        ${item.inLibrary
-          ? `<span class="badge badge-success" style="width:fit-content;margin-top:var(--space-1);">✓ In Library</span>`
-          : `<button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:var(--space-1);"
-              data-action="add"
-              data-tmdb-id="${item.tmdbId}"
-              data-media-type="${item.mediaType}"
-              data-title="${item.title.replace(/"/g, '&quot;')}"
-              id="add-${item.mediaType}-${item.tmdbId}">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-              Add
-            </button>`
-        }
-      </div>
-    </div>
-  `;
-}
-
-async function handleAdd(btn) {
-  const tmdbId = parseInt(btn.dataset.tmdbId);
-  const mediaType = btn.dataset.mediaType;
-  const title = btn.dataset.title;
-
-  btn.disabled = true;
-  btn.textContent = 'Adding...';
 
   try {
     if (mediaType === 'show') {
-      // Get full details from provider
       const details = await provider.getShowDetails(tmdbId);
       if (details) {
         await addShow({
-          tmdbId: details.tmdbId,
-          title: details.title,
-          originalTitle: details.originalTitle,
-          posterPath: details.posterPath,
-          backdropPath: details.backdropPath,
-          overview: details.overview,
-          genres: details.genres,
-          status: details.status,
-          firstAirDate: details.firstAirDate,
-          lastAirDate: details.lastAirDate,
-          totalSeasons: details.totalSeasons,
-          totalEpisodes: details.totalEpisodes,
-          network: details.network,
-          runtime: details.runtime,
+          ...details,
           trackingStatus: 'plan',
         });
       } else {
-        // Fallback — add with minimal data
         await addShow({ tmdbId, title, trackingStatus: 'plan' });
       }
     } else {
       const details = await provider.getMovieDetails(tmdbId);
       if (details) {
         await addMovie({
-          tmdbId: details.tmdbId,
-          title: details.title,
-          originalTitle: details.originalTitle,
-          posterPath: details.posterPath,
-          backdropPath: details.backdropPath,
-          overview: details.overview,
-          genres: details.genres,
-          releaseDate: details.releaseDate,
-          runtime: details.runtime,
-          status: details.status,
+          ...details,
           trackingStatus: 'plan',
         });
       } else {
@@ -602,20 +505,17 @@ async function handleAdd(btn) {
 
     toast(`${title} added to library`, 'success');
 
-    // Replace button with "In Library" badge
-    const card = btn.closest('.search-result-card');
-    if (card) {
-      btn.replaceWith(Object.assign(document.createElement('span'), {
-        className: 'badge badge-success',
-        style: 'width:fit-content;margin-top:var(--space-1);',
-        textContent: '✓ In Library',
-      }));
-    }
+    // Update component state
+    item.inLibrary = true;
+    card.setAttribute('data-item', JSON.stringify(item));
+    card.render();
 
   } catch (err) {
     console.error('[Search] Add failed:', err);
     toast(`Failed to add ${title}`, 'error');
-    btn.disabled = false;
-    btn.textContent = '+ Add to Library';
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '+ Add to Library';
+    }
   }
 }

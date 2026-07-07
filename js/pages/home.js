@@ -10,6 +10,7 @@ import { getShowProgress, getNextEpisode } from '../database/episodes.js';
 import { getPosterUrl } from '../api/tmdb.js';
 import { formatDate, formatYear, truncate, statusBadge } from '../utils/dom.js';
 import { openEnrichModal } from '../components/enrich-modal.js';
+import '../components/web/media-card.js';
 
 let viewMode = localStorage.getItem('showdeck-home-view') || 'grid';
 
@@ -174,21 +175,8 @@ export async function render() {
   let pausedShowsHTML = '';
   if (pausedShows.length > 0) {
     const cards = pausedShows.slice(0, 8).map(item => {
-      const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
-      const route = `#/show/${item.tmdbId}`;
       const year = formatYear(item.firstAirDate);
-      return `
-        <a href="${route}" class="poster-card" style="position:relative;">
-          ${posterUrl
-            ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
-            : `<div class="poster-card-image skeleton"></div>`
-          }
-          <div class="poster-card-overlay">
-            <div class="poster-card-title">${item.title}</div>
-            <div class="poster-card-meta">${year} • Paused</div>
-          </div>
-        </a>
-      `;
+      return `<media-card variant="poster" custom-meta="${year} • Paused" data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
     });
     pausedShowsHTML = `
       <div class="section">
@@ -209,22 +197,9 @@ export async function render() {
   let planToWatchHTML = '';
   if (planItems.length > 0) {
     const cards = planItems.map(item => {
-      const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
       const isShow = item.mediaType === 'show';
-      const route = isShow ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
       const year = formatYear(isShow ? item.firstAirDate : item.releaseDate);
-      return `
-        <a href="${route}" class="poster-card" style="position:relative;">
-          ${posterUrl
-            ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
-            : `<div class="poster-card-image skeleton"></div>`
-          }
-          <div class="poster-card-overlay">
-            <div class="poster-card-title">${item.title}</div>
-            <div class="poster-card-meta">${year} • ${isShow ? 'TV Show' : 'Movie'}</div>
-          </div>
-        </a>
-      `;
+      return `<media-card variant="poster" custom-meta="${year} • ${isShow ? 'TV Show' : 'Movie'}" data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
     });
     planToWatchHTML = `
       <div class="section">
@@ -265,36 +240,10 @@ export async function render() {
       const formattedDate = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
       
       if (viewMode === 'list') {
-        return `
-          <div class="library-list-item card" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);position:relative;">
-            <a href="${route}" style="flex-shrink:0;">
-              ${posterUrl
-                ? `<img src="${posterUrl}" alt="${item.title}" style="width:56px;height:84px;object-fit:cover;border-radius:var(--radius-sm);" loading="lazy">`
-                : `<div style="width:56px;height:84px;background:var(--surface-3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;">🎬</span></div>`
-              }
-            </a>
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--space-1);">
-              <a href="${route}" style="text-decoration:none;">
-                <div style="font-weight:var(--weight-medium);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</div>
-                <div style="font-size:var(--text-xs);color:var(--color-primary);font-weight:bold;">${formattedDate}</div>
-              </a>
-            </div>
-          </div>
-        `;
+        return `<media-card view-mode="list" data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
       }
 
-      return `
-        <a href="${route}" class="poster-card" style="position:relative;">
-          ${posterUrl
-            ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
-            : `<div class="poster-card-image skeleton"></div>`
-          }
-          <div class="poster-card-overlay">
-            <div class="poster-card-title">${item.title}</div>
-            <div class="poster-card-meta" style="color:var(--color-primary);font-weight:bold;">${formattedDate}</div>
-          </div>
-        </a>
-      `;
+      return `<media-card variant="poster" custom-meta="${formattedDate}" data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
     });
     
     let containerClass = viewMode === 'list' ? 'library-list stagger-children' : 'grid-posters stagger-children';
@@ -322,50 +271,15 @@ export async function render() {
       const isShow = item.mediaType === 'show';
       const typeStr = isShow ? 'show' : 'movie';
       const isMissing = item.tmdbId === null;
-      
-      const route = isMissing ? 'javascript:void(0)' : (isShow ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`);
-      const triggerClass = isMissing ? 'enrich-trigger' : '';
-      const triggerAttrs = isMissing ? `data-id="${item.id}" data-type="${typeStr}" data-title="${encodeURIComponent(item.title)}"` : '';
-      
+      const triggerClass = isMissing ? 'open-enrich' : '';
+      const triggerAttrs = isMissing ? `data-id="${item.id}" data-type="${typeStr}"` : '';
       const year = formatYear(isShow ? item.firstAirDate : item.releaseDate);
-      const missingBadge = isMissing ? `<div style="position:absolute;top:4px;right:4px;background:var(--color-error);color:white;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:bold;">Fix Match</div>` : '';
-
+      
       if (viewMode === 'list') {
-        const typeLabel = isShow ? 'TV Show' : 'Movie';
-        const rating = item.rating ? `<span class="badge badge-warning" style="margin-top:var(--space-1);">★ ${item.rating}</span>` : '';
-        return `
-          <div class="library-list-item card" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);position:relative;">
-            ${missingBadge}
-            <a href="${route}" class="${triggerClass}" ${triggerAttrs} style="flex-shrink:0;">
-              ${posterUrl
-                ? `<img src="${posterUrl}" alt="${item.title}" style="width:56px;height:84px;object-fit:cover;border-radius:var(--radius-sm);" loading="lazy">`
-                : `<div style="width:56px;height:84px;background:var(--surface-3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;">🎬</span></div>`
-              }
-            </a>
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--space-1);">
-              <a href="${route}" class="${triggerClass}" ${triggerAttrs} style="text-decoration:none;">
-                <div style="font-weight:var(--weight-medium);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</div>
-                <div style="font-size:var(--text-xs);color:var(--text-tertiary);">${year} • ${typeLabel}</div>
-              </a>
-              ${rating}
-            </div>
-          </div>
-        `;
+        return `<media-card view-mode="list" class="${triggerClass}" ${triggerAttrs} data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
       }
 
-      return `
-        <a href="${route}" class="poster-card ${triggerClass}" ${triggerAttrs} id="recent-${isShow ? 'show' : 'movie'}-${item.id}" style="position:relative;">
-          ${missingBadge}
-          ${posterUrl
-            ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
-            : `<div class="poster-card-image skeleton"></div>`
-          }
-          <div class="poster-card-info">
-            <div class="poster-card-info-title">${item.title}</div>
-            <div class="poster-card-info-sub">${year} • ${isShow ? 'TV Show' : 'Movie'}</div>
-          </div>
-        </a>
-      `;
+      return `<media-card variant="poster" class="${triggerClass}" ${triggerAttrs} custom-meta="${year} • ${isShow ? 'TV Show' : 'Movie'}" data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
     });
     
     if (viewMode === 'list') {
