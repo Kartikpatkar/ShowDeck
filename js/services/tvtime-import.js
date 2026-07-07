@@ -57,9 +57,11 @@ function parseCSVLine(line) {
  * Import TV Time GDPR ZIP data into ShowDeck.
  * @param {File} zipFile - The ZIP file from TV Time
  * @param {Function} onProgress - Callback: (stage, current, total, detail) => void
+ * @param {Object} [options] - Options object including abortSignal
  * @returns {Object} Import summary
  */
-export async function importTVTimeData(zipFile, onProgress = () => {}) {
+export async function importTVTimeData(zipFile, onProgress = () => {}, options = {}) {
+  const signal = options.abortSignal;
   const summary = {
     showsImported: 0,
     showsSkipped: 0,
@@ -104,6 +106,7 @@ export async function importTVTimeData(zipFile, onProgress = () => {}) {
   onProgress('importing', 0, totalShows, 'Starting show import...');
 
   for (const [showName, showInfo] of Object.entries(showMap)) {
+    if (signal?.aborted) throw new Error('Import cancelled by user');
     processed++;
     onProgress('importing', processed, totalShows, showName);
 
@@ -189,6 +192,7 @@ export async function importTVTimeData(zipFile, onProgress = () => {}) {
   let movieProcessed = 0;
 
   for (const movie of movieList) {
+    if (signal?.aborted) throw new Error('Import cancelled by user');
     movieProcessed++;
     onProgress('movies', movieProcessed, movieList.length, movie.name);
 

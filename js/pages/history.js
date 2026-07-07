@@ -10,6 +10,8 @@ import { formatDate, getRelativeTime, escapeHtml, formatYear } from '../utils/do
 let allActivities = [];
 let filteredActivities = [];
 let filterMode = 'all'; // 'all', 'shows', 'movies'
+let currentPage = 1;
+const ITEMS_PER_PAGE = 50;
 
 export function render() {
   return `
@@ -181,6 +183,7 @@ async function loadActivity() {
 }
 
 function applyFilter() {
+  currentPage = 1;
   if (filterMode === 'all') {
     filteredActivities = allActivities;
   } else {
@@ -206,7 +209,8 @@ function renderTimeline() {
 
   // Group by date string (e.g. "Jul 6, 2026")
   const groups = new Map();
-  filteredActivities.forEach(act => {
+  const paginatedActivities = filteredActivities.slice(0, currentPage * ITEMS_PER_PAGE);
+  paginatedActivities.forEach(act => {
     const d = new Date(act.date);
     const dateStr = d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     if (!groups.has(dateStr)) groups.set(dateStr, []);
@@ -241,7 +245,31 @@ function renderTimeline() {
       </div>
     `;
   }
+  
+  const hasMore = (currentPage * ITEMS_PER_PAGE) < filteredActivities.length;
+  if (hasMore) {
+    html += `
+      <div style="text-align:center; padding:var(--space-4) 0;">
+        <button id="history-load-more" class="btn btn-secondary">Load More</button>
+      </div>
+    `;
+  }
+  
   container.innerHTML = html;
+  
+  if (hasMore) {
+    document.getElementById('history-load-more').addEventListener('click', (e) => {
+      const btn = e.target;
+      btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;margin:0 auto;"></div>';
+      btn.disabled = true;
+      
+      // Artificial short delay for visual feedback as requested
+      setTimeout(() => {
+        currentPage++;
+        renderTimeline();
+      }, 300);
+    });
+  }
 }
 
 function renderHeatmap() {
