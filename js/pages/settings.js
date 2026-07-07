@@ -191,6 +191,19 @@ export function render() {
           </div>
         </div>
 
+        <!-- Contact / Issues -->
+        <div class="card" style="padding:var(--space-6);border-color:var(--color-primary);">
+          <h3 class="section-title" style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3);">
+            <span>💬</span> Need More Help?
+          </h3>
+          <p style="color:var(--text-secondary);line-height:1.6;margin-bottom:var(--space-4);">
+            If you encounter any bugs, or have a feature request, feel free to report it on our GitHub repository.
+          </p>
+          <a href="https://github.com/Kartikpatkar/ShowDeck/issues" target="_blank" class="btn btn-primary" style="width:fit-content;">Report an Issue</a>
+        </div>
+
+
+
         <!-- Danger Zone -->
         <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);border-color:var(--color-error);padding:var(--space-6);">
           <div>
