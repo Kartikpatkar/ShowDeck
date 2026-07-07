@@ -1,7 +1,7 @@
 # 🎬 ShowDeck – Personal Entertainment Tracker
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/Version-1.0.1-blue.svg)](#)
+[![Version](https://img.shields.io/badge/Version-1.1.0-blue.svg)](#)
 [![Progressive Web App](https://img.shields.io/badge/PWA-Ready-green.svg)](#)
 [![Vanilla JS](https://img.shields.io/badge/Tech-Vanilla%20JS-F7DF1E.svg)](#)
 
