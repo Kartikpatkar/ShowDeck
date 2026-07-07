@@ -133,6 +133,56 @@ export async function searchMulti(query, page = 1) {
   };
 }
 
+/**
+ * Discover shows based on filters.
+ */
+export async function discoverShows(filters = {}, page = 1) {
+  const data = await tmdbFetch('/discover/tv', { ...filters, page, sort_by: 'popularity.desc' });
+  return {
+    results: data.results.map(mapShowResult),
+    page: data.page,
+    totalPages: data.total_pages,
+    totalResults: data.total_results,
+  };
+}
+
+/**
+ * Discover movies based on filters.
+ */
+export async function discoverMovies(filters = {}, page = 1) {
+  const data = await tmdbFetch('/discover/movie', { ...filters, page, sort_by: 'popularity.desc' });
+  return {
+    results: data.results.map(mapMovieResult),
+    page: data.page,
+    totalPages: data.total_pages,
+    totalResults: data.total_results,
+  };
+}
+
+/**
+ * Get Movie Genres
+ */
+export async function getMovieGenres() {
+  const data = await tmdbFetch('/genre/movie/list');
+  return data.genres || [];
+}
+
+/**
+ * Get TV Genres
+ */
+export async function getTvGenres() {
+  const data = await tmdbFetch('/genre/tv/list');
+  return data.genres || [];
+}
+
+/**
+ * Get Countries
+ */
+export async function getCountries() {
+  const data = await tmdbFetch('/configuration/countries');
+  return data || [];
+}
+
 // ── Show Details ──
 
 /**

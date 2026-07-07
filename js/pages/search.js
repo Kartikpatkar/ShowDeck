@@ -63,6 +63,22 @@ export function render() {
               </button>
             </div>
           </div>
+          
+          <div id="discover-filters-container" style="display:${(!currentQuery && searchType !== 'multi') ? 'flex' : 'none'}; gap:var(--space-2); margin-top:var(--space-3); flex-wrap:wrap;">
+            <div style="flex:1; min-width:120px;">
+              <input type="text" id="filter-genre-input" list="genre-list" class="input input-sm" placeholder="Any Genre" style="width:100%;">
+              <datalist id="genre-list"></datalist>
+            </div>
+            <div style="flex:1; min-width:120px;">
+              <input type="text" id="filter-country-input" list="country-list" class="input input-sm" placeholder="Any Country" style="width:100%;">
+              <datalist id="country-list"></datalist>
+            </div>
+            <select id="filter-sort" class="input input-sm" style="flex:1; min-width:120px;">
+              <option value="popularity.desc">Most Popular</option>
+              <option value="vote_average.desc">Highest Rated</option>
+              <option value="first_air_date.desc">Newest First</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -94,17 +110,20 @@ export function init() {
     currentQuery = query.trim();
     
     // Toggle clear button
+    const filtersContainer = document.getElementById('discover-filters-container');
     if (currentQuery) {
       clearBtn?.classList.remove('hidden');
+      if (filtersContainer) filtersContainer.style.display = 'none';
     } else {
       clearBtn?.classList.add('hidden');
+      if (filtersContainer) filtersContainer.style.display = searchType !== 'multi' ? 'flex' : 'none';
     }
     
     sessionStorage.setItem('showdeck-search-query', currentQuery);
     
-    // If empty, show trending
+    // If empty, show trending/discover
     if (!currentQuery) {
-      loadTrending();
+      loadDiscover();
       return;
     }
     
@@ -137,11 +156,35 @@ export function init() {
       }
     });
 
+    const filtersContainer = document.getElementById('discover-filters-container');
+    if (filtersContainer) {
+      filtersContainer.style.display = (!currentQuery && searchType !== 'multi') ? 'flex' : 'none';
+      if (searchType !== 'multi') populateFilters();
+    }
+
     if (currentQuery) {
       currentPage = 1;
       performSearch();
+    } else {
+      currentPage = 1;
+      loadDiscover();
     }
   });
+
+  const genreFilter = document.getElementById('filter-genre-input');
+  const countryFilter = document.getElementById('filter-country-input');
+  const sortFilter = document.getElementById('filter-sort');
+  
+  function applyFilters() {
+    if (currentQuery) return; // Filters only apply in discover mode
+    currentPage = 1;
+    loadDiscover();
+  }
+
+  // Use 'change' so it fires when user selects from datalist or presses enter
+  genreFilter?.addEventListener('change', applyFilters);
+  countryFilter?.addEventListener('change', applyFilters);
+  sortFilter?.addEventListener('change', applyFilters);
 
   document.getElementById('search-view-toggle')?.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-view]');
@@ -166,14 +209,17 @@ export function init() {
       currentPage = 1;
       performSearch();
     } else {
-      loadTrending();
+      currentPage = 1;
+      loadDiscover();
     }
   });
 
   document.getElementById('load-more-btn')?.addEventListener('click', () => {
+    currentPage++;
     if (currentQuery) {
-      currentPage++;
       performSearch(true);
+    } else {
+      loadDiscover(true);
     }
   });
 
@@ -207,51 +253,136 @@ export function init() {
     currentPage = 1;
     performSearch();
   } else {
-    loadTrending();
+    loadDiscover();
+  }
+
+  if (searchType !== 'multi' && !currentQuery) {
+    populateFilters();
   }
 }
 
-async function loadTrending() {
+let cachedCountries = null;
+async function populateFilters() {
+  const genreList = document.getElementById('genre-list');
+  const countryList = document.getElementById('country-list');
+  const genreInput = document.getElementById('filter-genre-input');
+  
+  if (!genreList || !countryList) return;
+
+  // Clear current genre input to avoid mismatches between TV/Movie
+  if (genreInput) genreInput.value = '';
+
+  // Populate Countries once
+  if (!cachedCountries) {
+    const data = await provider.getCountries();
+    if (data.length > 0) {
+      cachedCountries = data.filter(c => c.english_name).sort((a, b) => a.english_name.localeCompare(b.english_name));
+      countryList.innerHTML = cachedCountries.map(c => `<option data-value="${c.iso_3166_1}" value="${c.english_name}"></option>`).join('');
+    }
+  }
+
+  // Populate Genres dynamically
+  const typeMap = searchType === 'shows' ? 'tv' : 'movie';
+  const genres = await provider.getGenres(typeMap);
+  if (genres.length > 0) {
+    genreList.innerHTML = genres.map(g => `<option data-value="${g.id}" value="${g.name}"></option>`).join('');
+  }
+}
+
+async function loadDiscover(append = false) {
   const container = document.getElementById('search-results');
+  const loadMoreEl = document.getElementById('search-load-more');
   if (!container) return;
   
-  container.innerHTML = `
-    <div style="display:flex;justify-content:center;padding:var(--space-8);">
-      <div class="spinner"></div>
-    </div>
-  `;
-  document.getElementById('search-load-more')?.classList.add('hidden');
+  if (!append) {
+    container.innerHTML = `
+      <div style="display:flex;justify-content:center;padding:var(--space-8);">
+        <div class="spinner"></div>
+      </div>
+    `;
+  }
+  
+  loadMoreEl?.classList.add('hidden');
   
   try {
-    const data = await provider.getTrendingShows();
+    let data;
+    let title = 'Trending';
+
+    if (searchType === 'multi') {
+      data = await provider.getTrendingShows();
+      title = 'Trending TV Shows';
+    } else {
+      const genreVal = document.getElementById('filter-genre-input')?.value;
+      const countryVal = document.getElementById('filter-country-input')?.value;
+      const sort = document.getElementById('filter-sort')?.value || 'popularity.desc';
+      
+      let genreId = '';
+      if (genreVal) {
+        const opt = document.querySelector(`#genre-list option[value="${genreVal}"]`);
+        if (opt) genreId = opt.dataset.value;
+      }
+      
+      let countryId = '';
+      if (countryVal) {
+        const opt = document.querySelector(`#country-list option[value="${countryVal}"]`);
+        if (opt) countryId = opt.dataset.value;
+      }
+
+      const filters = { sort_by: sort };
+      if (genreId) filters.with_genres = genreId;
+      if (countryId) filters.with_origin_country = countryId;
+
+      if (searchType === 'shows') {
+        data = await provider.discoverShows(filters, currentPage);
+        title = 'Discover TV Shows';
+      } else {
+        data = await provider.discoverMovies(filters, currentPage);
+        title = 'Discover Movies';
+      }
+    }
     
+    totalPages = data.totalPages || 1;
+
     if (!data.results || data.results.length === 0) {
-      container.innerHTML = `<div class="empty-state">No trending shows found.</div>`;
+      if (!append) container.innerHTML = `<div class="empty-state">No results found for these filters.</div>`;
       return;
     }
+
     // Check which items are already in library
     const results = [];
     for (const item of data.results) {
       if (!item.tmdbId) continue;
       let inLibrary = false;
-      if (item.mediaType === 'show') {
+      if (item.mediaType === 'show' || searchType === 'shows') {
         inLibrary = await showExists(item.tmdbId);
-      } else if (item.mediaType === 'movie') {
+        item.mediaType = 'show';
+      } else if (item.mediaType === 'movie' || searchType === 'movies') {
         inLibrary = await movieExists(item.tmdbId);
+        item.mediaType = 'movie';
       }
       results.push({ ...item, inLibrary });
     }
     
     const wrapperClass = viewMode === 'list' ? 'library-list stagger-children' : 'grid-posters stagger-children';
+    const cardsHtml = results.map(renderResultCard).join('');
     
-    const html = `
-      <h2 class="section-title" style="margin-bottom:var(--space-4);">Trending TV Shows</h2>
-      <div class="${wrapperClass}">${results.map(renderResultCard).join('')}</div>
-    `;
-    container.innerHTML = html;
+    if (append) {
+      const wrapper = container.querySelector('.grid-posters') || container.querySelector('.library-list');
+      if (wrapper) wrapper.insertAdjacentHTML('beforeend', cardsHtml);
+    } else {
+      const html = `
+        <h2 class="section-title" style="margin-bottom:var(--space-4);">${title}</h2>
+        <div class="${wrapperClass}">${cardsHtml}</div>
+      `;
+      container.innerHTML = html;
+    }
+
+    if (currentPage < totalPages && searchType !== 'multi') {
+      loadMoreEl?.classList.remove('hidden');
+    }
   } catch (err) {
     console.error(err);
-    container.innerHTML = `<div class="empty-state" style="color:var(--color-error);">Failed to load trending shows.</div>`;
+    if (!append) container.innerHTML = `<div class="empty-state" style="color:var(--color-error);">Failed to load discover results.</div>`;
   }
 }
 
