@@ -12,11 +12,17 @@ To provide its core functionality (entertainment tracking), ShowDeck stores the 
 
 * **Authentication Information**: Your personal TMDB API Key.
 * **Library Metadata**: Show and movie titles, IDs, posters, overviews, ratings, watch status, and personal notes.
-* **User Preferences**: UI configuration settings, such as your theme preference (light/dark mode, accent colors), and your display name.
+* **User Preferences**: UI configuration settings, such as your theme preference (light/dark mode, accent colors), your display name, and adult content toggle preference.
 
 ---
 
-## 2. How Data Is Stored and Transmitted
+## 2. Adult Content & Filtering
+
+By default, ShowDeck enforces a "safe" search environment by automatically filtering out adult (PG-18+) content when making requests to the TMDB API. 
+
+If you choose to enable the **Include Adult Content** toggle in the onboarding or settings screen, you must confirm that you are of legal age. Your preference is stored purely locally (`localStorage`) and simply instructs your browser to include the `include_adult=true` flag when talking directly to TMDB. We do not report, track, or monitor your adult content preference or viewing history.
+
+## 3. How Data Is Stored and Transmitted
 
 ShowDeck is designed with an **offline-first, zero-tracking architecture**:
 
@@ -27,7 +33,7 @@ ShowDeck is designed with an **offline-first, zero-tracking architecture**:
 
 ---
 
-## 3. Data Portability & Deletion
+## 4. Data Portability & Deletion
 
 You have complete control over your data:
 
@@ -36,7 +42,7 @@ You have complete control over your data:
 
 ---
 
-## 4. Analytics and Tracking
+## 5. Analytics and Tracking
 
 **We do not track you.**
 ShowDeck contains:
@@ -46,7 +52,7 @@ ShowDeck contains:
 
 ---
 
-## 5. Changes to This Policy
+## 6. Changes to This Policy
 
 We may update our Privacy Policy from time to time. Any changes will be documented in this repository. 
 

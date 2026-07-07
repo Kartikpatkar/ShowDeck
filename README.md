@@ -17,8 +17,8 @@ Unlike traditional entertainment trackers (like Trakt, TV Time, or Letterboxd), 
 
 * Local-first privacy (No accounts, no cloud syncing)
 * Direct TMDB & TVMaze API connections
-* Offline-first architecture
-* Fast, native-like mobile experience
+* Offline-first Progressive Web App (PWA) architecture
+* Fast, native-like mobile experience powered by modern Web Components
 * 100% data ownership
 
 Whether you're tracking currently airing shows, building a backlog of movies, or taking personal notes on individual episodes, ShowDeck helps you stay organized locally.
@@ -43,6 +43,9 @@ ShowDeck connects directly to TMDB (The Movie Database) and TVMaze from your dev
 * Mark individual episodes as watched.
 * Write private, auto-saving notes for any episode.
 
+### 🛡️ Adult Content Control
+By default, ShowDeck filters out adult (PG-18+) content from search results to provide a safe experience. You can explicitly opt-in to view adult content via the Settings or Onboarding flow. Opting in requires confirmation that you are of legal age.
+
 ### 🎨 Themes & Customization
 Personalize your app experience with multiple accent colors:
 * Purple, Blue, Green, Red
@@ -61,7 +64,8 @@ Personalize your app experience with multiple accent colors:
 ShowDeck is built using vanilla web technologies to ensure maximum performance, zero dependencies, and long-term stability:
 
 * **HTML5 & CSS3** (Vanilla CSS with custom properties)
-* **Vanilla JavaScript** (ES Modules)
+* **Vanilla JavaScript** (ES Modules & Native Web Components)
+* **Service Workers** (For offline caching and PWA installability)
 * **Dexie.js** (IndexedDB wrapper for local storage)
 * **Chart.js** (For rendering statistics)
 * **JSZip** (For TV Time migrations)
