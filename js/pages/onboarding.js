@@ -48,9 +48,20 @@ export function render() {
         <div id="onboarding-step-3" class="onboarding-step animate-fade-in" style="display: none;">
           <div style="font-size: 48px; margin-bottom: var(--space-4);">🔌</div>
           <h1 style="font-size: var(--text-2xl); font-weight: var(--weight-bold); margin-bottom: var(--space-2);">Connect Data Sources</h1>
-          <div style="text-align: left; margin-bottom: var(--space-8);">
+          <div style="text-align: left; margin-bottom: var(--space-4);">
             <label style="display:block; margin-bottom: var(--space-2); font-weight: var(--weight-medium);">TMDB API Key (Optional)</label>
             <input type="text" autocomplete="off" spellcheck="false" id="onboarding-tmdb-key" class="input" placeholder="Enter TMDB API Key" style="width: 100%;" />
+          </div>
+          
+          <div style="text-align: left; margin-bottom: var(--space-8); display:flex; align-items:center; justify-content:space-between; padding:var(--space-3); background:var(--surface-2); border-radius:var(--radius-md);">
+            <div>
+              <div style="font-weight:var(--weight-medium);">Include Adult Content</div>
+              <div style="font-size:var(--text-xs); color:var(--text-tertiary);">Allow 18+ content in search results</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="onboarding-adult-toggle">
+              <span class="slider"></span>
+            </label>
           </div>
           
           <div style="display: flex; gap: var(--space-4);">
@@ -147,10 +158,28 @@ export function init() {
 
   // Step 3
   const tmdbInput = container.querySelector('#onboarding-tmdb-key');
+  const adultToggle = container.querySelector('#onboarding-adult-toggle');
+  
+  adultToggle?.addEventListener('change', async (e) => {
+    if (e.target.checked) {
+      const { confirmModal } = await import('../components/modal.js');
+      const approved = await confirmModal(
+        'Adult Content Warning',
+        'Only select this if you are of legal age in your region. Are you sure you want to enable adult content?',
+        'Enable',
+        true
+      );
+      if (!approved) {
+        e.target.checked = false;
+      }
+    }
+  });
   
   const finish = () => {
     const tmdb = tmdbInput.value.trim();
     if (tmdb) localStorage.setItem('showdeck_tmdb_key', tmdb);
+    
+    localStorage.setItem('showdeck_include_adult', adultToggle?.checked ? 'true' : 'false');
     
     localStorage.setItem('showdeck_onboarded', 'true');
     window.location.hash = '#/home';
