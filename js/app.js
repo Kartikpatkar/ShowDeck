@@ -10,6 +10,12 @@ export const APP_VERSION = '1.0.1';
 
 const router = new Router();
 let sidebar = null;
+const scrollPositions = new Map();
+
+window.addEventListener('scroll', () => {
+  const hash = window.location.hash || '#/';
+  scrollPositions.set(hash, window.scrollY);
+}, { passive: true });
 
 // Page container reference
 const getPageContainer = () => document.getElementById('page-content');
@@ -41,6 +47,16 @@ async function loadPage(loader, params = {}) {
     }
     if (module.init) {
       await module.init(params);
+    }
+    
+    // Restore scroll position
+    const hash = window.location.hash || '#/';
+    if (scrollPositions.has(hash)) {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollPositions.get(hash));
+      });
+    } else {
+      window.scrollTo(0, 0);
     }
   } catch (err) {
     console.error('[ShowDeck] Page load error:', err);

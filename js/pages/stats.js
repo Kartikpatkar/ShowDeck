@@ -4,6 +4,7 @@
  */
 
 import { getFullStats } from '../database/stats.js';
+import { getAchievements } from '../database/achievements.js';
 
 let chartInstances = [];
 
@@ -38,6 +39,8 @@ export async function init() {
     chartInstances.forEach(c => c.destroy());
     chartInstances = [];
 
+    const achievements = await getAchievements();
+
     // Calculate times
     const daysWatched = Math.floor(stats.totalHours / 24);
     const hoursLeft = stats.totalHours % 24;
@@ -66,6 +69,22 @@ export async function init() {
         </div>
       </div>
 
+      <!-- Achievements -->
+      <div class="card" style="margin-bottom:var(--space-8);padding:var(--space-6);">
+        <h3 class="section-title">Achievements</h3>
+        <div style="display:flex;gap:var(--space-4);flex-wrap:wrap;">
+          ${achievements.map(ach => `
+            <div style="display:flex;flex-direction:column;align-items:center;width:100px;text-align:center;opacity:${ach.unlocked ? 1 : 0.4};filter:${ach.unlocked ? 'none' : 'grayscale(100%)'};">
+              <div style="width:64px;height:64px;border-radius:50%;background:${ach.color}20;color:${ach.color};display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:var(--space-2);border:2px solid ${ach.color};box-shadow:${ach.unlocked ? `0 0 10px ${ach.color}40` : 'none'};">
+                ${ach.icon}
+              </div>
+              <div style="font-size:var(--text-sm);font-weight:var(--weight-bold);">${ach.title}</div>
+              <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;line-height:1.2;" title="${ach.description}">${ach.description}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
       <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:var(--space-8);">
         <!-- Genre Chart -->
         <div class="card" style="display:flex;flex-direction:column;padding:var(--space-6);">
@@ -80,6 +99,14 @@ export async function init() {
           <h3 class="section-title">Rating Distribution</h3>
           <div style="flex:1;position:relative;min-height:250px;">
             <canvas id="ratingChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Day of Week Chart -->
+        <div class="card" style="display:flex;flex-direction:column;padding:var(--space-6);">
+          <h3 class="section-title">Activity by Day</h3>
+          <div style="flex:1;position:relative;min-height:250px;">
+            <canvas id="dayOfWeekChart"></canvas>
           </div>
         </div>
       </div>
@@ -196,6 +223,45 @@ function renderCharts(stats) {
           y: { 
             beginAtZero: true, 
             ticks: { stepSize: 1, color: textColor },
+            grid: { color: colorSurface3 }
+          },
+          x: {
+            ticks: { color: textColor },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+    chartInstances.push(chart);
+  }
+
+  // 3. Day of Week Chart (Polar Area or Bar)
+  const dayCtx = document.getElementById('dayOfWeekChart');
+  if (dayCtx && stats.activityByDayOfWeek) {
+    const labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const data = stats.activityByDayOfWeek;
+    
+    const chart = new Chart(dayCtx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Activity',
+          data,
+          backgroundColor: '#10b981', // Emerald
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: { 
+            beginAtZero: true,
+            ticks: { color: textColor },
             grid: { color: colorSurface3 }
           },
           x: {

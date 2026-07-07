@@ -54,12 +54,34 @@ export async function init() {
       });
     });
   });
+
+  // Customize Dashboard logic
+  const customizeBtn = document.getElementById('customize-dashboard-btn');
+  const customizeModal = document.getElementById('customize-modal');
+  const cancelCustomizeBtn = document.getElementById('cancel-customize-btn');
+  const saveCustomizeBtn = document.getElementById('save-customize-btn');
+
+  if (customizeBtn && customizeModal) {
+    customizeBtn.addEventListener('click', () => {
+      customizeModal.classList.toggle('hidden');
+    });
+    cancelCustomizeBtn.addEventListener('click', () => {
+      customizeModal.classList.add('hidden');
+    });
+    saveCustomizeBtn.addEventListener('click', () => {
+      const checkedBoxes = Array.from(document.querySelectorAll('#widget-checkboxes input:checked'));
+      const selectedWidgets = checkedBoxes.map(cb => cb.value);
+      localStorage.setItem('showdeck_home_widgets', JSON.stringify(selectedWidgets));
+      import('../router.js').then(r => window.dispatchEvent(new Event('hashchange')));
+    });
+  }
 }
 
 export async function render() {
   // Fetch data
   const [
     watchingShows,
+    pausedShows,
     planToWatchShows,
     planToWatchMovies,
     recentShows,
@@ -68,6 +90,7 @@ export async function render() {
     allMovies
   ] = await Promise.all([
     getShowsByStatus('watching'),
+    getShowsByStatus('paused'),
     getShowsByStatus('plan'),
     getAllMovies({ trackingStatus: 'plan' }),
     getRecentShows(8),
@@ -78,6 +101,7 @@ export async function render() {
 
   // Inject mediaType for routing
   watchingShows.forEach(i => i.mediaType = 'show');
+  pausedShows.forEach(i => i.mediaType = 'show');
   planToWatchShows.forEach(i => i.mediaType = 'show');
   recentShows.forEach(i => i.mediaType = 'show');
   allShows.forEach(i => i.mediaType = 'show');
@@ -128,6 +152,37 @@ export async function render() {
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           Search Shows
         </a>
+      </div>
+    `;
+  }
+
+  // Build Paused section
+  let pausedShowsHTML = '';
+  if (pausedShows.length > 0) {
+    const cards = pausedShows.slice(0, 8).map(item => {
+      const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
+      const route = `#/show/${item.tmdbId}`;
+      const year = formatYear(item.firstAirDate);
+      return `
+        <a href="${route}" class="poster-card" style="position:relative;">
+          ${posterUrl
+            ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
+            : `<div class="poster-card-image skeleton"></div>`
+          }
+          <div class="poster-card-overlay">
+            <div class="poster-card-title">${item.title}</div>
+            <div class="poster-card-meta">${year} • Paused</div>
+          </div>
+        </a>
+      `;
+    });
+    pausedShowsHTML = `
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Paused Shows</h2>
+          <a href="#/library?status=paused" class="section-action">View All</a>
+        </div>
+        <div class="grid-posters stagger-children">${cards.join('')}</div>
       </div>
     `;
   }
@@ -342,18 +397,15 @@ export async function render() {
     </div>
   ` : '';
 
-  return `
-    <div class="page-container animate-fade-in">
-      <div class="page-header">
-        <div class="page-header-left">
-          <h1 class="page-title">Welcome back${userName ? `, ${userName}` : ''} 👋</h1>
-          <p class="page-subtitle">Here's what's happening with your entertainment.</p>
-        </div>
-      </div>
+  const defaultWidgets = ['watching', 'paused', 'plan', 'recent', 'upcoming'];
+  let userWidgets = null;
+  try {
+    userWidgets = JSON.parse(localStorage.getItem('showdeck_home_widgets'));
+  } catch (e) {}
+  if (!Array.isArray(userWidgets)) userWidgets = defaultWidgets;
 
-      ${onboardingHtml}
-
-      <!-- Continue Watching -->
+  const widgetHTMLs = {
+    'watching': `
       <div class="section">
         <div class="section-header">
           <h2 class="section-title">Watching</h2>
@@ -361,10 +413,10 @@ export async function render() {
         </div>
         ${continueWatchingHTML}
       </div>
-
-      ${planToWatchHTML}
-
-      <!-- Recently Added -->
+    `,
+    'paused': pausedShowsHTML,
+    'plan': planToWatchHTML,
+    'recent': `
       <div class="section">
         <div class="section-header">
           <div style="display:flex;align-items:center;gap:var(--space-4);">
@@ -382,8 +434,59 @@ export async function render() {
         </div>
         ${recentlyAddedHTML}
       </div>
+    `,
+    'upcoming': upcomingHTML
+  };
 
-      ${upcomingHTML}
+  const dashboardContent = userWidgets.map(w => widgetHTMLs[w] || '').join('');
+
+  return `
+    <div class="page-container animate-fade-in">
+      <div class="page-header" style="align-items:flex-start;">
+        <div class="page-header-left">
+          <h1 class="page-title">Welcome back${userName ? `, ${userName}` : ''} 👋</h1>
+          <p class="page-subtitle">Here's what's happening with your entertainment.</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="customize-dashboard-btn" style="display:flex;align-items:center;gap:var(--space-2);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span class="hide-mobile">Customize</span>
+        </button>
+      </div>
+
+      <div id="customize-modal" class="card hidden" style="margin-bottom:var(--space-6); padding:var(--space-6); background:var(--surface-2); border-color:var(--color-primary);">
+        <h3 style="margin-top:0; margin-bottom:var(--space-4);">Customize Dashboard</h3>
+        <p style="font-size:var(--text-sm); color:var(--text-tertiary); margin-bottom:var(--space-4);">Select the sections you want to see on your home screen.</p>
+        <div style="display:flex; flex-direction:column; gap:var(--space-3);" id="widget-checkboxes">
+          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
+            <input type="checkbox" value="watching" ${userWidgets.includes('watching') ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
+            <span>Watching</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
+            <input type="checkbox" value="paused" ${userWidgets.includes('paused') ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
+            <span>Paused Shows</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
+            <input type="checkbox" value="plan" ${userWidgets.includes('plan') ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
+            <span>Plan to Watch</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
+            <input type="checkbox" value="recent" ${userWidgets.includes('recent') ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
+            <span>Recently Added</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
+            <input type="checkbox" value="upcoming" ${userWidgets.includes('upcoming') ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
+            <span>Upcoming Releases</span>
+          </label>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:var(--space-3); margin-top:var(--space-4);">
+          <button class="btn btn-ghost" id="cancel-customize-btn">Cancel</button>
+          <button class="btn btn-primary" id="save-customize-btn">Save Layout</button>
+        </div>
+      </div>
+
+      ${onboardingHtml}
+
+      ${dashboardContent}
     </div>
   `;
 }

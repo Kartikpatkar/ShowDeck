@@ -62,6 +62,7 @@ async function tmdbFetch(endpoint, params = {}) {
   const url = new URL(`${BASE_URL}${endpoint}`);
   url.searchParams.set('api_key', apiKey);
   url.searchParams.set('language', 'en-US');
+  url.searchParams.set('include_adult', 'false');
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 
   logApiUsage('tmdb');

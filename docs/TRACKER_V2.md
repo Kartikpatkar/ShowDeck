@@ -40,16 +40,16 @@
   - `[x]` Dynamically filter library contents based on saved rules.
 
 ## Phase 4: Analytics & Gamification
-- `[ ]` **Feature 11: Advanced Statistics**
-  - `[ ]` Expand `stats.js` with complex queries (Longest Streak, Favorite Genre).
-  - `[ ]` Add asynchronous caching for heavy queries to maintain UI speed.
-  - `[ ]` Add new visualization charts.
-- `[ ]` **Feature 5: Achievement System**
-  - `[ ]` Define baseline local achievements (Night Owl, Binge Master).
-  - `[ ]` Create background evaluation logic to trigger achievement popups on milestones.
-- `[ ]` **Feature 3 & 7: Dashboard Modularity**
-  - `[ ]` Refactor `home.js` to render dynamic widget arrays based on `localStorage` preferences.
-  - `[ ]` Build a widget manager modal for users to toggle/reorder dashboard sections.
+- `[x]` **Feature 11: Advanced Statistics**
+  - `[x]` Expand `stats.js` with complex queries (Longest Streak, Favorite Genre).
+  - `[x]` Add asynchronous caching for heavy queries to maintain UI speed.
+  - `[x]` Add new visualization charts.
+- `[x]` **Feature 5: Achievement System**
+  - `[x]` Define baseline local achievements (Night Owl, Binge Master).
+  - `[x]` Create background evaluation logic to trigger achievement popups on milestones.
+- `[x]` **Feature 3 & 7: Dashboard Modularity**
+  - `[x]` Refactor `home.js` to render dynamic widget arrays based on `localStorage` preferences.
+  - `[x]` Build a widget manager modal for users to toggle/reorder dashboard sections.
 
 ---
 
