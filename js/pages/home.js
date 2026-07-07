@@ -16,6 +16,18 @@ let viewMode = localStorage.getItem('showdeck-home-view') || 'grid';
 export async function init() {
   // Bind onboarding key save if it exists
   const homeSaveBtn = document.getElementById('home-save-key');
+  const adultInput = document.getElementById('home-adult-content');
+  
+  if (adultInput) {
+    adultInput.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        if (!confirm("Adult Content Warning:\n\nOnly select this if you are of legal age in your region. Are you sure you want to enable adult content?")) {
+          e.target.checked = false;
+        }
+      }
+    });
+  }
+
   if (homeSaveBtn) {
     homeSaveBtn.addEventListener('click', () => {
       const key = document.getElementById('home-api-key').value.trim();

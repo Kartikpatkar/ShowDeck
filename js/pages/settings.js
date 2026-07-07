@@ -362,6 +362,12 @@ function bindEvents() {
   const adultSetting = document.getElementById('adult-content-setting');
   if (adultSetting) {
     adultSetting.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        if (!confirm("Adult Content Warning:\n\nOnly select this if you are of legal age in your region. Are you sure you want to enable adult content?")) {
+          e.target.checked = false;
+          return;
+        }
+      }
       localStorage.setItem('showdeck_include_adult', e.target.checked ? 'true' : 'false');
       toast('Content preferences updated.', 'success');
     });
