@@ -1,59 +1,139 @@
 /**
- * ShowDeck — Help Page
+ * ShowDeck — Help & Guidance Page
+ * Simple, user-friendly feature explanations.
  */
 
 export function render() {
   return `
-    <div class="page-container animate-fade-in" style="max-width:800px;margin:0 auto;">
-      <div class="page-header" style="margin-bottom:var(--space-8);">
+    <div class="page-container animate-fade-in">
+      <div class="page-header">
         <div class="page-header-left">
-          <h1 class="page-title">Help & Guides</h1>
+          <h1 class="page-title">Help & Guidance</h1>
           <p class="page-subtitle">Learn how to get the most out of ShowDeck.</p>
         </div>
       </div>
 
-      <div style="display:flex;flex-direction:column;gap:var(--space-6);">
+      <div style="display:flex;flex-direction:column;gap:var(--space-6);max-width:800px;">
         
+        <!-- Finding & Adding Content -->
+        <div class="card" style="padding:var(--space-6);">
+          <h3 class="section-title" style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3);">
+            <span>🔍</span> Finding & Adding Content
+          </h3>
+          <p style="color:var(--text-secondary);line-height:1.6;margin-bottom:var(--space-4);">
+            Use the <strong>Search</strong> page to look up your favorite TV shows and movies. When you find something you want to track, tap the <strong>Add</strong> button on its poster. You can immediately categorize it into lists like 'Plan to Watch' or 'Watching' from the popup menu.
+          </p>
+        </div>
+
+        <!-- Managing Library -->
+        <div class="card" style="padding:var(--space-6);">
+          <h3 class="section-title" style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3);">
+            <span>📚</span> Managing Your Library
+          </h3>
+          <p style="color:var(--text-secondary);line-height:1.6;margin-bottom:var(--space-4);">
+            Your <strong>Library</strong> holds everything you've tracked. You can toggle between different views (Grid, List, and Compact) to see more details. 
+            <br><br>
+            In the <strong>List view</strong>, click on any show to open its details. From there, you can easily mark individual episodes as watched, give the show a star rating, or write private, auto-saving notes.
+          </p>
+        </div>
+
         <!-- Getting Started -->
         <div class="card" style="padding:var(--space-6);">
-          <h2 class="section-title">Getting Started</h2>
-          <div style="margin-top:var(--space-4);color:var(--text-secondary);line-height:1.6;">
-            <p style="margin-bottom:var(--space-2);"><strong>1. Add an API Key:</strong> To search for movies, you need a free TMDB API key. Go to <strong>Settings &rarr; API Providers</strong> and enter your key.</p>
-            <p style="margin-bottom:var(--space-2);"><strong>2. Search for Media:</strong> Click <strong>Search</strong> in the sidebar. Type a show or movie name and click "Add to Library".</p>
-            <p><strong>3. Track Progress:</strong> Go to your Library. Click a show, then click on a season, and mark episodes as "Watched" as you finish them.</p>
-          </div>
+          <h3 class="section-title" style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3);">
+            <span>🚀</span> Getting Started
+          </h3>
+          <p style="color:var(--text-secondary);line-height:1.6;margin-bottom:var(--space-4);">
+            Welcome to ShowDeck! To begin:
+            <br><br>
+            1. <strong>Connect an API Key:</strong> Go to Settings and enter your TMDB API Key. This lets ShowDeck fetch show data directly from your device.
+            <br>
+            2. <strong>Search for Shows:</strong> Navigate to the Search tab, look up your favorite shows, and add them to your library.
+            <br>
+            3. <strong>Track Progress:</strong> Go to your Library to mark episodes as watched.
+          </p>
         </div>
 
-        <!-- Managing Data -->
+        <!-- How to get TMDB API Key -->
         <div class="card" style="padding:var(--space-6);">
-          <h2 class="section-title">Managing Your Data</h2>
-          <div style="margin-top:var(--space-4);color:var(--text-secondary);line-height:1.6;">
-            <p style="margin-bottom:var(--space-2);"><strong>Offline Mode:</strong> ShowDeck is a Progressive Web App (PWA). If you lose internet connection, you can still view your entire library and notes!</p>
-            <p style="margin-bottom:var(--space-2);"><strong>Manual Sync:</strong> To fetch the latest episodes or updated posters, go to a show's page and click the <strong>Sync</strong> button in the top right.</p>
-            <p><strong>Backups:</strong> Since your data lives locally on your device, it's highly recommended to go to <strong>Settings &rarr; Export Backup (JSON)</strong> occasionally. You can restore this file on a new phone or computer.</p>
-          </div>
+          <h3 class="section-title" style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3);">
+            <span>🔑</span> How to get a TMDB API Key
+          </h3>
+          <p style="color:var(--text-secondary);line-height:1.6;margin-bottom:var(--space-4);">
+            ShowDeck connects directly to TMDB. You need your own free key. Here is how to get one:
+            <br><br>
+            1. <strong>Sign Up:</strong> Go to <a href="https://www.themoviedb.org/signup" target="_blank" style="color:var(--color-primary);text-decoration:none;">themoviedb.org</a> and create a free account.
+            <br>
+            2. <strong>Request an API Key:</strong> Once logged in, go to your <strong>Account Settings</strong> &gt; <strong>API</strong>.
+            <br>
+            3. <strong>Register as Developer:</strong> Click "Create" or "Click here to apply for an API key" and select <strong>Developer</strong>.
+            <br>
+            4. <strong>Fill the Form:</strong> Accept the terms and fill out the basic application form (you can mention ShowDeck as the application).
+            <br>
+            5. <strong>Copy Key:</strong> Once approved, copy your <strong>API Key (v3 auth)</strong> and paste it into ShowDeck's Settings or Onboarding screen!
+          </p>
         </div>
 
-        <!-- Hotkeys -->
+        <!-- Managing Your Data -->
         <div class="card" style="padding:var(--space-6);">
-          <h2 class="section-title">Desktop Keyboard Shortcuts</h2>
-          <div style="margin-top:var(--space-4);display:flex;flex-direction:column;gap:var(--space-4);">
-            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-color);padding-bottom:var(--space-2);">
-              <span class="text-secondary">Go Back</span>
-              <kbd style="background:var(--surface-3);padding:2px 8px;border-radius:4px;font-family:monospace;">Esc</kbd>
-            </div>
-            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-color);padding-bottom:var(--space-2);">
-              <span class="text-secondary">Sync Show/Movie</span>
-              <kbd style="background:var(--surface-3);padding:2px 8px;border-radius:4px;font-family:monospace;">S</kbd>
-            </div>
-            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-color);padding-bottom:var(--space-2);">
-              <span class="text-secondary">Toggle Watched</span>
-              <kbd style="background:var(--surface-3);padding:2px 8px;border-radius:4px;font-family:monospace;">W</kbd>
-            </div>
-          </div>
+          <h3 class="section-title" style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3);">
+            <span>💾</span> Managing Your Data
+          </h3>
+          <p style="color:var(--text-secondary);line-height:1.6;margin-bottom:var(--space-4);">
+            Because ShowDeck is local-first, you have full control over your data:
+            <br><br>
+            • <strong>JSON Export/Import:</strong> Backup your entire library to a JSON file in Settings. Keep this safe!<br>
+            • <strong>TV Time Import:</strong> Moving from TV Time? You can import your GDPR zip export directly into ShowDeck.<br>
+            • <strong>CSV Export:</strong> Need to analyze your watch habits in a spreadsheet? Export your library as a CSV.
+          </p>
         </div>
 
-        <!-- About & Contact (Inspired by sf-vault footer) -->
+        <!-- Keyboard Shortcuts -->
+        <div class="card" style="padding:var(--space-6);">
+          <h3 class="section-title" style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3);">
+            <span>⌨️</span> Desktop Keyboard Shortcuts
+          </h3>
+          <p style="color:var(--text-secondary);line-height:1.6;margin-bottom:var(--space-4);">
+            Speed up your workflow on desktop with these handy shortcuts:
+            <br><br>
+            • <kbd>/</kbd> – Focus the search bar<br>
+            • <kbd>Esc</kbd> – Close modals or clear search<br>
+            • <kbd>1-5</kbd> – Quickly rate a show when viewing its details
+          </p>
+        </div>
+
+        <!-- Statistics & Streaks -->
+        <div class="card" style="padding:var(--space-6);">
+          <h3 class="section-title" style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3);">
+            <span>📊</span> Statistics & Streaks
+          </h3>
+          <p style="color:var(--text-secondary);line-height:1.6;margin-bottom:var(--space-4);">
+            The <strong>Stats</strong> page visualizes your watching habits. 
+            <br><br>
+            • <strong>Watch Streak:</strong> Logging at least one episode a day builds your watch streak on the Activity Heatmap!
+            <br>
+            • <strong>Ratings:</strong> Rate your watched shows (1 to 5 stars) to see your personal Rating Distribution chart.
+            <br>
+            • <strong>Genres:</strong> See what genres you tend to watch the most.
+          </p>
+        </div>
+
+        <!-- Privacy & Offline -->
+        <div class="card" style="padding:var(--space-6);">
+          <h3 class="section-title" style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3);">
+            <span>🔒</span> Privacy & Offline Capabilities
+          </h3>
+          <p style="color:var(--text-secondary);line-height:1.6;margin-bottom:var(--space-4);">
+            ShowDeck is built to respect your privacy. It is an <strong>offline-first</strong> application.
+            <br><br>
+            • Your entire library is stored purely locally on your device. We do not track your activity or sync it to any server.
+            <br>
+            • You can use ShowDeck even without an internet connection (it will sync missing posters/details when you reconnect).
+            <br>
+            • You can easily export your data anytime or completely wipe it using the Danger Zone in <strong>Settings</strong>.
+          </p>
+        </div>
+
+        <!-- About & Contact -->
         <div class="card" style="padding:var(--space-6);border-color:var(--color-primary);text-align:center;">
           <h2 style="font-size:var(--text-xl);font-weight:var(--weight-bold);margin-bottom:var(--space-2);">ShowDeck</h2>
           <p style="color:var(--text-secondary);margin-bottom:var(--space-4);">Your personal entertainment tracker.</p>
@@ -89,4 +169,8 @@ export function render() {
       </div>
     </div>
   `;
+}
+
+export function init() {
+  // Static page, no init logic needed
 }

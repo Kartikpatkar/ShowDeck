@@ -4,6 +4,7 @@
  */
 
 import { getFullStats } from '../database/stats.js';
+import { getAchievements } from '../database/achievements.js';
 
 let chartInstances = [];
 
@@ -38,6 +39,8 @@ export async function init() {
     chartInstances.forEach(c => c.destroy());
     chartInstances = [];
 
+    const achievements = await getAchievements();
+
     // Calculate times
     const daysWatched = Math.floor(stats.totalHours / 24);
     const hoursLeft = stats.totalHours % 24;
@@ -66,6 +69,22 @@ export async function init() {
         </div>
       </div>
 
+      <!-- Achievements -->
+      <div class="card" style="margin-bottom:var(--space-8);padding:var(--space-6);">
+        <h3 class="section-title">Achievements</h3>
+        <div style="display:flex;gap:var(--space-4);flex-wrap:wrap;">
+          ${achievements.map(ach => `
+            <div style="display:flex;flex-direction:column;align-items:center;width:100px;text-align:center;opacity:${ach.unlocked ? 1 : 0.4};filter:${ach.unlocked ? 'none' : 'grayscale(100%)'};">
+              <div style="width:64px;height:64px;border-radius:50%;background:${ach.color}20;color:${ach.color};display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:var(--space-2);border:2px solid ${ach.color};box-shadow:${ach.unlocked ? `0 0 10px ${ach.color}40` : 'none'};">
+                ${ach.icon}
+              </div>
+              <div style="font-size:var(--text-sm);font-weight:var(--weight-bold);">${ach.title}</div>
+              <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;line-height:1.2;" title="${ach.description}">${ach.description}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
       <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:var(--space-8);">
         <!-- Genre Chart -->
         <div class="card" style="display:flex;flex-direction:column;padding:var(--space-6);">
@@ -82,13 +101,21 @@ export async function init() {
             <canvas id="ratingChart"></canvas>
           </div>
         </div>
+
+        <!-- Day of Week Chart -->
+        <div class="card" style="display:flex;flex-direction:column;padding:var(--space-6);">
+          <h3 class="section-title">Activity by Day</h3>
+          <div style="flex:1;position:relative;min-height:250px;">
+            <canvas id="dayOfWeekChart"></canvas>
+          </div>
+        </div>
       </div>
       
       <!-- Activity Heatmap -->
       <div class="card" style="margin-top:var(--space-8);padding:var(--space-6);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4);">
           <h3 class="section-title" style="margin:0;">Watch Activity</h3>
-          <div style="display:flex;gap:var(--space-4);font-size:var(--text-sm);">
+          <div style="display:flex;gap:var(--space-4);font-size:var(--text-sm);flex-wrap:wrap;">
             <div><span class="text-tertiary">Current Streak:</span> <strong>${stats.currentStreak} days</strong></div>
             <div><span class="text-tertiary">Longest Streak:</span> <strong>${stats.longestStreak} days</strong></div>
           </div>
@@ -99,12 +126,34 @@ export async function init() {
         </div>
       </div>
     `;
-
     renderCharts(stats);
+
+    if (window.statsThemeObserver) {
+      window.statsThemeObserver.disconnect();
+    }
+    window.statsThemeObserver = new MutationObserver(() => {
+      chartInstances.forEach(c => c.destroy());
+      chartInstances = [];
+      renderCharts(stats);
+    });
+    window.statsThemeObserver.observe(document.body, { attributes: true, attributeFilter: ['class', 'data-theme'] });
 
   } catch (err) {
     console.error('Stats error:', err);
     container.innerHTML = `<div class="empty-state">Failed to load statistics.</div>`;
+  }
+}
+
+export function destroy() {
+  if (window.statsThemeObserver) {
+    window.statsThemeObserver.disconnect();
+    window.statsThemeObserver = null;
+  }
+  if (chartInstances && chartInstances.length > 0) {
+    chartInstances.forEach(c => {
+      if (c && typeof c.destroy === 'function') c.destroy();
+    });
+    chartInstances = [];
   }
 }
 
@@ -114,11 +163,33 @@ function renderCharts(stats) {
     return;
   }
 
+  // Safety check to prevent race conditions during rapid navigation
+  if (!document.getElementById('genreChart')) {
+    return;
+  }
+
   // Theme colors
   const root = getComputedStyle(document.documentElement);
   const colorPrimary = root.getPropertyValue('--color-primary').trim();
+  const colorSurface0 = root.getPropertyValue('--surface-0').trim();
+  const colorSurface1 = root.getPropertyValue('--surface-1').trim();
   const colorSurface3 = root.getPropertyValue('--surface-3').trim();
   const textColor = root.getPropertyValue('--text-primary').trim();
+  const textColorSec = root.getPropertyValue('--text-secondary').trim();
+
+  // Global Chart Defaults
+  Chart.defaults.color = textColorSec;
+  Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+  Chart.defaults.plugins.tooltip.backgroundColor = colorSurface1;
+  Chart.defaults.plugins.tooltip.titleColor = textColor;
+  Chart.defaults.plugins.tooltip.bodyColor = textColor;
+  Chart.defaults.plugins.tooltip.borderColor = colorSurface3;
+  Chart.defaults.plugins.tooltip.borderWidth = 1;
+  Chart.defaults.plugins.tooltip.padding = 12;
+  Chart.defaults.plugins.tooltip.cornerRadius = 8;
+  Chart.defaults.plugins.tooltip.displayColors = false;
+  Chart.defaults.animation.easing = 'easeOutQuart';
+  Chart.defaults.animation.duration = 1000;
 
   // 1. Genre Chart (Doughnut)
   const genreCtx = document.getElementById('genreChart');
@@ -148,16 +219,18 @@ function renderCharts(stats) {
             '#f59e0b', // Amber
             colorSurface3
           ],
-          borderWidth: 0,
+          borderWidth: 2,
+          borderColor: colorSurface0,
+          hoverOffset: 6
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'right', labels: { color: textColor } }
+          legend: { position: 'right', labels: { color: textColor, padding: 16 } }
         },
-        cutout: '70%'
+        cutout: '65%'
       }
     });
     chartInstances.push(chart);
@@ -175,6 +248,11 @@ function renderCharts(stats) {
       stats.ratingDistribution[5] || 0,
     ];
 
+    const ctx = ratingCtx.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, colorPrimary);
+    gradient.addColorStop(1, 'transparent');
+
     const chart = new Chart(ratingCtx, {
       type: 'bar',
       data: {
@@ -182,8 +260,10 @@ function renderCharts(stats) {
         datasets: [{
           label: 'Ratings',
           data,
-          backgroundColor: colorPrimary,
-          borderRadius: 4,
+          backgroundColor: gradient,
+          hoverBackgroundColor: colorPrimary,
+          borderRadius: 6,
+          borderSkipped: false,
         }]
       },
       options: {
@@ -195,11 +275,57 @@ function renderCharts(stats) {
         scales: {
           y: { 
             beginAtZero: true, 
-            ticks: { stepSize: 1, color: textColor },
-            grid: { color: colorSurface3 }
+            ticks: { stepSize: 1, color: textColorSec },
+            grid: { color: colorSurface3, drawBorder: false }
           },
           x: {
-            ticks: { color: textColor },
+            ticks: { color: textColorSec },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+    chartInstances.push(chart);
+  }
+
+  // 3. Day of Week Chart (Bar)
+  const dayCtx = document.getElementById('dayOfWeekChart');
+  if (dayCtx && stats.activityByDayOfWeek) {
+    const labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const data = stats.activityByDayOfWeek;
+    
+    const ctx = dayCtx.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, '#10b981'); // Emerald
+    gradient.addColorStop(1, 'transparent');
+
+    const chart = new Chart(dayCtx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Activity',
+          data,
+          backgroundColor: gradient,
+          hoverBackgroundColor: '#10b981',
+          borderRadius: 6,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: { 
+            beginAtZero: true,
+            ticks: { color: textColorSec },
+            grid: { color: colorSurface3, drawBorder: false }
+          },
+          x: {
+            ticks: { color: textColorSec },
             grid: { display: false }
           }
         }
@@ -233,6 +359,7 @@ function renderHeatmap(activityData) {
       <div 
         style="
           width:16px;height:16px;
+          flex-shrink:0;
           border-radius:2px;
           background: ${count === 0 ? 'var(--surface-3)' : `color-mix(in srgb, var(--color-primary) ${intensity*100}%, transparent)`};
         "

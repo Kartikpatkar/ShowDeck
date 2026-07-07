@@ -2,6 +2,20 @@
 
 All notable changes to ShowDeck will be documented in this file.
 
+## [1.1.0] - 2026-07-07
+
+### Added
+- **PWA Architecture**: Officially added `manifest.json` and `sw.js` for full Progressive Web App installability and offline asset caching (Cache `v2`).
+- **Adult Content Consent**: Added a secure custom modal to explicitly request user consent before enabling 18+ content in search results (available in Onboarding and Settings).
+- **Web Components**: Migrated heavy DOM elements (like media cards) to native `<media-card>` Custom Elements, vastly improving render performance and lowering memory footprint.
+
+### Fixed
+- **Memory Leaks**: Implemented a `destroy()` router lifecycle method to systematically clean up global event listeners and `MutationObserver` instances (especially on the Stats page) when navigating between views.
+- **Chart.js Race Conditions**: Added DOM safety checks to prevent `CanvasRenderingContext2D` errors if a user rapidly navigates away from the Stats page during chart initialization.
+- **API Rate Limiting**: Enforced a strict `250ms` throttle during TV Time bulk imports to prevent TMDB IP bans (`429 Too Many Requests`).
+- **iOS Safari Storage**: Added explicit warnings in Settings for iOS Safari users regarding potential volatile `IndexedDB` purges to encourage regular JSON backups.
+- **Data Conflict Handlers**: Solidified episode tracking logic to natively prioritize TMDB's episode counts over TVMaze where data conflicts occur.
+
 ## [1.0.1] - Hotfix Release
 
 ### Fixed

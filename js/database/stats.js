@@ -95,6 +95,15 @@ export async function getFullStats() {
   // Streak calculation
   const { currentStreak, longestStreak } = calculateStreaks(activityByDate);
 
+  // Day of week distribution
+  const activityByDayOfWeek = [0, 0, 0, 0, 0, 0, 0]; // Sun..Sat
+  Object.keys(activityByDate).forEach(date => {
+    const d = new Date(date);
+    // Use UTC to avoid timezone shifts from YYYY-MM-DD
+    const day = d.getUTCDay();
+    activityByDayOfWeek[day] += activityByDate[date];
+  });
+
   return {
     totalShows: shows.length,
     totalMovies: movies.length,
@@ -107,6 +116,7 @@ export async function getFullStats() {
     currentStreak,
     longestStreak,
     activityByDate,
+    activityByDayOfWeek
   };
 }
 

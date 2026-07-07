@@ -6,10 +6,17 @@
 import { Router } from './router.js';
 import { Sidebar } from './components/sidebar.js';
 
-export const APP_VERSION = '1.0.1';
+export const APP_VERSION = '1.1.0';
 
 const router = new Router();
 let sidebar = null;
+const scrollPositions = new Map();
+let currentModule = null; // Track current module for memory cleanup
+
+window.addEventListener('scroll', () => {
+  const hash = window.location.hash || '#/';
+  scrollPositions.set(hash, window.scrollY);
+}, { passive: true });
 
 // Page container reference
 const getPageContainer = () => document.getElementById('page-content');
@@ -30,6 +37,19 @@ async function loadPage(loader, params = {}) {
 
   try {
     const module = await loader();
+    
+    // Call destroy on the outgoing module to prevent memory leaks
+    if (currentModule && typeof currentModule.destroy === 'function') {
+      try {
+        currentModule.destroy();
+      } catch (e) {
+        console.error('[ShowDeck] Error destroying previous module:', e);
+      }
+    }
+    
+    // Track the new module
+    currentModule = module;
+
     if (module.render) {
       container.innerHTML = '';
       const content = await module.render(params);
@@ -41,6 +61,16 @@ async function loadPage(loader, params = {}) {
     }
     if (module.init) {
       await module.init(params);
+    }
+    
+    // Restore scroll position
+    const hash = window.location.hash || '#/';
+    if (scrollPositions.has(hash)) {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollPositions.get(hash));
+      });
+    } else {
+      window.scrollTo(0, 0);
     }
   } catch (err) {
     console.error('[ShowDeck] Page load error:', err);
@@ -133,11 +163,23 @@ router
   .on('/stats', (params) => {
     loadPage(() => import('./pages/stats.js'), params);
   })
+  .on('/history', (params) => {
+    loadPage(() => import('./pages/history.js'), params);
+  })
+  .on('/calendar', (params) => {
+    loadPage(() => import('./pages/calendar.js'), params);
+  })
   .on('/settings', (params) => {
     loadPage(() => import('./pages/settings.js'), params);
   })
   .on('/enrich', (params) => {
     loadPage(() => import('./pages/enrich.js'), params);
+  })
+  .on('/goals', (params) => {
+    loadPage(() => import('./pages/goals.js'), params);
+  })
+  .on('/smart-collections', (params) => {
+    loadPage(() => import('./pages/smart_collections.js'), params);
   })
   .on('/share', (params) => {
     loadPage(() => import('./pages/share.js'), params);
@@ -174,6 +216,8 @@ router.afterEach = (route) => {
     if (route === '/home') navRoute = '/';
     if (route.startsWith('/show/') || route.startsWith('/movie/') || route.startsWith('/episode/')) navRoute = '/library';
     if (route === '/enrich') navRoute = '/settings';
+    if (route === '/history') navRoute = '/history';
+    if (route === '/calendar') navRoute = '/calendar';
     sidebar.setActive(navRoute);
   }
 
@@ -339,12 +383,14 @@ export function initTheme() {
   const accent = localStorage.getItem('showdeck_accent_theme') || 'purple';
   const customColor = localStorage.getItem('showdeck_custom_color');
   
+  const allBaseThemes = ['theme-light', 'theme-dark', 'theme-oled', 'theme-dracula', 'theme-nord', 'theme-catppuccin', 'theme-tokyo'];
+  
   if (theme === 'system') {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.body.classList.remove('theme-dark', 'theme-light');
+    document.body.classList.remove(...allBaseThemes);
     document.body.classList.add(isDark ? 'theme-dark' : 'theme-light');
   } else {
-    document.body.classList.remove('theme-dark', 'theme-light');
+    document.body.classList.remove(...allBaseThemes);
     document.body.classList.add(`theme-${theme}`);
   }
   
@@ -408,4 +454,13 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
+}
+
+// Register PWA Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(registration => console.log('SW registered:', registration.scope))
+      .catch(err => console.log('SW registration failed:', err));
+  });
 }

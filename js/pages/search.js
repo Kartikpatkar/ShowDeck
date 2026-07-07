@@ -9,6 +9,7 @@ import { showExists, addShow } from '../database/shows.js';
 import { movieExists, addMovie } from '../database/movies.js';
 import { debounce, formatYear, truncate, STATUS_MAP, escapeHtml } from '../utils/dom.js';
 import { toast } from '../components/toast.js';
+import '../components/web/media-card.js';
 
 let currentQuery = '';
 let currentPage = 1;
@@ -63,6 +64,22 @@ export function render() {
               </button>
             </div>
           </div>
+          
+          <div id="discover-filters-container" style="display:${(!currentQuery && searchType !== 'multi') ? 'flex' : 'none'}; gap:var(--space-2); margin-top:var(--space-3); flex-wrap:wrap;">
+            <div style="flex:1; min-width:120px;">
+              <input type="text" id="filter-genre-input" list="genre-list" class="input input-sm" placeholder="Any Genre" style="width:100%;">
+              <datalist id="genre-list"></datalist>
+            </div>
+            <div style="flex:1; min-width:120px;">
+              <input type="text" id="filter-country-input" list="country-list" class="input input-sm" placeholder="Any Country" style="width:100%;">
+              <datalist id="country-list"></datalist>
+            </div>
+            <select id="filter-sort" class="input input-sm" style="flex:1; min-width:120px;">
+              <option value="popularity.desc">Most Popular</option>
+              <option value="vote_average.desc">Highest Rated</option>
+              <option value="first_air_date.desc">Newest First</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -94,15 +111,20 @@ export function init() {
     currentQuery = query.trim();
     
     // Toggle clear button
+    const filtersContainer = document.getElementById('discover-filters-container');
     if (currentQuery) {
       clearBtn?.classList.remove('hidden');
+      if (filtersContainer) filtersContainer.style.display = 'none';
     } else {
       clearBtn?.classList.add('hidden');
+      if (filtersContainer) filtersContainer.style.display = searchType !== 'multi' ? 'flex' : 'none';
     }
     
-    // If empty, show trending
+    sessionStorage.setItem('showdeck-search-query', currentQuery);
+    
+    // If empty, show trending/discover
     if (!currentQuery) {
-      loadTrending();
+      loadDiscover();
       return;
     }
     
@@ -125,6 +147,7 @@ export function init() {
     const btn = e.target.closest('[data-type]');
     if (!btn) return;
     searchType = btn.dataset.type;
+    sessionStorage.setItem('showdeck-search-type', searchType);
     
     // Update active button
     document.querySelectorAll('#search-type-filters .btn').forEach(btn => {
@@ -134,11 +157,35 @@ export function init() {
       }
     });
 
+    const filtersContainer = document.getElementById('discover-filters-container');
+    if (filtersContainer) {
+      filtersContainer.style.display = (!currentQuery && searchType !== 'multi') ? 'flex' : 'none';
+      if (searchType !== 'multi') populateFilters();
+    }
+
     if (currentQuery) {
       currentPage = 1;
       performSearch();
+    } else {
+      currentPage = 1;
+      loadDiscover();
     }
   });
+
+  const genreFilter = document.getElementById('filter-genre-input');
+  const countryFilter = document.getElementById('filter-country-input');
+  const sortFilter = document.getElementById('filter-sort');
+  
+  function applyFilters() {
+    if (currentQuery) return; // Filters only apply in discover mode
+    currentPage = 1;
+    loadDiscover();
+  }
+
+  // Use 'change' so it fires when user selects from datalist or presses enter
+  genreFilter?.addEventListener('change', applyFilters);
+  countryFilter?.addEventListener('change', applyFilters);
+  sortFilter?.addEventListener('change', applyFilters);
 
   document.getElementById('search-view-toggle')?.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-view]');
@@ -163,72 +210,178 @@ export function init() {
       currentPage = 1;
       performSearch();
     } else {
-      loadTrending();
+      currentPage = 1;
+      loadDiscover();
     }
   });
 
   document.getElementById('load-more-btn')?.addEventListener('click', () => {
+    currentPage++;
     if (currentQuery) {
-      currentPage++;
       performSearch(true);
+    } else {
+      loadDiscover(true);
     }
   });
 
-  // Load trending on init
-  loadTrending();
-
-  // Result clicks (event delegation)
-  document.getElementById('search-results')?.addEventListener('click', async (e) => {
-    const addBtn = e.target.closest('[data-action="add"]');
-    if (addBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      await handleAdd(addBtn);
-    }
+  // Result clicks (event delegation for old buttons, though mostly handled by component now)
+  document.getElementById('search-results')?.addEventListener('add-to-library', async (e) => {
+    e.preventDefault();
+    const item = e.detail;
+    const card = e.target;
+    await handleAddItem(item, card);
   });
+
+  // Restore state
+  const savedType = sessionStorage.getItem('showdeck-search-type');
+  if (savedType) {
+    searchType = savedType;
+    document.querySelectorAll('#search-type-filters .btn').forEach(btn => {
+      if (btn.hasAttribute('data-type')) {
+        btn.classList.toggle('btn-primary', btn.dataset.type === searchType);
+        btn.classList.toggle('btn-ghost', btn.dataset.type !== searchType);
+      }
+    });
+  }
+
+  const savedQuery = sessionStorage.getItem('showdeck-search-query');
+  if (savedQuery && searchInput) {
+    searchInput.value = savedQuery;
+    currentQuery = savedQuery;
+    clearBtn?.classList.remove('hidden');
+    currentPage = 1;
+    performSearch();
+  } else {
+    loadDiscover();
+  }
+
+  if (searchType !== 'multi' && !currentQuery) {
+    populateFilters();
+  }
 }
 
-async function loadTrending() {
+let cachedCountries = null;
+async function populateFilters() {
+  const genreList = document.getElementById('genre-list');
+  const countryList = document.getElementById('country-list');
+  const genreInput = document.getElementById('filter-genre-input');
+  
+  if (!genreList || !countryList) return;
+
+  // Clear current genre input to avoid mismatches between TV/Movie
+  if (genreInput) genreInput.value = '';
+
+  // Populate Countries once
+  if (!cachedCountries) {
+    const data = await provider.getCountries();
+    if (data.length > 0) {
+      cachedCountries = data.filter(c => c.english_name).sort((a, b) => a.english_name.localeCompare(b.english_name));
+      countryList.innerHTML = cachedCountries.map(c => `<option data-value="${c.iso_3166_1}" value="${c.english_name}"></option>`).join('');
+    }
+  }
+
+  // Populate Genres dynamically
+  const typeMap = searchType === 'shows' ? 'tv' : 'movie';
+  const genres = await provider.getGenres(typeMap);
+  if (genres.length > 0) {
+    genreList.innerHTML = genres.map(g => `<option data-value="${g.id}" value="${g.name}"></option>`).join('');
+  }
+}
+
+async function loadDiscover(append = false) {
   const container = document.getElementById('search-results');
+  const loadMoreEl = document.getElementById('search-load-more');
   if (!container) return;
   
-  container.innerHTML = `
-    <div style="display:flex;justify-content:center;padding:var(--space-8);">
-      <div class="spinner"></div>
-    </div>
-  `;
-  document.getElementById('search-load-more')?.classList.add('hidden');
+  if (!append) {
+    container.innerHTML = `
+      <div style="display:flex;justify-content:center;padding:var(--space-8);">
+        <div class="spinner"></div>
+      </div>
+    `;
+  }
+  
+  loadMoreEl?.classList.add('hidden');
   
   try {
-    const data = await provider.getTrendingShows();
+    let data;
+    let title = 'Trending';
+
+    if (searchType === 'multi') {
+      data = await provider.getTrendingShows();
+      title = 'Trending TV Shows';
+    } else {
+      const genreVal = document.getElementById('filter-genre-input')?.value;
+      const countryVal = document.getElementById('filter-country-input')?.value;
+      const sort = document.getElementById('filter-sort')?.value || 'popularity.desc';
+      
+      let genreId = '';
+      if (genreVal) {
+        const opt = document.querySelector(`#genre-list option[value="${genreVal}"]`);
+        if (opt) genreId = opt.dataset.value;
+      }
+      
+      let countryId = '';
+      if (countryVal) {
+        const opt = document.querySelector(`#country-list option[value="${countryVal}"]`);
+        if (opt) countryId = opt.dataset.value;
+      }
+
+      const filters = { sort_by: sort };
+      if (genreId) filters.with_genres = genreId;
+      if (countryId) filters.with_origin_country = countryId;
+
+      if (searchType === 'shows') {
+        data = await provider.discoverShows(filters, currentPage);
+        title = 'Discover TV Shows';
+      } else {
+        data = await provider.discoverMovies(filters, currentPage);
+        title = 'Discover Movies';
+      }
+    }
     
+    totalPages = data.totalPages || 1;
+
     if (!data.results || data.results.length === 0) {
-      container.innerHTML = `<div class="empty-state">No trending shows found.</div>`;
+      if (!append) container.innerHTML = `<div class="empty-state">No results found for these filters.</div>`;
       return;
     }
+
     // Check which items are already in library
     const results = [];
     for (const item of data.results) {
       if (!item.tmdbId) continue;
       let inLibrary = false;
-      if (item.mediaType === 'show') {
+      if (item.mediaType === 'show' || searchType === 'shows') {
         inLibrary = await showExists(item.tmdbId);
-      } else if (item.mediaType === 'movie') {
+        item.mediaType = 'show';
+      } else if (item.mediaType === 'movie' || searchType === 'movies') {
         inLibrary = await movieExists(item.tmdbId);
+        item.mediaType = 'movie';
       }
       results.push({ ...item, inLibrary });
     }
     
     const wrapperClass = viewMode === 'list' ? 'library-list stagger-children' : 'grid-posters stagger-children';
+    const cardsHtml = results.map(item => `<media-card data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}' view-mode="${viewMode}"></media-card>`).join('');
     
-    const html = `
-      <h2 class="section-title" style="margin-bottom:var(--space-4);">Trending TV Shows</h2>
-      <div class="${wrapperClass}">${results.map(renderResultCard).join('')}</div>
-    `;
-    container.innerHTML = html;
+    if (append) {
+      const wrapper = container.querySelector('.grid-posters') || container.querySelector('.library-list');
+      if (wrapper) wrapper.insertAdjacentHTML('beforeend', cardsHtml);
+    } else {
+      const html = `
+        <h2 class="section-title" style="margin-bottom:var(--space-4);">${title}</h2>
+        <div class="${wrapperClass}">${cardsHtml}</div>
+      `;
+      container.innerHTML = html;
+    }
+
+    if (currentPage < totalPages && searchType !== 'multi') {
+      loadMoreEl?.classList.remove('hidden');
+    }
   } catch (err) {
     console.error(err);
-    container.innerHTML = `<div class="empty-state" style="color:var(--color-error);">Failed to load trending shows.</div>`;
+    if (!append) container.innerHTML = `<div class="empty-state" style="color:var(--color-error);">Failed to load discover results.</div>`;
   }
 }
 
@@ -286,7 +439,7 @@ async function performSearch(append = false) {
     }
 
     // Render
-    let cardsHTML = results.map(renderResultCard).join('');
+    let cardsHTML = results.map(item => `<media-card data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}' view-mode="${viewMode}"></media-card>`).join('');
     
     const wrapperClass = viewMode === 'list' ? 'library-list stagger-children' : 'grid-posters stagger-children';
     
@@ -318,127 +471,31 @@ async function performSearch(append = false) {
   }
 }
 
-function renderResultCard(item) {
-  const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
-  const year = formatYear(item.mediaType === 'show' ? item.firstAirDate : item.releaseDate);
-  const typeLabel = item.mediaType === 'show' ? 'TV Show' : 'Movie';
-  const rating = item.voteAverage ? `★ ${item.voteAverage.toFixed(1)}` : '';
-  const route = item.mediaType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
+async function handleAddItem(item, card) {
+  const { tmdbId, mediaType, title } = item;
 
-  if (viewMode === 'list') {
-    const genres = (item.genres || []).slice(0, 3).join(', ');
-    return `
-      <div class="library-list-item card" id="result-${item.mediaType}-${item.tmdbId}" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);text-decoration:none;">
-        <a href="${route}" style="flex-shrink:0;">
-          ${posterUrl
-            ? `<img src="${posterUrl}" alt="${item.title}" style="width:64px;height:96px;object-fit:cover;border-radius:var(--radius-sm);" loading="lazy">`
-            : `<div style="width:64px;height:96px;background:var(--surface-3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;">🎬</span></div>`
-          }
-        </a>
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--space-1);">
-          <a href="${route}" style="text-decoration:none;">
-            <div style="font-weight:var(--weight-medium);color:var(--text-primary);font-size:var(--text-lg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</div>
-            <div style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:2px;">${year} • ${typeLabel}${genres ? ` • ${genres}` : ''}</div>
-          </a>
-          <div style="display:flex;gap:var(--space-2);align-items:center;margin-top:var(--space-2);">
-            ${item.inLibrary
-              ? `<span class="badge badge-success">✓ In Library</span>`
-              : `<button class="btn btn-primary btn-sm"
-                  data-action="add"
-                  data-media-type="${item.mediaType}"
-                  data-tmdb-id="${item.tmdbId}"
-                  data-title="${item.title.replace(/"/g, '&quot;')}"
-                  id="add-${item.mediaType}-${item.tmdbId}">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                  Add
-                </button>`
-            }
-            ${rating ? `<span style="font-size:var(--text-sm);color:var(--color-warning);">★ ${item.voteAverage.toFixed(1)}</span>` : ''}
-          </div>
-        </div>
-      </div>
-    `;
+  const btn = card.querySelector('[data-action="add"]');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Adding...';
   }
-
-  return `
-    <div class="poster-card search-result-card" id="result-${item.mediaType}-${item.tmdbId}">
-      <a href="${route}">
-        ${posterUrl
-          ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
-          : `<div class="poster-card-image" style="display:flex;align-items:center;justify-content:center;background:var(--surface-3);aspect-ratio:var(--card-poster-ratio);"><span style="font-size:var(--text-3xl);opacity:0.3;">🎬</span></div>`
-        }
-      </a>
-      <div class="poster-card-info" style="display:flex;flex-direction:column;gap:var(--space-1);">
-        <div class="poster-card-info-title">${escapeHtml(item.title)}</div>
-        <div class="poster-card-info-sub" style="display:flex;align-items:center;justify-content:space-between;">
-          <span>${year} • ${typeLabel}</span>
-          ${rating ? `<span style="color:var(--color-warning);font-size:var(--text-xs);">${rating}</span>` : ''}
-        </div>
-        ${item.inLibrary
-          ? `<span class="badge badge-success" style="width:fit-content;margin-top:var(--space-1);">✓ In Library</span>`
-          : `<button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:var(--space-1);"
-              data-action="add"
-              data-tmdb-id="${item.tmdbId}"
-              data-media-type="${item.mediaType}"
-              data-title="${item.title.replace(/"/g, '&quot;')}"
-              id="add-${item.mediaType}-${item.tmdbId}">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-              Add
-            </button>`
-        }
-      </div>
-    </div>
-  `;
-}
-
-async function handleAdd(btn) {
-  const tmdbId = parseInt(btn.dataset.tmdbId);
-  const mediaType = btn.dataset.mediaType;
-  const title = btn.dataset.title;
-
-  btn.disabled = true;
-  btn.textContent = 'Adding...';
 
   try {
     if (mediaType === 'show') {
-      // Get full details from provider
       const details = await provider.getShowDetails(tmdbId);
       if (details) {
         await addShow({
-          tmdbId: details.tmdbId,
-          title: details.title,
-          originalTitle: details.originalTitle,
-          posterPath: details.posterPath,
-          backdropPath: details.backdropPath,
-          overview: details.overview,
-          genres: details.genres,
-          status: details.status,
-          firstAirDate: details.firstAirDate,
-          lastAirDate: details.lastAirDate,
-          totalSeasons: details.totalSeasons,
-          totalEpisodes: details.totalEpisodes,
-          network: details.network,
-          runtime: details.runtime,
+          ...details,
           trackingStatus: 'plan',
         });
       } else {
-        // Fallback — add with minimal data
         await addShow({ tmdbId, title, trackingStatus: 'plan' });
       }
     } else {
       const details = await provider.getMovieDetails(tmdbId);
       if (details) {
         await addMovie({
-          tmdbId: details.tmdbId,
-          title: details.title,
-          originalTitle: details.originalTitle,
-          posterPath: details.posterPath,
-          backdropPath: details.backdropPath,
-          overview: details.overview,
-          genres: details.genres,
-          releaseDate: details.releaseDate,
-          runtime: details.runtime,
-          status: details.status,
+          ...details,
           trackingStatus: 'plan',
         });
       } else {
@@ -448,20 +505,17 @@ async function handleAdd(btn) {
 
     toast(`${title} added to library`, 'success');
 
-    // Replace button with "In Library" badge
-    const card = btn.closest('.search-result-card');
-    if (card) {
-      btn.replaceWith(Object.assign(document.createElement('span'), {
-        className: 'badge badge-success',
-        style: 'width:fit-content;margin-top:var(--space-1);',
-        textContent: '✓ In Library',
-      }));
-    }
+    // Update component state
+    item.inLibrary = true;
+    card.setAttribute('data-item', JSON.stringify(item));
+    card.render();
 
   } catch (err) {
     console.error('[Search] Add failed:', err);
     toast(`Failed to add ${title}`, 'error');
-    btn.disabled = false;
-    btn.textContent = '+ Add to Library';
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '+ Add to Library';
+    }
   }
 }

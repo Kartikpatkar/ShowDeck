@@ -10,20 +10,35 @@ import { getShowProgress, getNextEpisode } from '../database/episodes.js';
 import { getPosterUrl } from '../api/tmdb.js';
 import { formatDate, formatYear, truncate, statusBadge } from '../utils/dom.js';
 import { openEnrichModal } from '../components/enrich-modal.js';
+import '../components/web/media-card.js';
 
 let viewMode = localStorage.getItem('showdeck-home-view') || 'grid';
 
 export async function init() {
   // Bind onboarding key save if it exists
   const homeSaveBtn = document.getElementById('home-save-key');
+  const adultInput = document.getElementById('home-adult-content');
+  
+  if (adultInput) {
+    adultInput.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        if (!confirm("Adult Content Warning:\n\nOnly select this if you are of legal age in your region. Are you sure you want to enable adult content?")) {
+          e.target.checked = false;
+        }
+      }
+    });
+  }
+
   if (homeSaveBtn) {
     homeSaveBtn.addEventListener('click', () => {
       const key = document.getElementById('home-api-key').value.trim();
       const nameInput = document.getElementById('home-user-name');
+      const adultInput = document.getElementById('home-adult-content');
       const name = nameInput ? nameInput.value.trim() : null;
       if (key) {
         localStorage.setItem('showdeck_tmdb_key', key);
         if (name) localStorage.setItem('showdeck_user_name', name);
+        if (adultInput) localStorage.setItem('showdeck_include_adult', adultInput.checked ? 'true' : 'false');
         import('../components/toast.js').then(m => m.toast('Settings saved! Enjoy ShowDeck. 🎉', 'success'));
         setTimeout(() => {
           import('../router.js').then(r => window.dispatchEvent(new Event('hashchange')));
@@ -54,12 +69,34 @@ export async function init() {
       });
     });
   });
+
+  // Customize Dashboard logic
+  const customizeBtn = document.getElementById('customize-dashboard-btn');
+  const customizeModal = document.getElementById('customize-modal');
+  const cancelCustomizeBtn = document.getElementById('cancel-customize-btn');
+  const saveCustomizeBtn = document.getElementById('save-customize-btn');
+
+  if (customizeBtn && customizeModal) {
+    customizeBtn.addEventListener('click', () => {
+      customizeModal.classList.toggle('hidden');
+    });
+    cancelCustomizeBtn.addEventListener('click', () => {
+      customizeModal.classList.add('hidden');
+    });
+    saveCustomizeBtn.addEventListener('click', () => {
+      const checkedBoxes = Array.from(document.querySelectorAll('#widget-checkboxes input:checked'));
+      const selectedWidgets = checkedBoxes.map(cb => cb.value);
+      localStorage.setItem('showdeck_home_widgets', JSON.stringify(selectedWidgets));
+      import('../router.js').then(r => window.dispatchEvent(new Event('hashchange')));
+    });
+  }
 }
 
 export async function render() {
   // Fetch data
   const [
     watchingShows,
+    pausedShows,
     planToWatchShows,
     planToWatchMovies,
     recentShows,
@@ -68,6 +105,7 @@ export async function render() {
     allMovies
   ] = await Promise.all([
     getShowsByStatus('watching'),
+    getShowsByStatus('paused'),
     getShowsByStatus('plan'),
     getAllMovies({ trackingStatus: 'plan' }),
     getRecentShows(8),
@@ -78,6 +116,7 @@ export async function render() {
 
   // Inject mediaType for routing
   watchingShows.forEach(i => i.mediaType = 'show');
+  pausedShows.forEach(i => i.mediaType = 'show');
   planToWatchShows.forEach(i => i.mediaType = 'show');
   recentShows.forEach(i => i.mediaType = 'show');
   allShows.forEach(i => i.mediaType = 'show');
@@ -99,17 +138,17 @@ export async function render() {
         : '';
 
       cards.push(`
-        <a href="#/show/${show.tmdbId}" class="poster-card" id="cw-${show.id}">
+        <a href="#/show/${show.tmdbId}" class="poster-card" id="cw-${show.id}" style="position:relative;overflow:hidden;border-radius:var(--radius-md);">
           ${posterUrl
             ? `<img class="poster-card-image" src="${posterUrl}" alt="${show.title}" loading="lazy">`
             : `<div class="poster-card-image skeleton"></div>`
           }
-          <div class="poster-card-overlay">
-            <div class="poster-card-title">${show.title}</div>
-            <div class="poster-card-meta">${nextLabel} • ${progress.percentage}%</div>
+          <div class="poster-card-overlay" style="background:linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%); opacity:1; padding:var(--space-2); padding-bottom:12px; display:flex; flex-direction:column; justify-content:flex-end;">
+            <div style="font-weight:var(--weight-bold); color:white; font-size:var(--text-sm); line-height:1.2; text-shadow:0 1px 2px rgba(0,0,0,0.8);">${show.title}</div>
+            ${nextLabel ? `<div style="font-size:11px; color:hsla(0,0%,100%,0.8); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,0.8);">${nextLabel}</div>` : ''}
           </div>
-          <div class="progress" style="position:absolute;bottom:0;left:0;right:0;border-radius:0;">
-            <div class="progress-bar" style="width:${progress.percentage}%"></div>
+          <div class="progress-bar-container" style="position:absolute; bottom:0; left:0; width:100%; height:4px; margin:0; border-radius:0; background:rgba(255,255,255,0.25); z-index:3;">
+            <div class="progress-bar-fill" style="width:${progress.percentage}%; border-radius:0;"></div>
           </div>
         </a>
       `);
@@ -132,6 +171,24 @@ export async function render() {
     `;
   }
 
+  // Build Paused section
+  let pausedShowsHTML = '';
+  if (pausedShows.length > 0) {
+    const cards = pausedShows.slice(0, 8).map(item => {
+      const year = formatYear(item.firstAirDate);
+      return `<media-card variant="poster" custom-meta="${year} • Paused" data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
+    });
+    pausedShowsHTML = `
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Paused Shows</h2>
+          <a href="#/library?status=paused" class="section-action">View All</a>
+        </div>
+        <div class="grid-posters stagger-children">${cards.join('')}</div>
+      </div>
+    `;
+  }
+
   // Build Plan to Watch section
   const planItems = [...planToWatchShows, ...planToWatchMovies]
     .sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt))
@@ -140,22 +197,9 @@ export async function render() {
   let planToWatchHTML = '';
   if (planItems.length > 0) {
     const cards = planItems.map(item => {
-      const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
       const isShow = item.mediaType === 'show';
-      const route = isShow ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`;
       const year = formatYear(isShow ? item.firstAirDate : item.releaseDate);
-      return `
-        <a href="${route}" class="poster-card" style="position:relative;">
-          ${posterUrl
-            ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
-            : `<div class="poster-card-image skeleton"></div>`
-          }
-          <div class="poster-card-overlay">
-            <div class="poster-card-title">${item.title}</div>
-            <div class="poster-card-meta">${year} • ${isShow ? 'TV Show' : 'Movie'}</div>
-          </div>
-        </a>
-      `;
+      return `<media-card variant="poster" custom-meta="${year} • ${isShow ? 'TV Show' : 'Movie'}" data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
     });
     planToWatchHTML = `
       <div class="section">
@@ -195,26 +239,22 @@ export async function render() {
       // Format as Month DD, YYYY
       const formattedDate = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
       
-      return `
-        <a href="${route}" class="poster-card" style="position:relative;">
-          ${posterUrl
-            ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
-            : `<div class="poster-card-image skeleton"></div>`
-          }
-          <div class="poster-card-overlay">
-            <div class="poster-card-title">${item.title}</div>
-            <div class="poster-card-meta" style="color:var(--color-primary);font-weight:bold;">${formattedDate}</div>
-          </div>
-        </a>
-      `;
+      if (viewMode === 'list') {
+        return `<media-card view-mode="list" data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
+      }
+
+      return `<media-card variant="poster" custom-meta="${formattedDate}" data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
     });
+    
+    let containerClass = viewMode === 'list' ? 'library-list stagger-children' : 'grid-posters stagger-children';
+
     upcomingHTML = `
       <div class="section">
         <div class="section-header">
           <h2 class="section-title">Upcoming</h2>
           <a href="#/library?status=upcoming" class="section-action">View All</a>
         </div>
-        <div class="grid-posters stagger-children">${cards.join('')}</div>
+        <div class="${containerClass}">${cards.join('')}</div>
       </div>
     `;
   }
@@ -231,50 +271,15 @@ export async function render() {
       const isShow = item.mediaType === 'show';
       const typeStr = isShow ? 'show' : 'movie';
       const isMissing = item.tmdbId === null;
-      
-      const route = isMissing ? 'javascript:void(0)' : (isShow ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`);
-      const triggerClass = isMissing ? 'enrich-trigger' : '';
-      const triggerAttrs = isMissing ? `data-id="${item.id}" data-type="${typeStr}" data-title="${encodeURIComponent(item.title)}"` : '';
-      
+      const triggerClass = isMissing ? 'open-enrich' : '';
+      const triggerAttrs = isMissing ? `data-id="${item.id}" data-type="${typeStr}"` : '';
       const year = formatYear(isShow ? item.firstAirDate : item.releaseDate);
-      const missingBadge = isMissing ? `<div style="position:absolute;top:4px;right:4px;background:var(--color-error);color:white;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:bold;">Fix Match</div>` : '';
-
+      
       if (viewMode === 'list') {
-        const typeLabel = isShow ? 'TV Show' : 'Movie';
-        const rating = item.rating ? `<span class="badge badge-warning" style="margin-top:var(--space-1);">★ ${item.rating}</span>` : '';
-        return `
-          <div class="library-list-item card" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);position:relative;">
-            ${missingBadge}
-            <a href="${route}" class="${triggerClass}" ${triggerAttrs} style="flex-shrink:0;">
-              ${posterUrl
-                ? `<img src="${posterUrl}" alt="${item.title}" style="width:56px;height:84px;object-fit:cover;border-radius:var(--radius-sm);" loading="lazy">`
-                : `<div style="width:56px;height:84px;background:var(--surface-3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;">🎬</span></div>`
-              }
-            </a>
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--space-1);">
-              <a href="${route}" class="${triggerClass}" ${triggerAttrs} style="text-decoration:none;">
-                <div style="font-weight:var(--weight-medium);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</div>
-                <div style="font-size:var(--text-xs);color:var(--text-tertiary);">${year} • ${typeLabel}</div>
-              </a>
-              ${rating}
-            </div>
-          </div>
-        `;
+        return `<media-card view-mode="list" class="${triggerClass}" ${triggerAttrs} data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
       }
 
-      return `
-        <a href="${route}" class="poster-card ${triggerClass}" ${triggerAttrs} id="recent-${isShow ? 'show' : 'movie'}-${item.id}" style="position:relative;">
-          ${missingBadge}
-          ${posterUrl
-            ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
-            : `<div class="poster-card-image skeleton"></div>`
-          }
-          <div class="poster-card-info">
-            <div class="poster-card-info-title">${item.title}</div>
-            <div class="poster-card-info-sub">${year} • ${isShow ? 'TV Show' : 'Movie'}</div>
-          </div>
-        </a>
-      `;
+      return `<media-card variant="poster" class="${triggerClass}" ${triggerAttrs} custom-meta="${year} • ${isShow ? 'TV Show' : 'Movie'}" data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
     });
     
     if (viewMode === 'list') {
@@ -309,6 +314,10 @@ export async function render() {
       </p>
       <div style="display:flex; flex-direction:column; gap:var(--space-3);">
         ${!userName ? `<input type="text" id="home-user-name" class="input" placeholder="What should we call you? (Optional)" style="width:100%; max-width:400px;">` : ''}
+        <label style="display:flex; align-items:center; gap:var(--space-2); cursor:pointer; font-size:var(--text-sm); color:var(--text-secondary);">
+          <input type="checkbox" id="home-adult-content" style="width:16px;height:16px;accent-color:var(--color-primary);">
+          <span>Include Adult Content (PG-18+ results)</span>
+        </label>
         <div style="display:flex; gap:var(--space-2);">
           <input type="text" autocomplete="off" spellcheck="false" id="home-api-key" class="input" placeholder="Enter TMDB API Key" style="flex:1;">
           <button class="btn btn-primary" id="home-save-key">Save & Connect</button>
@@ -320,18 +329,15 @@ export async function render() {
     </div>
   ` : '';
 
-  return `
-    <div class="page-container animate-fade-in">
-      <div class="page-header">
-        <div class="page-header-left">
-          <h1 class="page-title">Welcome back${userName ? `, ${userName}` : ''} 👋</h1>
-          <p class="page-subtitle">Here's what's happening with your entertainment.</p>
-        </div>
-      </div>
+  const defaultWidgets = ['watching', 'paused', 'plan', 'recent', 'upcoming'];
+  let userWidgets = null;
+  try {
+    userWidgets = JSON.parse(localStorage.getItem('showdeck_home_widgets'));
+  } catch (e) {}
+  if (!Array.isArray(userWidgets)) userWidgets = defaultWidgets;
 
-      ${onboardingHtml}
-
-      <!-- Continue Watching -->
+  const widgetHTMLs = {
+    'watching': `
       <div class="section">
         <div class="section-header">
           <h2 class="section-title">Watching</h2>
@@ -339,10 +345,10 @@ export async function render() {
         </div>
         ${continueWatchingHTML}
       </div>
-
-      ${planToWatchHTML}
-
-      <!-- Recently Added -->
+    `,
+    'paused': pausedShowsHTML,
+    'plan': planToWatchHTML,
+    'recent': `
       <div class="section">
         <div class="section-header">
           <div style="display:flex;align-items:center;gap:var(--space-4);">
@@ -360,8 +366,59 @@ export async function render() {
         </div>
         ${recentlyAddedHTML}
       </div>
+    `,
+    'upcoming': upcomingHTML
+  };
 
-      ${upcomingHTML}
+  const dashboardContent = userWidgets.map(w => widgetHTMLs[w] || '').join('');
+
+  return `
+    <div class="page-container animate-fade-in">
+      <div class="page-header" style="align-items:flex-start;">
+        <div class="page-header-left">
+          <h1 class="page-title">Welcome back${userName ? `, ${userName}` : ''} 👋</h1>
+          <p class="page-subtitle">Here's what's happening with your entertainment.</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="customize-dashboard-btn" style="display:flex;align-items:center;gap:var(--space-2);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span class="hide-mobile">Customize</span>
+        </button>
+      </div>
+
+      <div id="customize-modal" class="card hidden" style="margin-bottom:var(--space-6); padding:var(--space-6); background:var(--surface-2); border-color:var(--color-primary);">
+        <h3 style="margin-top:0; margin-bottom:var(--space-4);">Customize Dashboard</h3>
+        <p style="font-size:var(--text-sm); color:var(--text-tertiary); margin-bottom:var(--space-4);">Select the sections you want to see on your home screen.</p>
+        <div style="display:flex; flex-direction:column; gap:var(--space-3);" id="widget-checkboxes">
+          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
+            <input type="checkbox" value="watching" ${userWidgets.includes('watching') ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
+            <span>Watching</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
+            <input type="checkbox" value="paused" ${userWidgets.includes('paused') ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
+            <span>Paused Shows</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
+            <input type="checkbox" value="plan" ${userWidgets.includes('plan') ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
+            <span>Plan to Watch</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
+            <input type="checkbox" value="recent" ${userWidgets.includes('recent') ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
+            <span>Recently Added</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
+            <input type="checkbox" value="upcoming" ${userWidgets.includes('upcoming') ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
+            <span>Upcoming Releases</span>
+          </label>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:var(--space-3); margin-top:var(--space-4);">
+          <button class="btn btn-ghost" id="cancel-customize-btn">Cancel</button>
+          <button class="btn btn-primary" id="save-customize-btn">Save Layout</button>
+        </div>
+      </div>
+
+      ${onboardingHtml}
+
+      ${dashboardContent}
     </div>
   `;
 }

@@ -120,12 +120,14 @@ export async function importTVTimeData(zipFile, onProgress = () => {}) {
 
       // Search TMDB for this show
       const results = await searchShows(showName, 1);
-      const status = determineStatus(showInfo);
-
+      
       let match = null;
       if (results && results.results && results.results.length > 0) {
         match = results.results[0];
       }
+
+      const totalEpisodes = match ? match.totalEpisodes : 0;
+      const status = determineStatus(showInfo, totalEpisodes);
 
       if (!match) {
         summary.showsNotFound++;
@@ -325,20 +327,29 @@ function buildMovieList(records) {
   return Object.values(movieMap);
 }
 
-function determineStatus(showInfo) {
+function determineStatus(showInfo, totalEpisodes = 0) {
   if (showInfo.archived) return 'dropped';
   if (showInfo.episodes.length === 0) return 'plan';
 
-  // Check if watched recently (within last 60 days)
-  if (showInfo.latestWatchedAt) {
-    const lastWatch = new Date(showInfo.latestWatchedAt);
-    const sixtyDaysAgo = new Date();
-    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-
-    if (lastWatch > sixtyDaysAgo) return 'watching';
+  let hasEpisodesLeft = false;
+  if (totalEpisodes > 0 && showInfo.episodes.length < totalEpisodes) {
+    hasEpisodesLeft = true;
   }
 
-  return 'completed';
+  if (showInfo.latestWatchedAt) {
+    const lastWatch = new Date(showInfo.latestWatchedAt);
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    if (lastWatch > oneWeekAgo) {
+      return 'watching';
+    } else if (hasEpisodesLeft) {
+      return 'paused';
+    }
+  }
+
+  // If we get here, it's either fully watched, or it hasn't been watched recently
+  return hasEpisodesLeft ? 'paused' : 'completed';
 }
 
 function sleep(ms) {

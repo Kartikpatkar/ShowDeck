@@ -35,6 +35,25 @@ export function render() {
               <input type="text" id="user-name-input" class="input" placeholder="What should we call you?" value="${localStorage.getItem('showdeck_user_name') || ''}" style="flex:1;">
               <button class="btn btn-secondary" id="save-name-btn">Save</button>
             </div>
+            
+            <label style="display:flex; align-items:center; gap:var(--space-2); cursor:pointer; font-size:var(--text-sm); margin-top:var(--space-2);">
+              <input type="checkbox" id="adult-content-setting" style="width:16px;height:16px;accent-color:var(--color-primary);" ${localStorage.getItem('showdeck_include_adult') === 'true' ? 'checked' : ''}>
+              <span>Include Adult Content (PG-18+ results)</span>
+            </label>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:var(--space-3);margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--border-color);">
+            <label style="font-weight:var(--weight-medium);">Base Theme</label>
+            <select id="base-theme-select" class="input" style="width:100%;">
+              <option value="system">System Default</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+              <option value="oled">OLED Black</option>
+              <option value="dracula">Dracula</option>
+              <option value="nord">Nord</option>
+              <option value="catppuccin">Catppuccin</option>
+              <option value="tokyo">Tokyo Night</option>
+            </select>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:var(--space-3);margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--border-color);">
@@ -88,33 +107,38 @@ export function render() {
           </div>
         </div>
 
-        <!-- Data Portability -->
+        <!-- Versioned Backups -->
         <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-6);">
           <div>
-            <h3 class="section-title" style="margin:0;">Data Management</h3>
-            <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">Backup or restore your library.</p>
+            <h3 class="section-title" style="margin:0;">Versioned Backups</h3>
+            <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">Local database snapshots (V2 schema).</p>
           </div>
           
           <div style="display:flex;flex-direction:column;gap:var(--space-3);">
-            <button class="btn btn-secondary" id="export-json-btn" style="width:100%;justify-content:center;">
+            <button class="btn btn-primary" id="create-manual-backup-btn" style="width:100%;justify-content:center;">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-              Export Backup (JSON)
+              Create Manual Backup
             </button>
-            
-            <button class="btn btn-secondary" id="import-json-btn" style="width:100%;justify-content:center;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-              Restore Backup
+
+            <div style="margin-top:var(--space-4);">
+              <h4 style="font-size:var(--text-sm); color:var(--text-secondary); margin-bottom:var(--space-2);">Available Snapshots</h4>
+              <div id="backup-list-container" style="display:flex; flex-direction:column; gap:var(--space-2);">
+                <div class="spinner"></div>
+              </div>
+            </div>
+
+            <hr style="border:0;border-top:1px solid var(--border-subtle);margin:var(--space-4) 0;">
+
+            <button class="btn btn-secondary" id="export-json-btn" style="width:100%;justify-content:center;">
+              Export to JSON File
+            </button>
+            <button class="btn btn-secondary" id="import-json-btn" style="width:100%;justify-content:center;margin-top:var(--space-2);">
+              Restore from JSON File
             </button>
             <input type="file" id="import-file" accept=".json" style="display:none;">
-
-            <button class="btn btn-secondary" id="export-csv-btn" style="width:100%;justify-content:center;margin-top:var(--space-2);">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-              Export to CSV
-            </button>
             
-            <button class="btn btn-primary" id="share-library-btn" style="width:100%;justify-content:center;margin-top:var(--space-2);">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-              Share Library Link
+            <button class="btn btn-secondary" id="export-csv-btn" style="width:100%;justify-content:center;margin-top:var(--space-2);">
+              Export to CSV
             </button>
           </div>
         </div>
@@ -156,6 +180,30 @@ export function render() {
           </p>
         </div>
 
+        <!-- Storage Info -->
+        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-6);">
+          <div>
+            <h3 class="section-title" style="margin:0;">Storage Info</h3>
+            <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">Local browser storage space used by ShowDeck.</p>
+          </div>
+          <div id="storage-info-container" style="display:flex;flex-direction:column;gap:var(--space-2);">
+            <div class="spinner" style="width:16px;height:16px;border-width:2px;"></div>
+          </div>
+        </div>
+
+        <!-- Contact / Issues -->
+        <div class="card" style="padding:var(--space-6);border-color:var(--color-primary);">
+          <h3 class="section-title" style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3);">
+            <span>💬</span> Need More Help?
+          </h3>
+          <p style="color:var(--text-secondary);line-height:1.6;margin-bottom:var(--space-4);">
+            If you encounter any bugs, or have a feature request, feel free to report it on our GitHub repository.
+          </p>
+          <a href="https://github.com/Kartikpatkar/ShowDeck/issues" target="_blank" class="btn btn-primary" style="width:fit-content;">Report an Issue</a>
+        </div>
+
+
+
         <!-- Danger Zone -->
         <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);border-color:var(--color-error);padding:var(--space-6);">
           <div>
@@ -178,6 +226,104 @@ export function render() {
 export function init() {
   bindEvents();
   checkApiStatus();
+  renderBackups();
+  renderStorageInfo();
+}
+
+async function renderStorageInfo() {
+  const container = document.getElementById('storage-info-container');
+  if (!container) return;
+
+  if (navigator.storage && navigator.storage.estimate) {
+    try {
+      const estimate = await navigator.storage.estimate();
+      
+      // Use indexedDB specific usage if available (Chrome/Edge), otherwise fallback to total origin usage
+      let usageBytes = estimate.usage;
+      let isTotalOrigin = true;
+      if (estimate.usageDetails && estimate.usageDetails.indexedDB !== undefined) {
+        usageBytes = estimate.usageDetails.indexedDB;
+        isTotalOrigin = false;
+      }
+
+      const usageMB = (usageBytes / (1024 * 1024)).toFixed(2);
+      const quotaMB = (estimate.quota / (1024 * 1024)).toFixed(0);
+      const percentage = Math.round((usageBytes / estimate.quota) * 100) || 0;
+      
+      const labelText = isTotalOrigin ? 'Data Collected (Domain Total)' : 'Data Collected';
+
+      container.innerHTML = `
+        <div style="display:flex;justify-content:space-between;font-size:var(--text-sm);">
+          <span>${labelText}</span>
+          <span class="text-primary font-medium">${usageMB} MB / ${quotaMB} MB</span>
+        </div>
+        <div style="height:6px;background:var(--surface-3);border-radius:var(--radius-full);overflow:hidden;margin-top:var(--space-1);">
+          <div style="height:100%;width:${percentage}%;background:var(--color-primary);border-radius:var(--radius-full);"></div>
+        </div>
+        ${isTotalOrigin ? '<div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;">*Includes all apps hosted on this domain (e.g. localhost).</div>' : ''}
+        <div style="margin-top:var(--space-3);padding:var(--space-2);background-color:rgba(255,165,0,0.1);border-left:2px solid orange;font-size:var(--text-xs);color:var(--text-secondary);border-radius:0 var(--radius-sm) var(--radius-sm) 0;">
+          <strong>iOS / Safari Users:</strong> Your browser may automatically delete this local data if your device runs low on storage and you do not visit this app for a few weeks. Please export a JSON backup regularly!
+        </div>
+      `;
+    } catch (e) {
+      container.innerHTML = '<span class="text-tertiary" style="font-size:var(--text-sm);">Unable to estimate storage usage.</span>';
+    }
+  } else {
+    container.innerHTML = '<span class="text-tertiary" style="font-size:var(--text-sm);">Storage API not supported in this browser.</span>';
+  }
+}
+
+async function renderBackups() {
+  const container = document.getElementById('backup-list-container');
+  if (!container) return;
+  
+  try {
+    const { getBackupMetadata } = await import('../database/backups.js');
+    const backups = await getBackupMetadata();
+    
+    if (backups.length === 0) {
+      container.innerHTML = '<div class="text-tertiary" style="font-size:var(--text-sm);">No backups available.</div>';
+      return;
+    }
+    
+    container.innerHTML = backups.map(b => {
+      const dateStr = new Date(b.date).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const sizeStr = (b.size / 1024).toFixed(1) + ' KB';
+      return `
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-3); background:var(--surface-2);">
+          <div>
+            <div style="font-weight:var(--weight-medium); font-size:var(--text-sm); text-transform:capitalize;">${b.type} Backup</div>
+            <div style="font-size:var(--text-xs); color:var(--text-tertiary);">${dateStr} • ${sizeStr}</div>
+          </div>
+          <button class="btn btn-sm btn-ghost text-primary restore-backup-btn" data-id="${b.id}" style="padding:var(--space-2);">
+            Restore
+          </button>
+        </div>
+      `;
+    }).join('');
+    
+    // Bind restore buttons
+    container.querySelectorAll('.restore-backup-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = parseInt(e.currentTarget.dataset.id);
+        const { confirmModal } = await import('../components/modal.js');
+        const ok = await confirmModal('Restore Backup?', 'This will overwrite your current library. Any changes made after this backup will be lost. Proceed?');
+        if (ok) {
+          try {
+            const { restoreBackup } = await import('../database/backups.js');
+            await restoreBackup(id);
+            toast('Backup restored successfully!', 'success');
+            setTimeout(() => window.location.reload(), 1500);
+          } catch (err) {
+            toast('Restore failed', 'error');
+          }
+        }
+      });
+    });
+    
+  } catch (err) {
+    container.innerHTML = '<div class="text-error" style="font-size:var(--text-sm);">Failed to load backups.</div>';
+  }
 }
 
 async function checkApiStatus() {
@@ -217,7 +363,40 @@ function bindEvents() {
     toast('Name saved successfully', 'success');
   });
 
-  // Setup theme picker
+  // Base Theme
+  const baseThemeSelect = document.getElementById('base-theme-select');
+  if (baseThemeSelect) {
+    baseThemeSelect.value = localStorage.getItem('showdeck_theme') || 'system';
+    baseThemeSelect.addEventListener('change', async (e) => {
+      localStorage.setItem('showdeck_theme', e.target.value);
+      const { initTheme } = await import('../app.js');
+      initTheme();
+    });
+  }
+
+  // Adult Content Toggle
+  const adultSetting = document.getElementById('adult-content-setting');
+  if (adultSetting) {
+    adultSetting.addEventListener('change', async (e) => {
+      if (e.target.checked) {
+        const { confirmModal } = await import('../components/modal.js');
+        const approved = await confirmModal(
+          'Adult Content Warning',
+          'Only select this if you are of legal age in your region. Are you sure you want to enable adult content?',
+          'Enable',
+          true
+        );
+        if (!approved) {
+          e.target.checked = false;
+          return;
+        }
+      }
+      localStorage.setItem('showdeck_include_adult', e.target.checked ? 'true' : 'false');
+      toast('Content preferences updated.', 'success');
+    });
+  }
+
+  // Setup accent theme picker
   const currentTheme = localStorage.getItem('showdeck_accent_theme') || 'purple';
   const themeButtons = document.querySelectorAll('#theme-color-picker .color-preset');
   
@@ -268,14 +447,27 @@ function bindEvents() {
   const saveKeyBtn = document.getElementById('save-key-btn');
   saveKeyBtn?.addEventListener('click', () => {
     const key = document.getElementById('tmdb-key-input').value.trim();
-    if (key) {
-      localStorage.setItem('showdeck_tmdb_key', key);
-      toast('API Key saved successfully', 'success');
-      checkApiStatus();
-    } else {
-      localStorage.removeItem('showdeck_tmdb_key');
-      toast('API Key removed', 'warning');
-      checkApiStatus();
+    localStorage.setItem('showdeck_tmdb_key', key);
+    toast('API Key saved', 'success');
+    checkApiStatus();
+  });
+
+  // Create Manual Backup
+  const createManualBtn = document.getElementById('create-manual-backup-btn');
+  createManualBtn?.addEventListener('click', async () => {
+    createManualBtn.disabled = true;
+    const originalText = createManualBtn.innerHTML;
+    createManualBtn.textContent = 'Creating...';
+    try {
+      const { createBackup } = await import('../database/backups.js');
+      await createBackup('manual');
+      toast('Backup created successfully', 'success');
+      renderBackups();
+    } catch (err) {
+      toast('Failed to create backup', 'error');
+    } finally {
+      createManualBtn.disabled = false;
+      createManualBtn.innerHTML = originalText;
     }
   });
 

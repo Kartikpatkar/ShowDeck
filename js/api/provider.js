@@ -59,6 +59,49 @@ export async function searchMovies(query, page = 1) {
 }
 
 /**
+ * Discover shows based on filters (TMDB only).
+ */
+export async function discoverShows(filters, page = 1) {
+  return tmdb.discoverShows(filters, page);
+}
+
+/**
+ * Discover movies based on filters (TMDB only).
+ */
+export async function discoverMovies(filters, page = 1) {
+  return tmdb.discoverMovies(filters, page);
+}
+
+export async function getGenres(type = 'tv') {
+  const cacheKey = `genres_${type}`;
+  const cached = await getCached(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const data = type === 'tv' ? await tmdb.getTvGenres() : await tmdb.getMovieGenres();
+    await setCache(cacheKey, data);
+    return data;
+  } catch (err) {
+    console.warn(`[Provider] TMDB ${type} genres failed:`, err.message);
+    return [];
+  }
+}
+
+export async function getCountries() {
+  const cached = await getCached('countries');
+  if (cached) return cached;
+
+  try {
+    const data = await tmdb.getCountries();
+    await setCache('countries', data);
+    return data;
+  } catch (err) {
+    console.warn('[Provider] TMDB countries failed:', err.message);
+    return [];
+  }
+}
+
+/**
  * Get trending shows (cached for 24h).
  */
 export async function getTrendingShows() {
@@ -154,8 +197,20 @@ export async function getSeasonEpisodes(tmdbId, tvmazeId, seasonNumber) {
 export async function getAllEpisodes(tmdbId, tvmazeId, totalSeasons) {
   const allEpisodes = [];
 
-  if (totalSeasons && tmdbId) {
-    for (let s = 1; s <= totalSeasons; s++) {
+  if (tmdbId) {
+    let validSeasons = [];
+    try {
+      const details = await getShowDetails(tmdbId);
+      if (details && details.seasons) {
+        validSeasons = details.seasons.map(s => s.seasonNumber).filter(n => n > 0);
+      } else if (totalSeasons) {
+        validSeasons = Array.from({length: totalSeasons}, (_, i) => i + 1);
+      }
+    } catch {
+      if (totalSeasons) validSeasons = Array.from({length: totalSeasons}, (_, i) => i + 1);
+    }
+
+    for (const s of validSeasons) {
       const eps = await getSeasonEpisodes(tmdbId, tvmazeId, s);
       allEpisodes.push(...eps);
     }

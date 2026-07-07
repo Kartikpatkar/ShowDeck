@@ -328,6 +328,10 @@
     padding-top: calc(var(--space-4) + 52px);
   }
 
+  .sidebar-header {
+    padding-left: 60px;
+  }
+
   .sidebar-toggle {
     display: none;
   }

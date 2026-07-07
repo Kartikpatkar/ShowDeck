@@ -138,9 +138,12 @@ function renderContent(container) {
         <div class="detail-actions">
           ${isTracked ? `
             <select class="input" id="movie-status-select" style="width:180px;">
-              ${Object.entries(STATUS_MAP).map(([val, {label}]) => `
-                <option value="${val}" ${movieData.trackingStatus === val ? 'selected' : ''}>${label}</option>
-              `).join('')}
+              ${Object.entries(STATUS_MAP).map(([val, {label}]) => {
+                const releaseDate = movieData.releaseDate ? new Date(movieData.releaseDate) : null;
+                const isUnreleased = releaseDate ? releaseDate.getTime() > Date.now() : false;
+                const isDisabled = isUnreleased && val !== 'plan_to_watch';
+                return `<option value="${val}" ${movieData.trackingStatus === val ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}>${label}</option>`;
+              }).join('')}
             </select>
             <button class="btn btn-ghost" id="remove-btn" style="color:var(--color-error);" title="Remove from Library">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
@@ -215,7 +218,11 @@ function bindEvents() {
       trackBtn.disabled = true;
       trackBtn.textContent = 'Adding...';
       try {
-        currentMovieId = await addMovie({ ...movieData, trackingStatus: 'completed' });
+        const releaseDate = movieData.releaseDate ? new Date(movieData.releaseDate) : null;
+        const isUnreleased = releaseDate ? releaseDate.getTime() > Date.now() : false;
+        const defaultStatus = isUnreleased ? 'plan_to_watch' : 'completed';
+        
+        currentMovieId = await addMovie({ ...movieData, trackingStatus: defaultStatus });
         toast('Added to library', 'success');
         init({ id: movieData.tmdbId });
       } catch (err) {

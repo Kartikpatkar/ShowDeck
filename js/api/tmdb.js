@@ -59,9 +59,12 @@ async function tmdbFetch(endpoint, params = {}) {
     throw new Error('Missing TMDB API Key. Please add it in Settings.');
   }
 
+  const includeAdult = localStorage.getItem('showdeck_include_adult') === 'true' ? 'true' : 'false';
+
   const url = new URL(`${BASE_URL}${endpoint}`);
   url.searchParams.set('api_key', apiKey);
   url.searchParams.set('language', 'en-US');
+  url.searchParams.set('include_adult', includeAdult);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 
   logApiUsage('tmdb');
@@ -128,6 +131,56 @@ export async function searchMulti(query, page = 1) {
     totalPages: data.total_pages,
     totalResults: data.total_results,
   };
+}
+
+/**
+ * Discover shows based on filters.
+ */
+export async function discoverShows(filters = {}, page = 1) {
+  const data = await tmdbFetch('/discover/tv', { ...filters, page, sort_by: 'popularity.desc' });
+  return {
+    results: data.results.map(mapShowResult),
+    page: data.page,
+    totalPages: data.total_pages,
+    totalResults: data.total_results,
+  };
+}
+
+/**
+ * Discover movies based on filters.
+ */
+export async function discoverMovies(filters = {}, page = 1) {
+  const data = await tmdbFetch('/discover/movie', { ...filters, page, sort_by: 'popularity.desc' });
+  return {
+    results: data.results.map(mapMovieResult),
+    page: data.page,
+    totalPages: data.total_pages,
+    totalResults: data.total_results,
+  };
+}
+
+/**
+ * Get Movie Genres
+ */
+export async function getMovieGenres() {
+  const data = await tmdbFetch('/genre/movie/list');
+  return data.genres || [];
+}
+
+/**
+ * Get TV Genres
+ */
+export async function getTvGenres() {
+  const data = await tmdbFetch('/genre/tv/list');
+  return data.genres || [];
+}
+
+/**
+ * Get Countries
+ */
+export async function getCountries() {
+  const data = await tmdbFetch('/configuration/countries');
+  return data || [];
 }
 
 // ── Show Details ──
