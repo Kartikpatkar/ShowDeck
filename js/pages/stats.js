@@ -144,9 +144,27 @@ export async function init() {
   }
 }
 
+export function destroy() {
+  if (window.statsThemeObserver) {
+    window.statsThemeObserver.disconnect();
+    window.statsThemeObserver = null;
+  }
+  if (chartInstances && chartInstances.length > 0) {
+    chartInstances.forEach(c => {
+      if (c && typeof c.destroy === 'function') c.destroy();
+    });
+    chartInstances = [];
+  }
+}
+
 function renderCharts(stats) {
   if (!window.Chart) {
     console.warn('Chart.js not loaded');
+    return;
+  }
+
+  // Safety check to prevent race conditions during rapid navigation
+  if (!document.getElementById('genreChart')) {
     return;
   }
 

@@ -261,6 +261,9 @@ async function renderStorageInfo() {
           <div style="height:100%;width:${percentage}%;background:var(--color-primary);border-radius:var(--radius-full);"></div>
         </div>
         ${isTotalOrigin ? '<div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;">*Includes all apps hosted on this domain (e.g. localhost).</div>' : ''}
+        <div style="margin-top:var(--space-3);padding:var(--space-2);background-color:rgba(255,165,0,0.1);border-left:2px solid orange;font-size:var(--text-xs);color:var(--text-secondary);border-radius:0 var(--radius-sm) var(--radius-sm) 0;">
+          <strong>iOS / Safari Users:</strong> Your browser may automatically delete this local data if your device runs low on storage and you do not visit this app for a few weeks. Please export a JSON backup regularly!
+        </div>
       `;
     } catch (e) {
       container.innerHTML = '<span class="text-tertiary" style="font-size:var(--text-sm);">Unable to estimate storage usage.</span>';

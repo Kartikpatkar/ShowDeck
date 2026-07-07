@@ -11,6 +11,7 @@ export const APP_VERSION = '1.0.1';
 const router = new Router();
 let sidebar = null;
 const scrollPositions = new Map();
+let currentModule = null; // Track current module for memory cleanup
 
 window.addEventListener('scroll', () => {
   const hash = window.location.hash || '#/';
@@ -36,6 +37,19 @@ async function loadPage(loader, params = {}) {
 
   try {
     const module = await loader();
+    
+    // Call destroy on the outgoing module to prevent memory leaks
+    if (currentModule && typeof currentModule.destroy === 'function') {
+      try {
+        currentModule.destroy();
+      } catch (e) {
+        console.error('[ShowDeck] Error destroying previous module:', e);
+      }
+    }
+    
+    // Track the new module
+    currentModule = module;
+
     if (module.render) {
       container.innerHTML = '';
       const content = await module.render(params);

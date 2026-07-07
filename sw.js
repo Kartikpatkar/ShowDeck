@@ -1,5 +1,5 @@
-const CACHE_NAME = 'showdeck-v1';
-const IMAGE_CACHE_NAME = 'showdeck-images-v1';
+const CACHE_NAME = 'showdeck-v2';
+const IMAGE_CACHE_NAME = 'showdeck-images-v2';
 
 const URLS_TO_CACHE = [
   './',
