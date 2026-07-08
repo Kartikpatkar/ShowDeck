@@ -241,7 +241,22 @@ function bindEvents() {
       const { updateMovieTrackingStatus } = await import('../database/movies.js');
       await updateMovieTrackingStatus(currentMovieId, newStatus);
       movieData.trackingStatus = newStatus;
-      toast('Status updated');
+      
+      if (newStatus === 'completed') {
+        const { ratingModal } = await import('../components/modal.js');
+        const rating = await ratingModal(`Rate ${movieData.title}`);
+        if (rating !== null) {
+          const { db } = await import('../database/db.js');
+          await db.movies.update(currentMovieId, { rating });
+          movieData.rating = rating;
+          toast('Status & rating saved');
+        } else {
+          toast('Status updated');
+        }
+      } else {
+        toast('Status updated');
+      }
+
       renderContent(container);
       bindEvents();
     });

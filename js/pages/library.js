@@ -181,7 +181,7 @@ async function loadLibrary() {
   allItems = [
     ...showsWithProgress,
     ...movies.map(m => ({ ...m, itemType: 'movie' })),
-  ];
+  ].filter(i => i.tmdbId !== null);
 
   renderItems();
 }

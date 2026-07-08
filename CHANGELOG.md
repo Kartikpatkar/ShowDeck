@@ -2,6 +2,25 @@
 
 All notable changes to ShowDeck will be documented in this file.
 
+## [1.2.0] - 2026-07-08
+
+### Added
+- **Movies in Calendar**: Calendar now tracks upcoming movie release dates alongside TV episodes.
+- **Auto-Complete Rating Prompt**: Automatically prompts the user to rate a show/movie when its status naturally switches to 'Completed' (e.g., when marking the last episode watched).
+- **Recalculate Watch Status Tool**: Added a dedicated tool in Settings to automatically sync and fix 'Watching' / 'Paused' statuses based on your recent activity (14-day unwatched threshold).
+- **Dashboard Reordering**: You can now reorder the widget layout on the Home page (Watching, Paused, Plan to Watch, Recently Added, Upcoming).
+- **Completion Badges**: Added a green checkmark badge over posters and list items for titles marked as 'Completed'.
+- **Theme Previews**: Real-time theme previews during the onboarding flow.
+
+### Fixed
+- **Missing TMDB IDs**: Ensured custom/offline imported entries missing a TMDB ID are cleanly filtered from the Home dashboard, Calendar, and Stats page to prevent UI errors.
+- **Recently Added Strict Filtering**: Hardened the 'Recently Added' section on the Home dashboard to strictly display items added within the last 7 days.
+- **Dark Mode Chart Sync**: Fixed a race condition where the Stats page charts loaded invisible axes and legends when first opening the app in Dark Mode.
+- **Adult Content UI Animation**: Fixed a bug where the 'Include Adult Content' toggle failed to smoothly animate when toggled due to event listener conflicts.
+- **TV Time Imports**: Massively improved TV Time status conversion. Shows that have officially ended but are fully watched are now correctly marked 'Completed'.
+
+
+
 ## [1.1.0] - 2026-07-07
 
 ### Added

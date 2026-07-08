@@ -132,3 +132,97 @@ export function alertModal(title, message) {
     });
   });
 }
+
+/**
+ * Rating modal - 5 star selection
+ */
+export function ratingModal(title) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay animate-fade-in';
+    overlay.style.cssText = `
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      padding: var(--space-4);
+    `;
+
+    const modal = document.createElement('div');
+    modal.className = 'card';
+    modal.style.cssText = `
+      width: 100%; max-width: 320px; padding: var(--space-6); text-align: center;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      transform: scale(0.95);
+      animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    `;
+
+    if (!document.getElementById('modal-styles')) {
+      const style = document.createElement('style');
+      style.id = 'modal-styles';
+      style.textContent = `@keyframes modalPop { to { transform: scale(1); } }`;
+      document.head.appendChild(style);
+    }
+
+    modal.innerHTML = `
+      <h3 style="margin-bottom:var(--space-2);">${title}</h3>
+      <p style="color:var(--text-secondary); margin-bottom:var(--space-4); font-size:var(--text-sm);">How would you rate it?</p>
+      <div id="star-container" style="display:flex; justify-content:center; gap:var(--space-2); font-size:32px; color:var(--surface-3); margin-bottom:var(--space-6); cursor:pointer;">
+        <span data-val="1">★</span>
+        <span data-val="2">★</span>
+        <span data-val="3">★</span>
+        <span data-val="4">★</span>
+        <span data-val="5">★</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; gap:var(--space-3);">
+        <button class="btn btn-ghost" id="modal-skip" style="flex:1;">Skip</button>
+        <button class="btn btn-primary" id="modal-save" style="flex:1;" disabled>Save</button>
+      </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    let selectedRating = 0;
+    const stars = modal.querySelectorAll('#star-container span');
+    const saveBtn = modal.querySelector('#modal-save');
+    const skipBtn = modal.querySelector('#modal-skip');
+
+    stars.forEach(s => {
+      s.addEventListener('mouseover', (e) => {
+        const val = parseInt(e.target.dataset.val, 10);
+        stars.forEach(st => {
+          st.style.color = parseInt(st.dataset.val, 10) <= val ? 'var(--color-warning)' : 'var(--surface-3)';
+        });
+      });
+      s.addEventListener('mouseout', () => {
+        stars.forEach(st => {
+          st.style.color = parseInt(st.dataset.val, 10) <= selectedRating ? 'var(--color-warning)' : 'var(--surface-3)';
+        });
+      });
+      s.addEventListener('click', (e) => {
+        selectedRating = parseInt(e.target.dataset.val, 10);
+        saveBtn.disabled = false;
+        stars.forEach(st => {
+          st.style.color = parseInt(st.dataset.val, 10) <= selectedRating ? 'var(--color-warning)' : 'var(--surface-3)';
+        });
+      });
+    });
+
+    const cleanup = (result) => {
+      overlay.style.opacity = '0';
+      modal.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        if (document.body.contains(overlay)) document.body.removeChild(overlay);
+        resolve(result);
+      }, 200);
+    };
+
+    saveBtn.addEventListener('click', () => cleanup(selectedRating));
+    skipBtn.addEventListener('click', () => cleanup(null));
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) cleanup(null);
+    });
+  });
+}

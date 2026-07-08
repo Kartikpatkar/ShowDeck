@@ -62,10 +62,14 @@ export class MediaCard extends HTMLElement {
     const isMissing = item.tmdbId === null;
     const missingBadge = isMissing ? `<div style="position:absolute;top:0;right:0;background:var(--color-warning);color:var(--surface-0);font-size:10px;padding:2px 4px;font-weight:bold;z-index:10;border-bottom-left-radius:var(--radius-sm);">MISSING ID</div>` : '';
 
+    const isCompleted = item.trackingStatus === 'completed';
+    const completedBadge = isCompleted ? `<div style="position:absolute;top:var(--space-2);left:var(--space-2);width:22px;height:22px;background:var(--color-success);color:var(--surface-0);border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:10;box-shadow:0 2px 4px rgba(0,0,0,0.5);"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>` : '';
+
     if (variant === 'poster') {
       this.innerHTML = `
         <a href="${route}" class="poster-card" style="position:relative;display:block;">
           ${missingBadge}
+          ${completedBadge}
           ${posterUrl
             ? `<img class="poster-card-image" src="${posterUrl}" alt="${customTitle}" loading="lazy">`
             : `<div class="poster-card-image skeleton"></div>`
@@ -85,7 +89,8 @@ export class MediaCard extends HTMLElement {
       
       this.innerHTML = `
         <div class="library-list-item card" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);text-decoration:none;">
-          <a href="${route}" style="flex-shrink:0;">
+          <a href="${route}" style="flex-shrink:0;position:relative;display:block;">
+            ${completedBadge}
             ${posterUrl
               ? `<img src="${posterUrl}" alt="${customTitle}" style="width:64px;height:96px;object-fit:cover;border-radius:var(--radius-sm);" loading="lazy">`
               : `<div style="width:64px;height:96px;background:var(--surface-3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;">🎬</span></div>`
@@ -113,7 +118,8 @@ export class MediaCard extends HTMLElement {
       const subMeta = this.hasAttribute('custom-meta') ? customMeta : `${year} • ${typeLabel}`;
       this.innerHTML = `
         <div class="poster-card search-result-card">
-          <a href="${route}">
+          <a href="${route}" style="position:relative;display:block;">
+            ${completedBadge}
             ${posterUrl
               ? `<img class="poster-card-image" src="${posterUrl}" alt="${customTitle}" loading="lazy">`
               : `<div class="poster-card-image" style="display:flex;align-items:center;justify-content:center;background:var(--surface-3);aspect-ratio:var(--card-poster-ratio);"><span style="font-size:var(--text-3xl);opacity:0.3;">🎬</span></div>`

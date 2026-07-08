@@ -84,10 +84,26 @@ export async function init() {
       customizeModal.classList.add('hidden');
     });
     saveCustomizeBtn.addEventListener('click', () => {
-      const checkedBoxes = Array.from(document.querySelectorAll('#widget-checkboxes input:checked'));
-      const selectedWidgets = checkedBoxes.map(cb => cb.value);
+      const widgetRows = Array.from(document.querySelectorAll('.widget-row'));
+      const selectedWidgets = [];
+      widgetRows.forEach(row => {
+        const cb = row.querySelector('input[type="checkbox"]');
+        if (cb && cb.checked) selectedWidgets.push(cb.value);
+      });
       localStorage.setItem('showdeck_home_widgets', JSON.stringify(selectedWidgets));
       import('../router.js').then(r => window.dispatchEvent(new Event('hashchange')));
+    });
+
+    document.getElementById('widget-checkboxes')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-move]');
+      if (!btn) return;
+      const row = btn.closest('.widget-row');
+      const dir = btn.dataset.move;
+      if (dir === 'up' && row.previousElementSibling) {
+        row.parentNode.insertBefore(row, row.previousElementSibling);
+      } else if (dir === 'down' && row.nextElementSibling) {
+        row.parentNode.insertBefore(row.nextElementSibling, row);
+      }
     });
   }
 }
@@ -114,22 +130,33 @@ export async function render() {
     db.movies.toArray()
   ]);
 
+  const filterMissing = arr => arr.filter(i => i.tmdbId !== null);
+
+  const filteredWatching = filterMissing(watchingShows);
+  const filteredPaused = filterMissing(pausedShows);
+  const filteredPlanToWatchShows = filterMissing(planToWatchShows);
+  const filteredPlanToWatchMovies = filterMissing(planToWatchMovies);
+  const filteredRecentShows = filterMissing(recentShows);
+  const filteredRecentMovies = filterMissing(recentMovies);
+  const filteredAllShows = filterMissing(allShows);
+  const filteredAllMovies = filterMissing(allMovies);
+
   // Inject mediaType for routing
-  watchingShows.forEach(i => i.mediaType = 'show');
-  pausedShows.forEach(i => i.mediaType = 'show');
-  planToWatchShows.forEach(i => i.mediaType = 'show');
-  recentShows.forEach(i => i.mediaType = 'show');
-  allShows.forEach(i => i.mediaType = 'show');
+  filteredWatching.forEach(i => i.mediaType = 'show');
+  filteredPaused.forEach(i => i.mediaType = 'show');
+  filteredPlanToWatchShows.forEach(i => i.mediaType = 'show');
+  filteredRecentShows.forEach(i => i.mediaType = 'show');
+  filteredAllShows.forEach(i => i.mediaType = 'show');
   
-  planToWatchMovies.forEach(i => i.mediaType = 'movie');
-  recentMovies.forEach(i => i.mediaType = 'movie');
-  allMovies.forEach(i => i.mediaType = 'movie');
+  filteredPlanToWatchMovies.forEach(i => i.mediaType = 'movie');
+  filteredRecentMovies.forEach(i => i.mediaType = 'movie');
+  filteredAllMovies.forEach(i => i.mediaType = 'movie');
 
   // Build continue watching cards with progress
   let continueWatchingHTML = '';
-  if (watchingShows.length > 0) {
+  if (filteredWatching.length > 0) {
     const cards = [];
-    for (const show of watchingShows.slice(0, 6)) {
+    for (const show of filteredWatching.slice(0, 6)) {
       const progress = await getShowProgress(show.id);
       const next = await getNextEpisode(show.id);
       const posterUrl = getPosterUrl(show.posterPath, 'posterMedium');
@@ -173,8 +200,8 @@ export async function render() {
 
   // Build Paused section
   let pausedShowsHTML = '';
-  if (pausedShows.length > 0) {
-    const cards = pausedShows.slice(0, 8).map(item => {
+  if (filteredPaused.length > 0) {
+    const cards = filteredPaused.slice(0, 8).map(item => {
       const year = formatYear(item.firstAirDate);
       return `<media-card variant="poster" custom-meta="${year} • Paused" data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
     });
@@ -190,7 +217,7 @@ export async function render() {
   }
 
   // Build Plan to Watch section
-  const planItems = [...planToWatchShows, ...planToWatchMovies]
+  const planItems = [...filteredPlanToWatchShows, ...filteredPlanToWatchMovies]
     .sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt))
     .slice(0, 8);
     
@@ -259,8 +286,10 @@ export async function render() {
     `;
   }
 
-  // Recently added
-  const recentItems = [...recentShows, ...recentMovies]
+  // Recently added (Strict 7 days)
+  const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+  const recentItems = [...filteredRecentShows, ...filteredRecentMovies]
+    .filter(i => new Date(i.addedAt).getTime() > sevenDaysAgo)
     .sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt))
     .slice(0, 8);
 
@@ -341,7 +370,7 @@ export async function render() {
       <div class="section">
         <div class="section-header">
           <h2 class="section-title">Watching</h2>
-          ${watchingShows.length > 0 ? '<a href="#/library?status=watching" class="section-action">View All</a>' : ''}
+          ${filteredWatching.length > 0 ? '<a href="#/library?status=watching" class="section-action">View All</a>' : ''}
         </div>
         ${continueWatchingHTML}
       </div>
@@ -387,28 +416,31 @@ export async function render() {
 
       <div id="customize-modal" class="card hidden" style="margin-bottom:var(--space-6); padding:var(--space-6); background:var(--surface-2); border-color:var(--color-primary);">
         <h3 style="margin-top:0; margin-bottom:var(--space-4);">Customize Dashboard</h3>
-        <p style="font-size:var(--text-sm); color:var(--text-tertiary); margin-bottom:var(--space-4);">Select the sections you want to see on your home screen.</p>
-        <div style="display:flex; flex-direction:column; gap:var(--space-3);" id="widget-checkboxes">
-          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
-            <input type="checkbox" value="watching" ${userWidgets.includes('watching') ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
-            <span>Watching</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
-            <input type="checkbox" value="paused" ${userWidgets.includes('paused') ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
-            <span>Paused Shows</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
-            <input type="checkbox" value="plan" ${userWidgets.includes('plan') ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
-            <span>Plan to Watch</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
-            <input type="checkbox" value="recent" ${userWidgets.includes('recent') ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
-            <span>Recently Added</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer;">
-            <input type="checkbox" value="upcoming" ${userWidgets.includes('upcoming') ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
-            <span>Upcoming Releases</span>
-          </label>
+        <p style="font-size:var(--text-sm); color:var(--text-tertiary); margin-bottom:var(--space-4);">Select and reorder the sections you want to see on your home screen.</p>
+        <div style="display:flex; flex-direction:column; gap:var(--space-2);" id="widget-checkboxes">
+          ${(() => {
+            const allWidgets = {
+              'watching': 'Watching',
+              'paused': 'Paused Shows',
+              'plan': 'Plan to Watch',
+              'recent': 'Recently Added',
+              'upcoming': 'Upcoming Releases'
+            };
+            const orderedKeys = [...userWidgets, ...Object.keys(allWidgets).filter(k => !userWidgets.includes(k))];
+            
+            return orderedKeys.map(k => `
+              <div class="widget-row card" style="display:flex; align-items:center; justify-content:space-between; padding:var(--space-2) var(--space-3); background:var(--surface-1);">
+                <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer; flex:1;">
+                  <input type="checkbox" value="${k}" ${userWidgets.includes(k) ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
+                  <span>${allWidgets[k]}</span>
+                </label>
+                <div style="display:flex; gap:var(--space-1);">
+                  <button class="btn btn-ghost btn-sm" data-move="up" style="padding:4px; height:auto; min-height:0;">▲</button>
+                  <button class="btn btn-ghost btn-sm" data-move="down" style="padding:4px; height:auto; min-height:0;">▼</button>
+                </div>
+              </div>
+            `).join('');
+          })()}
         </div>
         <div style="display:flex; justify-content:flex-end; gap:var(--space-3); margin-top:var(--space-4);">
           <button class="btn btn-ghost" id="cancel-customize-btn">Cancel</button>

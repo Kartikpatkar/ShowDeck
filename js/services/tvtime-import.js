@@ -129,8 +129,7 @@ export async function importTVTimeData(zipFile, onProgress = () => {}, options =
         match = results.results[0];
       }
 
-      const totalEpisodes = match ? match.totalEpisodes : 0;
-      const status = determineStatus(showInfo, totalEpisodes);
+      const status = determineStatus(showInfo, match);
 
       if (!match) {
         summary.showsNotFound++;
@@ -331,29 +330,38 @@ function buildMovieList(records) {
   return Object.values(movieMap);
 }
 
-function determineStatus(showInfo, totalEpisodes = 0) {
+function determineStatus(showInfo, match) {
+  const totalEpisodes = match ? match.totalEpisodes : 0;
+  const tmdbStatus = match ? match.status : '';
+
   if (showInfo.archived) return 'dropped';
   if (showInfo.episodes.length === 0) return 'plan';
 
-  let hasEpisodesLeft = false;
-  if (totalEpisodes > 0 && showInfo.episodes.length < totalEpisodes) {
-    hasEpisodesLeft = true;
+  let hasEpisodesLeft = true;
+  if (totalEpisodes > 0 && showInfo.episodes.length >= totalEpisodes) {
+    hasEpisodesLeft = false;
   }
 
-  if (showInfo.latestWatchedAt) {
-    const lastWatch = new Date(showInfo.latestWatchedAt);
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  if (hasEpisodesLeft || !match) {
+    if (showInfo.latestWatchedAt) {
+      const lastWatch = new Date(showInfo.latestWatchedAt);
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    if (lastWatch > oneWeekAgo) {
-      return 'watching';
-    } else if (hasEpisodesLeft) {
-      return 'paused';
+      if (lastWatch > oneWeekAgo) {
+        return 'watching';
+      }
     }
+    return 'paused';
   }
 
-  // If we get here, it's either fully watched, or it hasn't been watched recently
-  return hasEpisodesLeft ? 'paused' : 'completed';
+  // They watched all known episodes
+  if (tmdbStatus === 'Ended' || tmdbStatus === 'Canceled') {
+    return 'completed';
+  }
+  
+  // Show is still returning, so they are just caught up
+  return 'watching';
 }
 
 function sleep(ms) {

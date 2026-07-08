@@ -1,0 +1,13 @@
+Feedback:
+- during onboarding, while asking ascent also ask what theme user wants too choose.
+- include adult content in on boarding the switch button is not animating as selected in UI
+- after upload any show is unmatch only show it in unmatched list in setting, we shouldnt show it to user in its linbrary untill its linked my the user
+- after importing from Tv time, few series all episodes are not watched, but status is showing completed. it should be watching. if all are watched then only Complted.
+- in setting we can add, recalulate function which will calulate the status based on the progress, like if updated within week and all everisos and seasion are not done then wathcing. if not updated within week then pasused. likt that. 
+- If in show or movie page, status mark completed, show popup or model which will as user to rate the movie or show
+- in home page customize Dashboard, can we give user open to arrange the orde of the section too
+- in calender uploading can we also show movies which are to be released
+- in statistic page, top genres legend are font color is blank and in dark themes or other themes it not visible properly
+- in home page, recently added, all are showing with add button. also if recently should show only for this week, after that it should get removes the item if added week ago. 
+- in library, recently added should come on top.
+- in linrary, items grid cards view, completed and star badges over lap can we fix this ui maybe introduce green tick on the corner for completed and to show some icons for other status status

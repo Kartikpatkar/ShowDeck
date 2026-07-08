@@ -33,13 +33,14 @@ export async function init() {
 
 async function loadCalendar() {
   try {
-    const [shows, episodes] = await Promise.all([
+    const [shows, episodes, movies] = await Promise.all([
       db.shows.toArray(),
-      db.episodes.toArray()
+      db.episodes.toArray(),
+      db.movies.toArray()
     ]);
     
-    // Only care about shows we are actually tracking (not Plan to Watch maybe? Actually all tracked is fine)
-    showMap = new Map(shows.map(s => [s.id, s]));
+    // Only care about shows we are actually tracking that have a tmdbId
+    showMap = new Map(shows.filter(s => s.tmdbId !== null).map(s => [s.id, s]));
     
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Start of today
@@ -65,11 +66,38 @@ async function loadCalendar() {
         if (show) {
           upcoming.push({
             ...ep,
+            type: 'episode',
             epDate,
             diffDays,
             show
           });
         }
+      }
+    }
+    
+    for (const m of movies.filter(m => m.tmdbId !== null)) {
+      if (!m.releaseDate) continue;
+      
+      const parts = m.releaseDate.split('-');
+      if (parts.length !== 3) continue;
+      
+      const epDate = new Date(parts[0], parts[1] - 1, parts[2]);
+      epDate.setHours(0, 0, 0, 0);
+      
+      const diffTime = epDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays >= -7) {
+        upcoming.push({
+          type: 'movie',
+          id: m.id,
+          tmdbId: m.tmdbId,
+          title: m.title,
+          posterPath: m.posterPath,
+          epDate,
+          diffDays,
+          show: null
+        });
       }
     }
     
@@ -127,8 +155,11 @@ function renderCalendar() {
         </h4>
         <div class="calendar-items grid-posters" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:var(--space-4);">
           ${eps.map(ep => {
-            const posterUrl = getPosterUrl(ep.show.posterPath, 'posterMedium');
-            const route = `#/episode/${ep.show.tmdbId}/${ep.season}/${ep.episode}`;
+            const isMovie = ep.type === 'movie';
+            const posterPath = isMovie ? ep.posterPath : ep.show.posterPath;
+            const posterUrl = getPosterUrl(posterPath, 'posterMedium');
+            const route = isMovie ? `#/movie/${ep.tmdbId}` : `#/episode/${ep.show.tmdbId}/${ep.season}/${ep.episode}`;
+            
             return `
               <a href="${route}" class="card" style="display:flex; flex-direction:column; text-decoration:none; background:var(--surface-1); overflow:hidden; border: 1px solid var(--border-subtle); border-radius:var(--radius-md); transition:transform 0.2s, border-color 0.2s;">
                 <div style="display:flex; padding:var(--space-3); gap:var(--space-3); align-items:center;">
@@ -137,11 +168,11 @@ function renderCalendar() {
                     : `<div style="width:48px; height:72px; border-radius:var(--radius-sm); background:var(--surface-3); flex-shrink:0;"></div>`
                   }
                   <div style="flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center;">
-                    <div style="font-weight:var(--weight-bold); color:var(--text-primary); font-size:var(--text-md); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(ep.show.title)}</div>
-                    <div style="font-size:var(--text-sm); color:var(--text-secondary); margin-top:2px; font-variant-numeric: tabular-nums;">S${String(ep.season).padStart(2, '0')}E${String(ep.episode).padStart(2, '0')}</div>
+                    <div style="font-weight:var(--weight-bold); color:var(--text-primary); font-size:var(--text-md); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(isMovie ? ep.title : ep.show.title)}</div>
+                    <div style="font-size:var(--text-sm); color:var(--text-secondary); margin-top:2px; font-variant-numeric: tabular-nums;">${isMovie ? 'Movie Release' : `S${String(ep.season).padStart(2, '0')}E${String(ep.episode).padStart(2, '0')}`}</div>
                   </div>
                 </div>
-                ${ep.title ? `<div style="padding:var(--space-2) var(--space-3); background:var(--surface-2); border-top:1px solid var(--border-subtle); font-size:var(--text-xs); color:var(--text-tertiary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(ep.title)}</div>` : ''}
+                ${!isMovie && ep.title ? `<div style="padding:var(--space-2) var(--space-3); background:var(--surface-2); border-top:1px solid var(--border-subtle); font-size:var(--text-xs); color:var(--text-tertiary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(ep.title)}</div>` : ''}
               </a>
             `;
           }).join('')}

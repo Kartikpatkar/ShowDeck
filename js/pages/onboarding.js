@@ -29,7 +29,25 @@ export function render() {
         <div id="onboarding-step-2" class="onboarding-step animate-fade-in" style="display: none;">
           <div style="font-size: 48px; margin-bottom: var(--space-4);">🎨</div>
           <h1 style="font-size: var(--text-2xl); font-weight: var(--weight-bold); margin-bottom: var(--space-2);">Make it yours</h1>
-          <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">Choose an accent color for your UI.</p>
+          <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">Choose your theme and accent color.</p>
+          
+          <div style="text-align: left; margin-bottom: var(--space-6);">
+            <label style="display:block; margin-bottom: var(--space-2); font-weight: var(--weight-medium);">Base Theme</label>
+            <select id="onboarding-theme-select" class="input" style="width: 100%;">
+              <option value="system">System Default</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+              <option value="oled">OLED Black</option>
+              <option value="dracula">Dracula</option>
+              <option value="nord">Nord</option>
+              <option value="catppuccin">Catppuccin</option>
+              <option value="tokyo">Tokyo Night</option>
+            </select>
+          </div>
+          
+          <div style="text-align: left; margin-bottom: var(--space-2);">
+            <label style="display:block; font-weight: var(--weight-medium);">Accent Color</label>
+          </div>
           
           <div style="display: flex; gap: var(--space-4); justify-content: center; margin-bottom: var(--space-8); flex-wrap: wrap;">
             <button class="color-preset active" data-color="purple" style="width: 48px; height: 48px; border-radius: 50%; background: hsl(245, 58%, 51%); border: 3px solid transparent; cursor: pointer;"></button>
@@ -125,10 +143,9 @@ export function init() {
       selectedTheme = p.dataset.color;
       
       if (selectedTheme !== 'custom') {
-        document.body.dataset.theme = selectedTheme;
         localStorage.setItem('showdeck_accent_theme', selectedTheme);
         localStorage.removeItem('showdeck_custom_color');
-        applyCustomTheme(null);
+        import('../app.js').then(({ initTheme }) => initTheme());
       }
     });
   });
@@ -139,10 +156,16 @@ export function init() {
     selectedTheme = 'custom';
     customHex = e.target.value;
     customColorPreview.style.background = customHex;
-    document.body.dataset.theme = 'custom';
     localStorage.setItem('showdeck_accent_theme', 'custom');
     localStorage.setItem('showdeck_custom_color', customHex);
-    applyCustomTheme(customHex);
+    import('../app.js').then(({ initTheme }) => initTheme());
+  });
+
+  const themeSelect = container.querySelector('#onboarding-theme-select');
+  themeSelect.addEventListener('change', (e) => {
+    const mode = e.target.value;
+    localStorage.setItem('showdeck_theme', mode);
+    import('../app.js').then(({ initTheme }) => initTheme());
   });
 
   const btnNext2 = container.querySelector('#btn-next-2');
@@ -171,6 +194,7 @@ export function init() {
       );
       if (!approved) {
         e.target.checked = false;
+        return;
       }
     }
   });

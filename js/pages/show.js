@@ -522,7 +522,22 @@ function bindEvents() {
       const { updateTrackingStatus } = await import('../database/shows.js');
       await updateTrackingStatus(currentShowId, newStatus);
       showData.trackingStatus = newStatus;
-      toast('Status updated');
+      
+      if (newStatus === 'completed') {
+        const { ratingModal } = await import('../components/modal.js');
+        const rating = await ratingModal(`Rate ${showData.title}`);
+        if (rating !== null) {
+          const { db } = await import('../database/db.js');
+          await db.shows.update(currentShowId, { rating });
+          showData.rating = rating;
+          toast('Status & rating saved');
+        } else {
+          toast('Status updated');
+        }
+      } else {
+        toast('Status updated');
+      }
+
       renderContent(container);
       bindEvents();
     });
@@ -605,8 +620,18 @@ function bindEvents() {
 
         // Trigger auto-complete check
         const { updateTrackingStatus } = await import('../database/shows.js');
-        await updateTrackingStatus(currentShowId, 'completed');
-        showData.trackingStatus = 'completed';
+        if (showData.trackingStatus !== 'completed') {
+          await updateTrackingStatus(currentShowId, 'completed');
+          showData.trackingStatus = 'completed';
+          
+          const { ratingModal } = await import('../components/modal.js');
+          const rating = await ratingModal(`Rate ${showData.title}`);
+          if (rating !== null) {
+            const { db } = await import('../database/db.js');
+            await db.shows.update(currentShowId, { rating });
+            showData.rating = rating;
+          }
+        }
 
         toast('All episodes marked as watched', 'success');
         renderContent(container);
@@ -751,6 +776,15 @@ function bindEvents() {
             const { updateTrackingStatus } = await import('../database/shows.js');
             await updateTrackingStatus(currentShowId, 'completed');
             showData.trackingStatus = 'completed';
+            
+            const { ratingModal } = await import('../components/modal.js');
+            const rating = await ratingModal(`Rate ${showData.title}`);
+            if (rating !== null) {
+              const { db } = await import('../database/db.js');
+              await db.shows.update(currentShowId, { rating });
+              showData.rating = rating;
+            }
+            
             toast('Show completed!', 'success');
             bulkUpdated = true; // force re-render for status dropdown
           }
@@ -790,6 +824,22 @@ function bindEvents() {
       } else {
         await markSeasonWatched(currentShowId, currentSeason);
         episodesData.forEach(e => { if (e.season === currentSeason) e.watched = true; });
+        
+        const allWatched = episodesData.every(e => e.watched);
+        if (allWatched && showData.trackingStatus !== 'completed') {
+          const { updateTrackingStatus } = await import('../database/shows.js');
+          await updateTrackingStatus(currentShowId, 'completed');
+          showData.trackingStatus = 'completed';
+          
+          const { ratingModal } = await import('../components/modal.js');
+          const rating = await ratingModal(`Rate ${showData.title}`);
+          if (rating !== null) {
+            const { db } = await import('../database/db.js');
+            await db.shows.update(currentShowId, { rating });
+            showData.rating = rating;
+          }
+          toast('Show completed!', 'success');
+        }
       }
       const tabsContainer = document.getElementById('season-tabs');
       const scrollPos = tabsContainer ? tabsContainer.scrollLeft : 0;

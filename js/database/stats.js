@@ -18,12 +18,19 @@ const GENRE_MAP = {
  * Get comprehensive stats.
  */
 export async function getFullStats() {
-  const [shows, movies, episodes, activity] = await Promise.all([
+  const [allShows, allMovies, allEpisodes, activity] = await Promise.all([
     db.shows.toArray(),
     db.movies.toArray(),
     db.episodes.toArray(),
     db.activity.toArray(),
   ]);
+
+  const shows = allShows.filter(s => s.tmdbId !== null);
+  const movies = allMovies.filter(m => m.tmdbId !== null);
+  
+  // Filter episodes to only include those belonging to tracked shows that have a tmdbId
+  const validShowIds = new Set(shows.map(s => s.id));
+  const episodes = allEpisodes.filter(e => validShowIds.has(e.showId));
 
   const watchedEpisodes = episodes.filter(e => e.watched);
 
