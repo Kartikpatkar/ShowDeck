@@ -203,6 +203,19 @@ export function render() {
         </div>
 
 
+        <!-- Data Management Tools -->
+        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-6);margin-bottom:var(--space-4);">
+          <div>
+            <h3 class="section-title" style="margin:0;">Data Management Tools</h3>
+            <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">Fix inconsistencies in your library.</p>
+          </div>
+          <button class="btn btn-secondary" id="recalculate-status-btn" style="width:100%;justify-content:center;">
+            Recalculate Watch Statuses
+          </button>
+          <p class="text-tertiary" style="font-size:var(--text-xs);margin-top:0;">
+            Automatically scan your shows and update their status (e.g., mark as Paused if unwatched for 14 days, or Watching if you have episodes left).
+          </p>
+        </div>
 
         <!-- Danger Zone -->
         <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);border-color:var(--color-error);padding:var(--space-6);">
@@ -548,6 +561,72 @@ function bindEvents() {
     } finally {
       exportCsvBtn.disabled = false;
       exportCsvBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Export to CSV';
+    }
+  });
+
+  // Recalculate Tool
+  const recalculateBtn = document.getElementById('recalculate-status-btn');
+  recalculateBtn?.addEventListener('click', async () => {
+    recalculateBtn.disabled = true;
+    recalculateBtn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div>';
+    
+    try {
+      const { db } = await import('../database/db.js');
+      const shows = await db.shows.toArray();
+      const episodes = await db.episodes.toArray();
+      let updatedCount = 0;
+      
+      const now = new Date();
+      const twoWeeksAgo = new Date(now.getTime() - (14 * 24 * 60 * 60 * 1000));
+      
+      const epMap = new Map();
+      for (const ep of episodes) {
+        if (!epMap.has(ep.showId)) epMap.set(ep.showId, []);
+        epMap.get(ep.showId).push(ep);
+      }
+      
+      await db.transaction('rw', db.shows, async () => {
+        for (const show of shows) {
+          if (show.trackingStatus === 'dropped' || show.trackingStatus === 'plan') continue;
+          
+          const showEps = epMap.get(show.id) || [];
+          const watchedEps = showEps.filter(e => e.watched);
+          
+          if (watchedEps.length === 0) continue;
+          
+          // Sort to find latest watched date
+          watchedEps.sort((a, b) => new Date(b.watchedAt).getTime() - new Date(a.watchedAt).getTime());
+          const latestWatch = new Date(watchedEps[0].watchedAt);
+          
+          let newStatus = show.trackingStatus;
+          const hasEpisodesLeft = show.totalEpisodes > 0 && watchedEps.length < show.totalEpisodes;
+          
+          if (hasEpisodesLeft) {
+            if (latestWatch < twoWeeksAgo) {
+              newStatus = 'paused';
+            } else {
+              newStatus = 'watching';
+            }
+          } else if (show.status === 'Ended' || show.status === 'Canceled') {
+            newStatus = 'completed';
+          } else if (show.totalEpisodes > 0) {
+            newStatus = 'watching'; // Caught up but still returning
+          }
+          
+          if (newStatus !== show.trackingStatus) {
+            await db.shows.update(show.id, { trackingStatus: newStatus, updatedAt: now.toISOString() });
+            updatedCount++;
+          }
+        }
+      });
+      
+      toast(`Recalculated successfully. Updated ${updatedCount} shows.`, 'success');
+    } catch (err) {
+      console.error('Recalculate error', err);
+      toast('Failed to recalculate statuses', 'error');
+    } finally {
+      recalculateBtn.disabled = false;
+      recalculateBtn.textContent = 'Recalculate Watch Statuses';
     }
   });
 

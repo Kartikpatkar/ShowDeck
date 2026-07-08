@@ -169,7 +169,7 @@ function renderCharts(stats) {
   }
 
   // Theme colors
-  const root = getComputedStyle(document.documentElement);
+  const root = getComputedStyle(document.body);
   const colorPrimary = root.getPropertyValue('--color-primary').trim();
   const colorSurface0 = root.getPropertyValue('--surface-0').trim();
   const colorSurface1 = root.getPropertyValue('--surface-1').trim();

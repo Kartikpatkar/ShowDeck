@@ -29,7 +29,20 @@ export function render() {
         <div id="onboarding-step-2" class="onboarding-step animate-fade-in" style="display: none;">
           <div style="font-size: 48px; margin-bottom: var(--space-4);">🎨</div>
           <h1 style="font-size: var(--text-2xl); font-weight: var(--weight-bold); margin-bottom: var(--space-2);">Make it yours</h1>
-          <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">Choose an accent color for your UI.</p>
+          <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">Choose your theme and accent color.</p>
+          
+          <div style="text-align: left; margin-bottom: var(--space-6);">
+            <label style="display:block; margin-bottom: var(--space-2); font-weight: var(--weight-medium);">Base Theme</label>
+            <select id="onboarding-theme-select" class="input" style="width: 100%;">
+              <option value="system">System Default</option>
+              <option value="dark">Dark Mode</option>
+              <option value="light">Light Mode</option>
+            </select>
+          </div>
+          
+          <div style="text-align: left; margin-bottom: var(--space-2);">
+            <label style="display:block; font-weight: var(--weight-medium);">Accent Color</label>
+          </div>
           
           <div style="display: flex; gap: var(--space-4); justify-content: center; margin-bottom: var(--space-8); flex-wrap: wrap;">
             <button class="color-preset active" data-color="purple" style="width: 48px; height: 48px; border-radius: 50%; background: hsl(245, 58%, 51%); border: 3px solid transparent; cursor: pointer;"></button>
@@ -145,6 +158,19 @@ export function init() {
     applyCustomTheme(customHex);
   });
 
+  const themeSelect = container.querySelector('#onboarding-theme-select');
+  themeSelect.addEventListener('change', (e) => {
+    const mode = e.target.value;
+    localStorage.setItem('showdeck_theme', mode);
+    
+    if (mode === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', mode);
+    }
+  });
+
   const btnNext2 = container.querySelector('#btn-next-2');
   btnNext2.addEventListener('click', () => {
     localStorage.setItem('showdeck_accent_theme', selectedTheme);
@@ -160,8 +186,10 @@ export function init() {
   const tmdbInput = container.querySelector('#onboarding-tmdb-key');
   const adultToggle = container.querySelector('#onboarding-adult-toggle');
   
-  adultToggle?.addEventListener('change', async (e) => {
-    if (e.target.checked) {
+  adultToggle?.addEventListener('click', async (e) => {
+    // If turning ON, intercept
+    if (!e.target.checked && !e.target.hasAttribute('data-approved')) {
+      e.preventDefault(); // Stop the switch from animating yet
       const { confirmModal } = await import('../components/modal.js');
       const approved = await confirmModal(
         'Adult Content Warning',
@@ -169,9 +197,13 @@ export function init() {
         'Enable',
         true
       );
-      if (!approved) {
-        e.target.checked = false;
+      if (approved) {
+        e.target.setAttribute('data-approved', 'true');
+        e.target.checked = true; // Manually check it now
       }
+    } else if (!e.target.checked) {
+      // If turning OFF, clear the approved flag
+      e.target.removeAttribute('data-approved');
     }
   });
   
