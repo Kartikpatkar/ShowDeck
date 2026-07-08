@@ -35,8 +35,13 @@ export function render() {
             <label style="display:block; margin-bottom: var(--space-2); font-weight: var(--weight-medium);">Base Theme</label>
             <select id="onboarding-theme-select" class="input" style="width: 100%;">
               <option value="system">System Default</option>
-              <option value="dark">Dark Mode</option>
-              <option value="light">Light Mode</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+              <option value="oled">OLED Black</option>
+              <option value="dracula">Dracula</option>
+              <option value="nord">Nord</option>
+              <option value="catppuccin">Catppuccin</option>
+              <option value="tokyo">Tokyo Night</option>
             </select>
           </div>
           
@@ -138,10 +143,9 @@ export function init() {
       selectedTheme = p.dataset.color;
       
       if (selectedTheme !== 'custom') {
-        document.body.dataset.theme = selectedTheme;
         localStorage.setItem('showdeck_accent_theme', selectedTheme);
         localStorage.removeItem('showdeck_custom_color');
-        applyCustomTheme(null);
+        import('../app.js').then(({ initTheme }) => initTheme());
       }
     });
   });
@@ -152,23 +156,16 @@ export function init() {
     selectedTheme = 'custom';
     customHex = e.target.value;
     customColorPreview.style.background = customHex;
-    document.body.dataset.theme = 'custom';
     localStorage.setItem('showdeck_accent_theme', 'custom');
     localStorage.setItem('showdeck_custom_color', customHex);
-    applyCustomTheme(customHex);
+    import('../app.js').then(({ initTheme }) => initTheme());
   });
 
   const themeSelect = container.querySelector('#onboarding-theme-select');
   themeSelect.addEventListener('change', (e) => {
     const mode = e.target.value;
     localStorage.setItem('showdeck_theme', mode);
-    
-    if (mode === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-    } else {
-      document.documentElement.setAttribute('data-theme', mode);
-    }
+    import('../app.js').then(({ initTheme }) => initTheme());
   });
 
   const btnNext2 = container.querySelector('#btn-next-2');
@@ -186,10 +183,8 @@ export function init() {
   const tmdbInput = container.querySelector('#onboarding-tmdb-key');
   const adultToggle = container.querySelector('#onboarding-adult-toggle');
   
-  adultToggle?.addEventListener('click', async (e) => {
-    // If turning ON, intercept
-    if (!e.target.checked && !e.target.hasAttribute('data-approved')) {
-      e.preventDefault(); // Stop the switch from animating yet
+  adultToggle?.addEventListener('change', async (e) => {
+    if (e.target.checked) {
       const { confirmModal } = await import('../components/modal.js');
       const approved = await confirmModal(
         'Adult Content Warning',
@@ -197,13 +192,10 @@ export function init() {
         'Enable',
         true
       );
-      if (approved) {
-        e.target.setAttribute('data-approved', 'true');
-        e.target.checked = true; // Manually check it now
+      if (!approved) {
+        e.target.checked = false;
+        return;
       }
-    } else if (!e.target.checked) {
-      // If turning OFF, clear the approved flag
-      e.target.removeAttribute('data-approved');
     }
   });
   
