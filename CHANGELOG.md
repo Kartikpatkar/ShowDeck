@@ -2,6 +2,18 @@
 
 All notable changes to ShowDeck will be documented in this file.
 
+## [1.3.0] - 2026-07-09
+
+### Added
+- **Library Grid Virtualization (Infinite Scroll)**: The library now handles thousands of items seamlessly without freezing the browser during the initial render by using an infinite scroll mechanism.
+- **Global Tag Manager**: A new dedicated interface to view, rename, delete, and customize tags globally under the "Organize" section.
+
+### Fixed
+- **Status Badges Performance**: Refactored status badges dictionary allocation out of the render loop to prevent unnecessary memory use and GC pauses during library scroll.
+- **Progress Lazy Loading**: Progress bars and Next Episode data now correctly defer fetching until cards enter the viewport using IntersectionObserver.
+- **Library Filters Persistence**: The library search bar now correctly visually populates with the active search term if it was restored from a previous session, preventing missing items confusion.
+- **Status Badges (Global UI)**: Replicated the completed checkmark badge style across all tracking statuses (Watching, Paused, Dropped, Plan to Watch) to unify the design language.
+
 ## [1.2.0] - 2026-07-08
 
 ### Added
