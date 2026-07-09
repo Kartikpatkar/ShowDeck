@@ -6,7 +6,7 @@
 import { Router } from './router.js';
 import { Sidebar } from './components/sidebar.js';
 
-export const APP_VERSION = '1.2.0';
+export const APP_VERSION = '1.3.0';
 
 const router = new Router();
 let sidebar = null;
@@ -180,6 +180,9 @@ router
   })
   .on('/smart-collections', (params) => {
     loadPage(() => import('./pages/smart_collections.js'), params);
+  })
+  .on('/tags', (params) => {
+    loadPage(() => import('./pages/tags.js'), params);
   })
   .on('/share', (params) => {
     loadPage(() => import('./pages/share.js'), params);

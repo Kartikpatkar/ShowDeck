@@ -24,6 +24,7 @@ const icons = {
   x: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`,
   clapperboard: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/><path d="m6.2 5.3 3.1 3.9"/><path d="m12.4 3.4 3.1 4"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>`,
   info: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`,
+  tags: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>`,
 };
 
 const SIDEBAR_KEY = 'showdeck-sidebar-collapsed';
@@ -37,6 +38,7 @@ const navItems = [
   { section: 'Organize', items: [
     { id: 'collections', label: 'Collections', icon: 'collections', route: '/collections' },
     { id: 'smart-collections', label: 'Smart Collections', icon: 'collections', route: '/smart-collections' },
+    { id: 'tags', label: 'Tags', icon: 'tags', route: '/tags' },
     { id: 'history', label: 'History', icon: 'history', route: '/history' },
     { id: 'calendar', label: 'Calendar', icon: 'calendar', route: '/calendar' },
     { id: 'goals', label: 'Goals', icon: 'goals', route: '/goals' },
@@ -114,8 +116,16 @@ export class Sidebar {
     overlay.className = 'sidebar-overlay';
     overlay.id = 'sidebar-overlay';
 
+    // Mobile Home button
+    const mobileHomeBtn = document.createElement('a');
+    mobileHomeBtn.className = 'mobile-home-btn';
+    mobileHomeBtn.href = '#/home';
+    mobileHomeBtn.setAttribute('aria-label', 'Go to Home');
+    mobileHomeBtn.innerHTML = icons.home;
+
     this.container.prepend(overlay);
     this.container.prepend(sidebar);
+    this.container.prepend(mobileHomeBtn);
     this.container.prepend(mobileBtn);
 
     this.sidebarEl = sidebar;
@@ -165,6 +175,16 @@ export class Sidebar {
     const activeItem = this.sidebarEl.querySelector(`.nav-item[data-route="${normalizedRoute}"]`);
     if (activeItem) {
       activeItem.classList.add('active');
+    }
+
+    // Hide mobile home button on home page
+    const mobileHomeBtn = document.querySelector('.mobile-home-btn');
+    if (mobileHomeBtn) {
+      if (normalizedRoute === '/') {
+        mobileHomeBtn.style.display = 'none';
+      } else {
+        mobileHomeBtn.style.display = '';
+      }
     }
   }
 

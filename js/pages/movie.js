@@ -137,18 +137,24 @@ function renderContent(container) {
         <!-- Controls -->
         <div class="detail-actions">
           ${isTracked ? `
-            <select class="input" id="movie-status-select" style="width:180px;">
-              ${Object.entries(STATUS_MAP).map(([val, {label}]) => {
-                const releaseDate = movieData.releaseDate ? new Date(movieData.releaseDate) : null;
-                const isUnreleased = releaseDate ? releaseDate.getTime() > Date.now() : false;
-                const isDisabled = isUnreleased && val !== 'plan_to_watch';
-                return `<option value="${val}" ${movieData.trackingStatus === val ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}>${label}</option>`;
-              }).join('')}
+          <div style="display:flex;gap:var(--space-2);width:100%;">
+            <select id="movie-status-select" class="input" style="flex:1;">
+              <option value="watching" ${movieData.trackingStatus === 'watching' ? 'selected' : ''}>Watching</option>
+              <option value="plan" ${movieData.trackingStatus === 'plan' ? 'selected' : ''}>Plan to Watch</option>
+              <option value="completed" ${movieData.trackingStatus === 'completed' ? 'selected' : ''}>Completed</option>
+              <option value="dropped" ${movieData.trackingStatus === 'dropped' ? 'selected' : ''}>Dropped</option>
             </select>
-            <button class="btn btn-ghost" id="remove-btn" style="color:var(--color-error);" title="Remove from Library">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            <button class="btn btn-outline" id="add-collection-btn" style="padding:0 var(--space-3);" data-tooltip="Add to Collection">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M3 15h6"/><path d="M6 12v6"/></svg>
             </button>
-            <div class="rating-stars" id="movie-rating" style="display:flex;align-items:center;gap:4px;font-size:24px;cursor:pointer;color:var(--color-warning);">
+            <button class="btn btn-outline" id="manage-tags-btn" style="padding:0 var(--space-3);" data-tooltip="Manage Tags">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+            </button>
+            <button class="btn btn-outline" id="movie-remove-btn" style="color:var(--color-danger);border-color:var(--color-danger);padding:0 var(--space-3);" data-tooltip="Remove from Library">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
+          </div>
+          <div class="rating-stars" id="movie-rating" style="display:flex;align-items:center;gap:4px;font-size:24px;cursor:pointer;color:var(--color-warning);">
               ${interactiveStarRating(movieData.rating || 0)}
             </div>
           ` : `
@@ -263,7 +269,7 @@ function bindEvents() {
   }
 
   // Remove button
-  const removeBtn = document.getElementById('remove-btn');
+  const removeBtn = document.getElementById('movie-remove-btn');
   if (removeBtn && isTracked) {
     removeBtn.addEventListener('click', async () => {
       if (!confirm(`Are you sure you want to remove ${movieData.title} from your library?`)) return;
@@ -297,6 +303,32 @@ function bindEvents() {
       }
     });
     container.dataset.readMoreBound = 'true';
+  }
+
+  const addColBtn = document.getElementById('add-collection-btn');
+  if (addColBtn && isTracked) {
+    addColBtn.addEventListener('click', async () => {
+      const { addToCollectionModal } = await import('../components/modal.js');
+      const updated = await addToCollectionModal(currentMovieId, 'movie');
+      if (updated) {
+        toast('Collections updated', 'success');
+      }
+    });
+  }
+
+  // Manage Tags button
+  const manageTagsBtn = document.getElementById('manage-tags-btn');
+  if (manageTagsBtn && isTracked) {
+    manageTagsBtn.addEventListener('click', async () => {
+      const { manageTagsModal } = await import('../components/modal.js');
+      const updated = await manageTagsModal(currentMovieId, 'movie');
+      if (updated) {
+        toast('Tags updated', 'success');
+        const { db } = await import('../database/db.js');
+        const movie = await db.movies.get(currentMovieId);
+        movieData.tags = movie.tags;
+      }
+    });
   }
 
   // Sync button

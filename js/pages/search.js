@@ -178,6 +178,9 @@ export function init() {
   
   function applyFilters() {
     if (currentQuery) return; // Filters only apply in discover mode
+    sessionStorage.setItem('showdeck-search-genre', genreFilter?.value || '');
+    sessionStorage.setItem('showdeck-search-country', countryFilter?.value || '');
+    sessionStorage.setItem('showdeck-search-sort', sortFilter?.value || 'popularity.desc');
     currentPage = 1;
     loadDiscover();
   }
@@ -245,6 +248,11 @@ export function init() {
   }
 
   const savedQuery = sessionStorage.getItem('showdeck-search-query');
+  
+  if (genreFilter) genreFilter.value = sessionStorage.getItem('showdeck-search-genre') || '';
+  if (countryFilter) countryFilter.value = sessionStorage.getItem('showdeck-search-country') || '';
+  if (sortFilter) sortFilter.value = sessionStorage.getItem('showdeck-search-sort') || 'popularity.desc';
+  
   if (savedQuery && searchInput) {
     searchInput.value = savedQuery;
     currentQuery = savedQuery;
@@ -256,20 +264,23 @@ export function init() {
   }
 
   if (searchType !== 'multi' && !currentQuery) {
-    populateFilters();
+    populateFilters(true); // pass true to indicate it's an initial restore
   }
 }
 
 let cachedCountries = null;
-async function populateFilters() {
+async function populateFilters(isRestore = false) {
   const genreList = document.getElementById('genre-list');
   const countryList = document.getElementById('country-list');
   const genreInput = document.getElementById('filter-genre-input');
   
   if (!genreList || !countryList) return;
 
-  // Clear current genre input to avoid mismatches between TV/Movie
-  if (genreInput) genreInput.value = '';
+  // Clear current genre input to avoid mismatches between TV/Movie unless restoring
+  if (genreInput && !isRestore) {
+    genreInput.value = '';
+    sessionStorage.setItem('showdeck-search-genre', '');
+  }
 
   // Populate Countries once
   if (!cachedCountries) {

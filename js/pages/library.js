@@ -12,12 +12,18 @@ import { toast } from '../components/toast.js';
 import { openEnrichModal } from '../components/enrich-modal.js';
 
 let viewMode = localStorage.getItem('showdeck-library-view') || 'grid';
-let filterStatus = '';
-let filterType = 'all'; // 'all' | 'shows' | 'movies'
-let sortBy = 'addedAt';
-let sortOrder = 'desc';
-let searchTerm = '';
+let filterStatus = sessionStorage.getItem('showdeck-library-status') || '';
+let filterType = sessionStorage.getItem('showdeck-library-type') || 'all'; // 'all' | 'shows' | 'movies'
+let sortBy = sessionStorage.getItem('showdeck-library-sortby') || 'addedAt';
+let sortOrder = sessionStorage.getItem('showdeck-library-sortorder') || 'desc';
+let searchTerm = sessionStorage.getItem('showdeck-library-search') || '';
+let filterCollection = null;
 let allItems = [];
+
+let currentFilteredItems = [];
+let currentRenderCount = 0;
+const CHUNK_SIZE = 60;
+let scrollObserver = null;
 
 export function render() {
   return `
@@ -50,37 +56,37 @@ export function render() {
           <span class="input-group-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           </span>
-          <input type="search" class="input" id="library-search" placeholder="Filter library..." aria-label="Filter library">
+          <input type="search" class="input" id="library-search" placeholder="Filter library..." aria-label="Filter library" value="${searchTerm ? searchTerm.replace(/"/g, '&quot;') : ''}">
         </div>
 
         <!-- Type Filter -->
         <select class="input" id="filter-type" style="width:auto;min-width:110px;" aria-label="Filter by type">
-          <option value="all">All Types</option>
-          <option value="shows">TV Shows</option>
-          <option value="movies">Movies</option>
+          <option value="all" ${filterType === 'all' ? 'selected' : ''}>All Types</option>
+          <option value="shows" ${filterType === 'shows' ? 'selected' : ''}>TV Shows</option>
+          <option value="movies" ${filterType === 'movies' ? 'selected' : ''}>Movies</option>
         </select>
 
         <!-- Status Filter -->
         <select class="input" id="filter-status" style="width:auto;min-width:140px;" aria-label="Filter by status">
-          <option value="">All Status</option>
-          <option value="watching">Watching</option>
-          <option value="upcoming">Upcoming</option>
-          <option value="completed">Completed</option>
-          <option value="paused">Paused</option>
-          <option value="dropped">Dropped</option>
-          <option value="plan">Plan to Watch</option>
-          <option value="rewatching">Rewatching</option>
+          <option value="" ${filterStatus === '' ? 'selected' : ''}>All Status</option>
+          <option value="watching" ${filterStatus === 'watching' ? 'selected' : ''}>Watching</option>
+          <option value="upcoming" ${filterStatus === 'upcoming' ? 'selected' : ''}>Upcoming</option>
+          <option value="completed" ${filterStatus === 'completed' ? 'selected' : ''}>Completed</option>
+          <option value="paused" ${filterStatus === 'paused' ? 'selected' : ''}>Paused</option>
+          <option value="dropped" ${filterStatus === 'dropped' ? 'selected' : ''}>Dropped</option>
+          <option value="plan" ${filterStatus === 'plan' ? 'selected' : ''}>Plan to Watch</option>
+          <option value="rewatching" ${filterStatus === 'rewatching' ? 'selected' : ''}>Rewatching</option>
         </select>
 
         <!-- Sort -->
         <select class="input" id="sort-by" style="width:auto;min-width:130px;" aria-label="Sort by">
-          <option value="addedAt-desc">Recently Added</option>
-          <option value="addedAt-asc">Oldest Added</option>
-          <option value="title-asc">Title A→Z</option>
-          <option value="title-desc">Title Z→A</option>
-          <option value="rating-desc">Highest Rated</option>
-          <option value="rating-asc">Lowest Rated</option>
-          <option value="updatedAt-desc">Recently Updated</option>
+          <option value="addedAt-desc" ${sortBy === 'addedAt' && sortOrder === 'desc' ? 'selected' : ''}>Recently Added</option>
+          <option value="addedAt-asc" ${sortBy === 'addedAt' && sortOrder === 'asc' ? 'selected' : ''}>Oldest Added</option>
+          <option value="title-asc" ${sortBy === 'title' && sortOrder === 'asc' ? 'selected' : ''}>Title A→Z</option>
+          <option value="title-desc" ${sortBy === 'title' && sortOrder === 'desc' ? 'selected' : ''}>Title Z→A</option>
+          <option value="rating-desc" ${sortBy === 'rating' && sortOrder === 'desc' ? 'selected' : ''}>Highest Rated</option>
+          <option value="rating-asc" ${sortBy === 'rating' && sortOrder === 'asc' ? 'selected' : ''}>Lowest Rated</option>
+          <option value="updatedAt-desc" ${sortBy === 'updatedAt' && sortOrder === 'desc' ? 'selected' : ''}>Recently Updated</option>
         </select>
       </div>
 
@@ -98,6 +104,12 @@ export async function init() {
     filterStatus = params.get('status');
     const statusSelect = document.getElementById('filter-status');
     if (statusSelect) statusSelect.value = filterStatus;
+  }
+  
+  if (params.get('collection')) {
+    filterCollection = parseInt(params.get('collection'), 10);
+  } else {
+    filterCollection = null;
   }
 
   await loadLibrary();
@@ -125,11 +137,13 @@ function bindEvents() {
   // Filters
   document.getElementById('filter-type')?.addEventListener('change', (e) => {
     filterType = e.target.value;
+    sessionStorage.setItem('showdeck-library-type', filterType);
     renderItems();
   });
 
   document.getElementById('filter-status')?.addEventListener('change', (e) => {
     filterStatus = e.target.value;
+    sessionStorage.setItem('showdeck-library-status', filterStatus);
     renderItems();
   });
 
@@ -137,6 +151,8 @@ function bindEvents() {
     const [field, order] = e.target.value.split('-');
     sortBy = field;
     sortOrder = order;
+    sessionStorage.setItem('showdeck-library-sortby', sortBy);
+    sessionStorage.setItem('showdeck-library-sortorder', sortOrder);
     renderItems();
   });
 
@@ -144,6 +160,7 @@ function bindEvents() {
   document.getElementById('library-search')?.addEventListener('input',
     debounce((e) => {
       searchTerm = e.target.value.trim().toLowerCase();
+      sessionStorage.setItem('showdeck-library-search', searchTerm);
       renderItems();
     }, 200)
   );
@@ -172,16 +189,25 @@ async function loadLibrary() {
     getAllMovies(),
   ]);
 
-  const { getShowProgress } = await import('../database/episodes.js');
+  const { getShowProgress, getNextEpisode } = await import('../database/episodes.js');
   const showsWithProgress = await Promise.all(shows.map(async s => {
     const progress = await getShowProgress(s.id);
-    return { ...s, progress, itemType: 'show' };
+    const next = (s.trackingStatus === 'watching' || s.trackingStatus === 'paused') ? await getNextEpisode(s.id) : null;
+    return { ...s, progress, nextEpisode: next, itemType: 'show' };
   }));
 
   allItems = [
     ...showsWithProgress,
     ...movies.map(m => ({ ...m, itemType: 'movie' })),
   ].filter(i => i.tmdbId !== null);
+  
+  if (filterCollection) {
+    const { getCollection } = await import('../database/collections.js');
+    const coll = await getCollection(filterCollection);
+    if (coll && coll.itemIds) {
+      allItems = allItems.filter(i => coll.itemIds.includes(`${i.itemType}:${i.id}`));
+    }
+  }
 
   renderItems();
 }
@@ -235,7 +261,8 @@ function getFilteredItems() {
 }
 
 function renderItems() {
-  const items = getFilteredItems();
+  currentFilteredItems = getFilteredItems();
+  const items = currentFilteredItems;
   const contentEl = document.getElementById('library-content');
   const countEl = document.getElementById('library-count');
 
@@ -251,24 +278,41 @@ function renderItems() {
         <div class="empty-state-icon">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
         </div>
-        <h3 class="empty-state-title">${searchTerm || filterStatus ? 'No matches' : 'Library is empty'}</h3>
-        <p class="empty-state-text">${searchTerm || filterStatus ? 'Try different filters.' : 'Search and add shows to get started.'}</p>
-        ${!searchTerm && !filterStatus ? '<a href="#/search" class="btn btn-primary">Search Content</a>' : ''}
+        <h3 class="empty-state-title">${searchTerm || filterStatus || filterCollection ? 'No matches' : 'Library is empty'}</h3>
+        <p class="empty-state-text">${searchTerm || filterStatus || filterCollection ? 'Try different filters.' : 'Search and add shows to get started.'}</p>
+        ${!searchTerm && !filterStatus && !filterCollection ? '<a href="#/search" class="btn btn-primary">Search Content</a>' : ''}
       </div>
     `;
     return;
   }
 
+  currentRenderCount = Math.min(CHUNK_SIZE, items.length);
+  const initialItems = items.slice(0, currentRenderCount);
+
+  let html = '';
   if (viewMode === 'grid') {
-    contentEl.innerHTML = `<div class="grid-posters stagger-children">${items.map(renderGridCard).join('')}</div>`;
+    html = `<div class="grid-posters stagger-children" id="library-list-container">${initialItems.map(renderGridCard).join('')}</div>`;
   } else if (viewMode === 'list') {
-    contentEl.innerHTML = `<div class="library-list stagger-children">${items.map(renderListItem).join('')}</div>`;
+    html = `<div class="library-list stagger-children" id="library-list-container">${initialItems.map(renderListItem).join('')}</div>`;
   } else {
-    contentEl.innerHTML = `<div class="library-compact stagger-children">${items.map(renderCompactItem).join('')}</div>`;
+    html = `<div class="library-compact stagger-children" id="library-list-container">${initialItems.map(renderCompactItem).join('')}</div>`;
   }
 
-  // Enrich Modal Triggers
-  document.querySelectorAll('.enrich-trigger').forEach(el => {
+  if (currentRenderCount < items.length) {
+    html += `<div id="library-sentinel" style="height:20px; width:100%;"></div>`;
+  }
+  contentEl.innerHTML = html;
+
+  bindEnrichTriggers(contentEl);
+  setupObserver();
+}
+
+function bindEnrichTriggers(container) {
+  container.querySelectorAll('.enrich-trigger').forEach(el => {
+    // Prevent duplicate binding if called multiple times on the container, but since we append fresh DOM nodes, it's mostly fine.
+    // However, to be perfectly safe, we can just bind to elements that don't have a specific data flag.
+    if (el.dataset.bound) return;
+    el.dataset.bound = "true";
     el.addEventListener('click', (e) => {
       e.preventDefault();
       const id = parseInt(el.dataset.id);
@@ -281,6 +325,52 @@ function renderItems() {
   });
 }
 
+function setupObserver() {
+  if (scrollObserver) {
+    scrollObserver.disconnect();
+  }
+  const sentinel = document.getElementById('library-sentinel');
+  if (!sentinel) return;
+
+  scrollObserver = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      renderMoreItems();
+    }
+  }, { rootMargin: '200px' });
+  scrollObserver.observe(sentinel);
+}
+
+function renderMoreItems() {
+  const container = document.getElementById('library-list-container');
+  if (!container) return;
+
+  const nextCount = Math.min(currentRenderCount + CHUNK_SIZE, currentFilteredItems.length);
+  const nextItems = currentFilteredItems.slice(currentRenderCount, nextCount);
+  
+  const tempDiv = document.createElement('div');
+  if (viewMode === 'grid') {
+    tempDiv.innerHTML = nextItems.map(renderGridCard).join('');
+  } else if (viewMode === 'list') {
+    tempDiv.innerHTML = nextItems.map(renderListItem).join('');
+  } else {
+    tempDiv.innerHTML = nextItems.map(renderCompactItem).join('');
+  }
+
+  while (tempDiv.firstChild) {
+    container.appendChild(tempDiv.firstChild);
+  }
+  
+  bindEnrichTriggers(container);
+
+  currentRenderCount = nextCount;
+
+  if (currentRenderCount >= currentFilteredItems.length) {
+    const sentinel = document.getElementById('library-sentinel');
+    if (sentinel) sentinel.remove();
+    if (scrollObserver) scrollObserver.disconnect();
+  }
+}
+
 function renderGridCard(item) {
   const posterUrl = getPosterUrl(item.posterPath, 'posterMedium');
   const year = formatYear(item.itemType === 'show' ? item.firstAirDate : item.releaseDate);
@@ -291,22 +381,43 @@ function renderGridCard(item) {
   const triggerAttrs = isMissing ? `data-id="${item.id}" data-type="${item.itemType}" data-title="${encodeURIComponent(item.title)}"` : '';
   const missingBadge = isMissing ? `<div style="position:absolute;top:4px;right:4px;background:var(--color-error);color:white;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:bold;z-index:2;">Fix Match</div>` : '';
 
+  let statusBadgeHtml = '';
+  if (item.trackingStatus) {
+    const badges = {
+      'completed': { bg: 'var(--color-success)', icon: '<polyline points="20 6 9 17 4 12"/>' },
+      'watching': { bg: 'var(--color-primary)', icon: '<polygon points="5 3 19 12 5 21 5 3"/>' },
+      'paused': { bg: 'var(--color-warning)', icon: '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>' },
+      'dropped': { bg: 'var(--color-error)', icon: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>' },
+      'plan': { bg: 'var(--text-secondary)', icon: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>' }
+    };
+    const b = badges[item.trackingStatus];
+    if (b) {
+      statusBadgeHtml = `<div style="position:absolute;top:var(--space-2);left:var(--space-2);width:22px;height:22px;background:${b.bg};color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:10;box-shadow:0 2px 4px rgba(0,0,0,0.5);" title="${item.trackingStatus}"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${b.icon}</svg></div>`;
+    }
+  }
+
+  let nextLabelHtml = '';
+  if (item.itemType === 'show' && item.nextEpisode) {
+    const n = item.nextEpisode;
+    const label = `S${String(n.season).padStart(2, '0')}E${String(n.episode).padStart(2, '0')}${n.title && !n.title.toLowerCase().startsWith('episode') ? ` - ${n.title}` : ''}`;
+    nextLabelHtml = `<div style="font-size:11px; color:hsla(0,0%,100%,0.8); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,0.8);">${label}</div>`;
+  }
+
   return `
     <a href="${route}" class="poster-card ${triggerClass}" ${triggerAttrs} id="lib-${item.itemType}-${item.id}" style="position:relative;">
+      ${statusBadgeHtml}
       ${missingBadge}
       ${posterUrl
         ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
         : `<div class="poster-card-image" style="display:flex;align-items:center;justify-content:center;background:var(--surface-3);"><span style="font-size:var(--text-3xl);opacity:0.3;">🎬</span></div>`
       }
-      ${item.progress && item.progress.percentage > 0 ? `<div style="position:absolute;bottom:0;left:0;height:4px;background:var(--color-primary);width:${item.progress.percentage}%;z-index:2;"></div>` : ''}
+      ${item.progress && item.progress.percentage > 0 ? `<div style="position:absolute;bottom:0;left:0;height:4px;background:${item.trackingStatus === 'paused' ? 'var(--text-secondary)' : 'var(--color-primary)'};width:${item.progress.percentage}%;z-index:2;"></div>` : ''}
       <div class="poster-card-overlay">
         <div class="poster-card-title">${item.title}</div>
-        <div class="poster-card-meta">${year} • ${item.itemType === 'show' ? 'TV' : 'Movie'}${item.progress ? ` • ${item.progress.percentage}%` : ''}</div>
+        <div class="poster-card-meta">${year} • ${item.itemType === 'show' ? 'TV' : 'Movie'}</div>
+        ${nextLabelHtml}
       </div>
-      <div style="position:absolute;top:var(--space-2);right:var(--space-2);">
-        <span class="badge badge-${status.color}" style="font-size:10px;">${status.icon} ${status.label}</span>
-      </div>
-      ${item.rating ? `<div style="position:absolute;top:var(--space-2);left:var(--space-2);"><span class="badge badge-warning" style="font-size:10px;">★ ${item.rating}</span></div>` : ''}
+      ${item.rating ? `<div style="position:absolute;top:var(--space-2);right:var(--space-2);"><span class="badge badge-warning" style="font-size:10px;">★ ${item.rating}</span></div>` : ''}
     </a>
   `;
 }

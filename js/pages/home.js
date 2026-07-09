@@ -201,15 +201,36 @@ export async function render() {
   // Build Paused section
   let pausedShowsHTML = '';
   if (filteredPaused.length > 0) {
-    const cards = filteredPaused.slice(0, 8).map(item => {
-      const year = formatYear(item.firstAirDate);
-      return `<media-card variant="poster" custom-meta="${year} • Paused" data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
-    });
+    const cards = [];
+    for (const show of filteredPaused.slice(0, 8)) {
+      const progress = await getShowProgress(show.id);
+      const next = await getNextEpisode(show.id);
+      const posterUrl = getPosterUrl(show.posterPath, 'posterMedium');
+      const nextLabel = next
+        ? `S${String(next.season).padStart(2, '0')}E${String(next.episode).padStart(2, '0')}${next.title && !next.title.toLowerCase().startsWith('episode') ? ` - ${next.title}` : ''}`
+        : '';
+
+      cards.push(`
+        <a href="#/show/${show.tmdbId}" class="poster-card" style="position:relative;overflow:hidden;border-radius:var(--radius-md);">
+          ${posterUrl
+            ? `<img class="poster-card-image" src="${posterUrl}" alt="${show.title}" loading="lazy" style="filter: grayscale(80%) opacity(0.7);">`
+            : `<div class="poster-card-image skeleton" style="filter: grayscale(80%) opacity(0.7);"></div>`
+          }
+          <div class="poster-card-overlay" style="background:linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%); opacity:1; padding:var(--space-2); padding-bottom:12px; display:flex; flex-direction:column; justify-content:flex-end;">
+            <div style="font-weight:var(--weight-bold); color:white; font-size:var(--text-sm); line-height:1.2; text-shadow:0 1px 2px rgba(0,0,0,0.8);">${show.title}</div>
+            ${nextLabel ? `<div style="font-size:11px; color:hsla(0,0%,100%,0.8); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,0.8);">${nextLabel}</div>` : ''}
+          </div>
+          <div class="progress-bar-container" style="position:absolute; bottom:0; left:0; width:100%; height:4px; margin:0; border-radius:0; background:rgba(255,255,255,0.25); z-index:3;">
+            <div class="progress-bar-fill" style="width:${progress.percentage}%; border-radius:0; background:var(--text-secondary);"></div>
+          </div>
+        </a>
+      `);
+    }
     pausedShowsHTML = `
       <div class="section">
         <div class="section-header">
-          <h2 class="section-title">Paused Shows</h2>
-          <a href="#/library?status=paused" class="section-action">View All</a>
+          <h2 class="section-title">Paused</h2>
+          ${filteredPaused.length > 0 ? '<a href="#/library?status=paused" class="section-action">View All</a>' : ''}
         </div>
         <div class="grid-posters stagger-children">${cards.join('')}</div>
       </div>
