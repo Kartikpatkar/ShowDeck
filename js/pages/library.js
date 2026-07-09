@@ -20,6 +20,11 @@ let searchTerm = sessionStorage.getItem('showdeck-library-search') || '';
 let filterCollection = null;
 let allItems = [];
 
+let currentFilteredItems = [];
+let currentRenderCount = 0;
+const CHUNK_SIZE = 60;
+let scrollObserver = null;
+
 export function render() {
   return `
     <div class="page-container animate-fade-in">
@@ -256,7 +261,8 @@ function getFilteredItems() {
 }
 
 function renderItems() {
-  const items = getFilteredItems();
+  currentFilteredItems = getFilteredItems();
+  const items = currentFilteredItems;
   const contentEl = document.getElementById('library-content');
   const countEl = document.getElementById('library-count');
 
@@ -280,16 +286,33 @@ function renderItems() {
     return;
   }
 
+  currentRenderCount = Math.min(CHUNK_SIZE, items.length);
+  const initialItems = items.slice(0, currentRenderCount);
+
+  let html = '';
   if (viewMode === 'grid') {
-    contentEl.innerHTML = `<div class="grid-posters stagger-children">${items.map(renderGridCard).join('')}</div>`;
+    html = `<div class="grid-posters stagger-children" id="library-list-container">${initialItems.map(renderGridCard).join('')}</div>`;
   } else if (viewMode === 'list') {
-    contentEl.innerHTML = `<div class="library-list stagger-children">${items.map(renderListItem).join('')}</div>`;
+    html = `<div class="library-list stagger-children" id="library-list-container">${initialItems.map(renderListItem).join('')}</div>`;
   } else {
-    contentEl.innerHTML = `<div class="library-compact stagger-children">${items.map(renderCompactItem).join('')}</div>`;
+    html = `<div class="library-compact stagger-children" id="library-list-container">${initialItems.map(renderCompactItem).join('')}</div>`;
   }
 
-  // Enrich Modal Triggers
-  document.querySelectorAll('.enrich-trigger').forEach(el => {
+  if (currentRenderCount < items.length) {
+    html += `<div id="library-sentinel" style="height:20px; width:100%;"></div>`;
+  }
+  contentEl.innerHTML = html;
+
+  bindEnrichTriggers(contentEl);
+  setupObserver();
+}
+
+function bindEnrichTriggers(container) {
+  container.querySelectorAll('.enrich-trigger').forEach(el => {
+    // Prevent duplicate binding if called multiple times on the container, but since we append fresh DOM nodes, it's mostly fine.
+    // However, to be perfectly safe, we can just bind to elements that don't have a specific data flag.
+    if (el.dataset.bound) return;
+    el.dataset.bound = "true";
     el.addEventListener('click', (e) => {
       e.preventDefault();
       const id = parseInt(el.dataset.id);
@@ -300,6 +323,52 @@ function renderItems() {
       });
     });
   });
+}
+
+function setupObserver() {
+  if (scrollObserver) {
+    scrollObserver.disconnect();
+  }
+  const sentinel = document.getElementById('library-sentinel');
+  if (!sentinel) return;
+
+  scrollObserver = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      renderMoreItems();
+    }
+  }, { rootMargin: '200px' });
+  scrollObserver.observe(sentinel);
+}
+
+function renderMoreItems() {
+  const container = document.getElementById('library-list-container');
+  if (!container) return;
+
+  const nextCount = Math.min(currentRenderCount + CHUNK_SIZE, currentFilteredItems.length);
+  const nextItems = currentFilteredItems.slice(currentRenderCount, nextCount);
+  
+  const tempDiv = document.createElement('div');
+  if (viewMode === 'grid') {
+    tempDiv.innerHTML = nextItems.map(renderGridCard).join('');
+  } else if (viewMode === 'list') {
+    tempDiv.innerHTML = nextItems.map(renderListItem).join('');
+  } else {
+    tempDiv.innerHTML = nextItems.map(renderCompactItem).join('');
+  }
+
+  while (tempDiv.firstChild) {
+    container.appendChild(tempDiv.firstChild);
+  }
+  
+  bindEnrichTriggers(container);
+
+  currentRenderCount = nextCount;
+
+  if (currentRenderCount >= currentFilteredItems.length) {
+    const sentinel = document.getElementById('library-sentinel');
+    if (sentinel) sentinel.remove();
+    if (scrollObserver) scrollObserver.disconnect();
+  }
 }
 
 function renderGridCard(item) {

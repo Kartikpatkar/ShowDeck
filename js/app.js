@@ -181,6 +181,9 @@ router
   .on('/smart-collections', (params) => {
     loadPage(() => import('./pages/smart_collections.js'), params);
   })
+  .on('/tags', (params) => {
+    loadPage(() => import('./pages/tags.js'), params);
+  })
   .on('/share', (params) => {
     loadPage(() => import('./pages/share.js'), params);
   })
