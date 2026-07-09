@@ -73,12 +73,21 @@ export async function init(params) {
       episodesData = await provider.getAllEpisodes(tmdbId, null, showData.totalSeasons);
     }
     
-    // Set initial season if not set
+    // Set initial active season
     if (episodesData.length > 0) {
       const seasonsList = Array.from(new Set(episodesData.map(e => e.season))).sort((a,b) => a-b);
-      if (!seasonsList.includes(currentSeason)) {
-        currentSeason = seasonsList[0];
+      let activeSeason = seasonsList[0];
+      
+      // Find the lowest season with unwatched episodes, or the highest season if all watched
+      for (const s of seasonsList) {
+        const unwatched = episodesData.filter(e => e.season === s && !e.watched).length;
+        if (unwatched > 0) {
+          activeSeason = s;
+          break;
+        }
+        activeSeason = s;
       }
+      currentSeason = activeSeason;
     }
 
     renderContent(container);
@@ -226,6 +235,10 @@ async function enrichSeasonEpisodes(season) {
 }
 
 function renderContent(container) {
+  // Preserve scroll positions
+  const tabsScrollEl = container.querySelector('.tabs-scroll');
+  const savedTabsScroll = tabsScrollEl ? tabsScrollEl.scrollLeft : 0;
+  
   const backdropUrl = getBackdropUrl(showData.backdropPath, 'backdropLarge');
   const posterUrl = getPosterUrl(showData.posterPath, 'posterLarge');
   const year = formatYear(showData.firstAirDate);
@@ -310,20 +323,25 @@ function renderContent(container) {
         <!-- Controls -->
         <div class="detail-actions">
           ${isTracked ? `
-            <select class="input" id="status-select" style="width:180px;">
-              ${Object.entries(STATUS_MAP).map(([k,v]) => `
-                <option value="${k}" ${showData.trackingStatus === k ? 'selected' : ''}>
-                  ${v.icon} ${v.label}
-                </option>
-              `).join('')}
+          <div style="display:flex;gap:var(--space-2);width:100%;">
+            <select id="status-select" class="input" style="flex:1;">
+              <option value="watching" ${showData.trackingStatus === 'watching' ? 'selected' : ''}>Watching</option>
+              <option value="paused" ${showData.trackingStatus === 'paused' ? 'selected' : ''}>Paused</option>
+              <option value="plan" ${showData.trackingStatus === 'plan' ? 'selected' : ''}>Plan to Watch</option>
+              <option value="completed" ${showData.trackingStatus === 'completed' ? 'selected' : ''}>Completed</option>
+              <option value="dropped" ${showData.trackingStatus === 'dropped' ? 'selected' : ''}>Dropped</option>
             </select>
-            <button class="btn btn-ghost" id="remove-btn" style="color:var(--color-error);" title="Remove from Library">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            <button class="btn btn-outline" id="add-collection-btn" style="padding:0 var(--space-3);" data-tooltip="Add to Collection">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M3 15h6"/><path d="M6 12v6"/></svg>
             </button>
-            <button class="btn btn-secondary btn-sm" id="mark-all-btn">Mark All ✓</button>
-            <div class="rating-stars" id="rating-control" style="display:flex;align-items:center;gap:4px;font-size:24px;cursor:pointer;color:var(--color-warning);">
-              ${interactiveStarRating(showData.rating || 0)}
-            </div>
+            <button class="btn btn-outline" id="remove-btn" style="color:var(--color-danger);border-color:var(--color-danger);padding:0 var(--space-3);" data-tooltip="Remove from Library">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="mark-all-btn">Mark All ✓</button>
+          <div class="rating-stars" id="rating-control" style="display:flex;align-items:center;gap:4px;font-size:24px;cursor:pointer;color:var(--color-warning);">
+            ${interactiveStarRating(showData.rating || 0)}
+          </div>
           ` : `
             <button class="btn btn-primary" id="track-btn">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
@@ -483,6 +501,12 @@ function renderContent(container) {
       </div>
     ` : ''}
   `;
+
+  // Restore scroll position
+  if (savedTabsScroll > 0) {
+    const newTabsScrollEl = container.querySelector('.tabs-scroll');
+    if (newTabsScrollEl) newTabsScrollEl.scrollLeft = savedTabsScroll;
+  }
 }
 
 function bindEvents() {
@@ -556,6 +580,18 @@ function bindEvents() {
       } catch (err) {
         console.error('Failed to remove show:', err);
         toast('Failed to remove show', 'error');
+      }
+    });
+  }
+
+  // Add to Collection button
+  const addColBtn = document.getElementById('add-collection-btn');
+  if (addColBtn && isTracked) {
+    addColBtn.addEventListener('click', async () => {
+      const { addToCollectionModal } = await import('../components/modal.js');
+      const updated = await addToCollectionModal(currentShowId, 'show');
+      if (updated) {
+        toast('Collections updated', 'success');
       }
     });
   }
@@ -744,7 +780,10 @@ function bindEvents() {
         } else {
           let bulkUpdated = false;
           const prevUnwatched = episodesData.filter(e => {
-            if (e.season !== ep.season || e.episode >= ep.episode || e.watched) return false;
+            if (e.watched) return false;
+            if (e.season > ep.season) return false;
+            if (e.season === ep.season && e.episode >= ep.episode) return false;
+            
             if (e.airDate) {
               const epDate = new Date(e.airDate);
               if (epDate.getTime() > Date.now()) return false;

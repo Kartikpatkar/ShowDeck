@@ -42,20 +42,34 @@ export function render() {
               </select>
             </div>
             <div>
-              <label style="font-weight:var(--weight-medium); display:block; margin-bottom:var(--space-1);">Minimum Rating</label>
-              <input type="number" id="smart-min-rating" class="input" placeholder="e.g. 8" min="0" max="10" step="0.5" style="width:100%;">
-            </div>
-            <div>
-              <label style="font-weight:var(--weight-medium); display:block; margin-bottom:var(--space-1);">Genre (contains)</label>
-              <input type="text" id="smart-genre" class="input" placeholder="e.g. Crime" style="width:100%;">
-            </div>
-            <div>
               <label style="font-weight:var(--weight-medium); display:block; margin-bottom:var(--space-1);">Status</label>
               <select id="smart-status" class="input" style="width:100%;">
                 <option value="any">Any Status</option>
-                <option value="completed">Watched / Completed</option>
-                <option value="plan_to_watch">Plan to Watch</option>
+                <option value="watching">Watching</option>
+                <option value="completed">Completed</option>
+                <option value="plan">Plan to Watch</option>
+                <option value="paused">Paused</option>
               </select>
+            </div>
+            <div>
+              <label style="font-weight:var(--weight-medium); display:block; margin-bottom:var(--space-1);">Genres (comma separated)</label>
+              <input type="text" id="smart-genre" class="input" placeholder="e.g. Action, Sci-Fi" style="width:100%;">
+            </div>
+            <div>
+              <label style="font-weight:var(--weight-medium); display:block; margin-bottom:var(--space-1);">Minimum Rating (0-10)</label>
+              <input type="number" id="smart-min-rating" class="input" placeholder="e.g. 8" min="0" max="10" step="0.5" style="width:100%;">
+            </div>
+            <div>
+              <label style="font-weight:var(--weight-medium); display:block; margin-bottom:var(--space-1);">Release Year (≥)</label>
+              <input type="number" id="smart-year" class="input" placeholder="e.g. 2020" min="1900" max="2100" style="width:100%;">
+            </div>
+            <div>
+              <label style="font-weight:var(--weight-medium); display:block; margin-bottom:var(--space-1);">Maximum Runtime (mins)</label>
+              <input type="number" id="smart-runtime" class="input" placeholder="e.g. 30" min="0" max="500" style="width:100%;">
+            </div>
+            <div>
+              <label style="font-weight:var(--weight-medium); display:block; margin-bottom:var(--space-1);">Network/Provider (contains)</label>
+              <input type="text" id="smart-network" class="input" placeholder="e.g. Netflix, HBO" style="width:100%;">
             </div>
           </div>
           <div style="display:flex; justify-content:flex-end; gap:var(--space-3); margin-top:var(--space-2);">
@@ -104,7 +118,7 @@ async function loadCollections() {
 
     for (const coll of collections) {
       const rules = coll.rules || {};
-      const { type = 'both', minRating, genre, status } = rules;
+      const { type = 'both', minRating, genre, status, year, runtime, network } = rules;
       
       let matches = [];
 
@@ -113,8 +127,21 @@ async function loadCollections() {
           if (minRating && (s.voteAverage || 0) < parseFloat(minRating)) return false;
           if (status && status !== 'any' && s.trackingStatus !== status) return false;
           if (genre && genre.trim() !== '') {
-            const hasGenre = s.genres && s.genres.some(g => g.toLowerCase().includes(genre.trim().toLowerCase()));
+            const targets = genre.split(',').map(g => g.trim().toLowerCase());
+            const hasGenre = s.genres && targets.every(t => s.genres.some(g => g.toLowerCase().includes(t)));
             if (!hasGenre) return false;
+          }
+          if (year && parseInt(year)) {
+            const sYear = s.firstAirDate ? parseInt(s.firstAirDate.substring(0,4)) : 0;
+            if (sYear < parseInt(year)) return false;
+          }
+          if (runtime && parseInt(runtime)) {
+            if (s.runtime && s.runtime > parseInt(runtime)) return false;
+          }
+          if (network && network.trim() !== '') {
+            const targets = network.split(',').map(n => n.trim().toLowerCase());
+            const hasNetwork = s.network && targets.some(t => s.network.toLowerCase().includes(t));
+            if (!hasNetwork) return false;
           }
           return true;
         }).map(s => ({ ...s, mediaType: 'show' }));
@@ -126,8 +153,27 @@ async function loadCollections() {
           if (minRating && (m.voteAverage || 0) < parseFloat(minRating)) return false;
           if (status && status !== 'any' && m.trackingStatus !== status) return false;
           if (genre && genre.trim() !== '') {
-            const hasGenre = m.genres && m.genres.some(g => g.toLowerCase().includes(genre.trim().toLowerCase()));
+            const targets = genre.split(',').map(g => g.trim().toLowerCase());
+            const hasGenre = m.genres && targets.every(t => m.genres.some(g => g.toLowerCase().includes(t)));
             if (!hasGenre) return false;
+          }
+          if (year && parseInt(year)) {
+            const mYear = m.releaseDate ? parseInt(m.releaseDate.substring(0,4)) : 0;
+            if (mYear < parseInt(year)) return false;
+          }
+          if (runtime && parseInt(runtime)) {
+            if (m.runtime && m.runtime > parseInt(runtime)) return false;
+          }
+          if (network && network.trim() !== '') {
+            // Movies generally don't have networks, but might have studios. Just skip filtering out if they don't have the field unless it's strictly required
+            // For now, if a network is specified, we check if the movie has any production companies matching
+            if (m.productionCompanies) {
+              const targets = network.split(',').map(n => n.trim().toLowerCase());
+              const hasNetwork = targets.some(t => m.productionCompanies.some(pc => pc.name.toLowerCase().includes(t)));
+              if (!hasNetwork) return false;
+            } else {
+              return false; // required network but movie has none
+            }
           }
           return true;
         }).map(m => ({ ...m, mediaType: 'movie' }));
@@ -184,9 +230,14 @@ async function loadCollections() {
                 ${matches.length} items match these rules
               </div>
             </div>
-            <button class="btn btn-sm btn-ghost delete-smart-btn text-error" data-id="${coll.id}">
-              Delete Rule
-            </button>
+            <div style="display:flex;gap:var(--space-2);">
+              <button class="btn btn-sm btn-ghost run-smart-btn" style="color:var(--color-primary);" data-id="${coll.id}">
+                Run
+              </button>
+              <button class="btn btn-sm btn-ghost delete-smart-btn text-error" data-id="${coll.id}">
+                Delete Rule
+              </button>
+            </div>
           </div>
           ${previewHtml}
         </div>
@@ -203,6 +254,14 @@ async function loadCollections() {
           toast('Collection deleted');
           loadCollections();
         }
+      });
+    });
+
+    container.querySelectorAll('.run-smart-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        toast('Running rule...', 'info');
+        // loadCollections already recalculates everything dynamically, so we just re-run it
+        setTimeout(loadCollections, 300);
       });
     });
 
@@ -233,6 +292,9 @@ function bindEvents() {
     const minRating = document.getElementById('smart-min-rating').value;
     const genre = document.getElementById('smart-genre').value;
     const status = document.getElementById('smart-status').value;
+    const year = document.getElementById('smart-year').value;
+    const runtime = document.getElementById('smart-runtime').value;
+    const network = document.getElementById('smart-network').value;
 
     if (!name) {
       toast('Please enter a collection name', 'warning');
@@ -246,7 +308,10 @@ function bindEvents() {
           type,
           minRating,
           genre,
-          status
+          status,
+          year,
+          runtime,
+          network
         },
         createdAt: new Date().toISOString()
       });
@@ -255,6 +320,9 @@ function bindEvents() {
       document.getElementById('smart-name').value = '';
       document.getElementById('smart-genre').value = '';
       document.getElementById('smart-min-rating').value = '';
+      document.getElementById('smart-year').value = '';
+      document.getElementById('smart-runtime').value = '';
+      document.getElementById('smart-network').value = '';
       toast('Smart Collection created!', 'success');
       
       loadCollections();
