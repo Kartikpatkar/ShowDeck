@@ -108,8 +108,8 @@ async function loadGoals() {
               </div>
             </div>
             <div style="display:flex;gap:var(--space-2);">
-              <button class="btn btn-icon btn-ghost recalc-goal-btn" data-id="${g.id}" style="color:var(--color-primary); padding:4px;" data-tooltip="Recalculate">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.13 15.57a9 9 0 1 0 3.84-10.36L2 8"/></svg>
+              <button class="btn btn-icon btn-ghost recalc-goal-btn" data-id="${g.id}" style="color:var(--text-tertiary); padding:4px;" data-tooltip="Recalculate">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
               </button>
               <button class="btn btn-icon btn-ghost delete-goal-btn" data-id="${g.id}" style="color:var(--text-tertiary); padding:4px;" data-tooltip="Delete">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>

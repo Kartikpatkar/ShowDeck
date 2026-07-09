@@ -12,3 +12,9 @@
 
 - in personal refresh icon or  recaludate icon is not proper
 - in library also can we show for watching and pause progress on card like fir we did for watching section in home page showing progress
+
+- give click on collection option to check items in the collection
+- give option in detail page also to add tags similar to collection we did
+
+- in library, if i apply filter of status, type etc. and open the show or movie. once i come back to library page the select filter are reseting.
+- in all pages other then home page, if user wants to go to home page user have to click on menu and select can we go back to home page

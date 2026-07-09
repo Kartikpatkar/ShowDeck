@@ -89,13 +89,14 @@ async function renderLists() {
     colList.innerHTML = `<div class="empty-state" style="padding:var(--space-6) var(--space-4);"><p class="empty-state-text">No collections yet.</p></div>`;
   } else {
     colList.innerHTML = collections.map(c => `
-      <div class="card" style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3);">
-        <div style="font-size:24px;width:40px;height:40px;background:var(--surface-3);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;">${c.icon || '📁'}</div>
-        <div style="flex:1;">
+      <div class="card" style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3);position:relative;">
+        <a href="#/library?collection=${c.id}" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;"></a>
+        <div style="font-size:24px;width:40px;height:40px;background:var(--surface-3);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;position:relative;z-index:2;">${c.icon || '📁'}</div>
+        <div style="flex:1;position:relative;z-index:2;pointer-events:none;">
           <div style="font-weight:var(--weight-medium);">${c.name}</div>
           <div style="font-size:var(--text-xs);color:var(--text-tertiary);">${c.itemIds?.length || 0} items</div>
         </div>
-        <button class="btn btn-icon btn-sm btn-ghost text-error" data-action="delete-col" data-id="${c.id}" data-name="${c.name}">
+        <button class="btn btn-icon btn-sm btn-ghost text-error" style="position:relative;z-index:2;" data-action="delete-col" data-id="${c.id}" data-name="${c.name}">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
         </button>
       </div>

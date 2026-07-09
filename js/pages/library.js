@@ -17,6 +17,7 @@ let filterType = 'all'; // 'all' | 'shows' | 'movies'
 let sortBy = 'addedAt';
 let sortOrder = 'desc';
 let searchTerm = '';
+let filterCollection = null;
 let allItems = [];
 
 export function render() {
@@ -99,6 +100,12 @@ export async function init() {
     const statusSelect = document.getElementById('filter-status');
     if (statusSelect) statusSelect.value = filterStatus;
   }
+  
+  if (params.get('collection')) {
+    filterCollection = parseInt(params.get('collection'), 10);
+  } else {
+    filterCollection = null;
+  }
 
   await loadLibrary();
   bindEvents();
@@ -172,16 +179,25 @@ async function loadLibrary() {
     getAllMovies(),
   ]);
 
-  const { getShowProgress } = await import('../database/episodes.js');
+  const { getShowProgress, getNextEpisode } = await import('../database/episodes.js');
   const showsWithProgress = await Promise.all(shows.map(async s => {
     const progress = await getShowProgress(s.id);
-    return { ...s, progress, itemType: 'show' };
+    const next = (s.trackingStatus === 'watching' || s.trackingStatus === 'paused') ? await getNextEpisode(s.id) : null;
+    return { ...s, progress, nextEpisode: next, itemType: 'show' };
   }));
 
   allItems = [
     ...showsWithProgress,
     ...movies.map(m => ({ ...m, itemType: 'movie' })),
   ].filter(i => i.tmdbId !== null);
+  
+  if (filterCollection) {
+    const { getCollection } = await import('../database/collections.js');
+    const coll = await getCollection(filterCollection);
+    if (coll && coll.itemIds) {
+      allItems = allItems.filter(i => coll.itemIds.includes(`${i.itemType}:${i.id}`));
+    }
+  }
 
   renderItems();
 }
@@ -251,9 +267,9 @@ function renderItems() {
         <div class="empty-state-icon">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
         </div>
-        <h3 class="empty-state-title">${searchTerm || filterStatus ? 'No matches' : 'Library is empty'}</h3>
-        <p class="empty-state-text">${searchTerm || filterStatus ? 'Try different filters.' : 'Search and add shows to get started.'}</p>
-        ${!searchTerm && !filterStatus ? '<a href="#/search" class="btn btn-primary">Search Content</a>' : ''}
+        <h3 class="empty-state-title">${searchTerm || filterStatus || filterCollection ? 'No matches' : 'Library is empty'}</h3>
+        <p class="empty-state-text">${searchTerm || filterStatus || filterCollection ? 'Try different filters.' : 'Search and add shows to get started.'}</p>
+        ${!searchTerm && !filterStatus && !filterCollection ? '<a href="#/search" class="btn btn-primary">Search Content</a>' : ''}
       </div>
     `;
     return;
@@ -291,22 +307,43 @@ function renderGridCard(item) {
   const triggerAttrs = isMissing ? `data-id="${item.id}" data-type="${item.itemType}" data-title="${encodeURIComponent(item.title)}"` : '';
   const missingBadge = isMissing ? `<div style="position:absolute;top:4px;right:4px;background:var(--color-error);color:white;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:bold;z-index:2;">Fix Match</div>` : '';
 
+  let statusBadgeHtml = '';
+  if (item.trackingStatus) {
+    const badges = {
+      'completed': { bg: 'var(--color-success)', icon: '<polyline points="20 6 9 17 4 12"/>' },
+      'watching': { bg: 'var(--color-primary)', icon: '<polygon points="5 3 19 12 5 21 5 3"/>' },
+      'paused': { bg: 'var(--color-warning)', icon: '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>' },
+      'dropped': { bg: 'var(--color-error)', icon: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>' },
+      'plan': { bg: 'var(--text-secondary)', icon: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>' }
+    };
+    const b = badges[item.trackingStatus];
+    if (b) {
+      statusBadgeHtml = `<div style="position:absolute;top:var(--space-2);left:var(--space-2);width:22px;height:22px;background:${b.bg};color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:10;box-shadow:0 2px 4px rgba(0,0,0,0.5);" title="${item.trackingStatus}"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${b.icon}</svg></div>`;
+    }
+  }
+
+  let nextLabelHtml = '';
+  if (item.itemType === 'show' && item.nextEpisode) {
+    const n = item.nextEpisode;
+    const label = `S${String(n.season).padStart(2, '0')}E${String(n.episode).padStart(2, '0')}${n.title && !n.title.toLowerCase().startsWith('episode') ? ` - ${n.title}` : ''}`;
+    nextLabelHtml = `<div style="font-size:11px; color:hsla(0,0%,100%,0.8); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,0.8);">${label}</div>`;
+  }
+
   return `
     <a href="${route}" class="poster-card ${triggerClass}" ${triggerAttrs} id="lib-${item.itemType}-${item.id}" style="position:relative;">
+      ${statusBadgeHtml}
       ${missingBadge}
       ${posterUrl
         ? `<img class="poster-card-image" src="${posterUrl}" alt="${item.title}" loading="lazy">`
         : `<div class="poster-card-image" style="display:flex;align-items:center;justify-content:center;background:var(--surface-3);"><span style="font-size:var(--text-3xl);opacity:0.3;">🎬</span></div>`
       }
-      ${item.progress && item.progress.percentage > 0 ? `<div style="position:absolute;bottom:0;left:0;height:4px;background:var(--color-primary);width:${item.progress.percentage}%;z-index:2;"></div>` : ''}
+      ${item.progress && item.progress.percentage > 0 ? `<div style="position:absolute;bottom:0;left:0;height:4px;background:${item.trackingStatus === 'paused' ? 'var(--text-secondary)' : 'var(--color-primary)'};width:${item.progress.percentage}%;z-index:2;"></div>` : ''}
       <div class="poster-card-overlay">
         <div class="poster-card-title">${item.title}</div>
-        <div class="poster-card-meta">${year} • ${item.itemType === 'show' ? 'TV' : 'Movie'}${item.progress ? ` • ${item.progress.percentage}%` : ''}</div>
+        <div class="poster-card-meta">${year} • ${item.itemType === 'show' ? 'TV' : 'Movie'}</div>
+        ${nextLabelHtml}
       </div>
-      <div style="position:absolute;top:var(--space-2);right:var(--space-2);">
-        <span class="badge badge-${status.color}" style="font-size:10px;">${status.icon} ${status.label}</span>
-      </div>
-      ${item.rating ? `<div style="position:absolute;top:var(--space-2);left:var(--space-2);"><span class="badge badge-warning" style="font-size:10px;">★ ${item.rating}</span></div>` : ''}
+      ${item.rating ? `<div style="position:absolute;top:var(--space-2);right:var(--space-2);"><span class="badge badge-warning" style="font-size:10px;">★ ${item.rating}</span></div>` : ''}
     </a>
   `;
 }

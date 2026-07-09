@@ -322,6 +322,98 @@ export async function addToCollectionModal(itemId, itemType) {
 }
 
 /**
+ * Manage Tags modal
+ */
+export async function manageTagsModal(itemId, itemType) {
+  const { db } = await import('../database/db.js');
+  const tags = await db.tags.toArray();
+  const store = itemType === 'show' ? db.shows : db.movies;
+  const item = await store.get(itemId);
+  if (!item) return false;
+  
+  const currentTags = item.tags || [];
+
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay animate-fade-in';
+    overlay.style.cssText = `
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      padding: var(--space-4);
+    `;
+
+    const modal = document.createElement('div');
+    modal.className = 'card';
+    modal.style.cssText = `
+      width: 100%; max-width: 320px; padding: var(--space-6);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      transform: scale(0.95);
+      animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+    `;
+
+    const tagListHtml = tags.length > 0 ? tags.map(t => {
+      const hasTag = currentTags.includes(t.name);
+      return \`
+        <label style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-2); cursor:pointer; border-radius:var(--radius-sm); transition:background 0.2s;" onmouseover="this.style.background='var(--surface-3)'" onmouseout="this.style.background='transparent'">
+          <input type="checkbox" class="tag-checkbox" data-name="\${t.name}" \${hasTag ? 'checked' : ''} style="accent-color:var(--text-primary);width:18px;height:18px;">
+          <span style="font-size:var(--text-md);">#\${t.name}</span>
+        </label>
+      \`;
+    }).join('') : \`<p style="color:var(--text-tertiary); font-size:var(--text-sm); text-align:center;">No tags created yet. Go to Settings > Collections to create tags.</p>\`;
+
+    modal.innerHTML = \`
+      <h3 style="margin-bottom:var(--space-4); display:flex; align-items:center; gap:var(--space-2);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+        Manage Tags
+      </h3>
+      <div style="flex:1; overflow-y:auto; margin-bottom:var(--space-4); display:flex; flex-direction:column; gap:2px;">
+        \${tagListHtml}
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:var(--space-3); margin-top:auto;">
+        <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="modal-save">Save</button>
+      </div>
+    \`;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    const cleanup = () => {
+      overlay.style.opacity = '0';
+      modal.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        if (document.body.contains(overlay)) document.body.removeChild(overlay);
+      }, 200);
+    };
+
+    modal.querySelector('#modal-cancel').addEventListener('click', () => {
+      cleanup();
+      resolve(false);
+    });
+
+    modal.querySelector('#modal-save').addEventListener('click', async () => {
+      const selected = Array.from(modal.querySelectorAll('.tag-checkbox:checked')).map(cb => cb.dataset.name);
+      await store.update(itemId, { tags: selected });
+      cleanup();
+      resolve(true);
+    });
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        cleanup();
+        resolve(false);
+      }
+    });
+  });
+}
+
+/**
  * Rating modal - 5 star selection
  */
 export function ratingModal(title) {

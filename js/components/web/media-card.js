@@ -1,5 +1,6 @@
 import { getPosterUrl } from '../../api/tmdb.js';
 import { formatYear } from '../../utils/dom.js';
+import { getShowProgress, getNextEpisode } from '../../database/episodes.js';
 
 function escapeHtml(unsafe) {
   if (!unsafe) return '';
@@ -62,14 +63,37 @@ export class MediaCard extends HTMLElement {
     const isMissing = item.tmdbId === null;
     const missingBadge = isMissing ? `<div style="position:absolute;top:0;right:0;background:var(--color-warning);color:var(--surface-0);font-size:10px;padding:2px 4px;font-weight:bold;z-index:10;border-bottom-left-radius:var(--radius-sm);">MISSING ID</div>` : '';
 
-    const isCompleted = item.trackingStatus === 'completed';
-    const completedBadge = isCompleted ? `<div style="position:absolute;top:var(--space-2);left:var(--space-2);width:22px;height:22px;background:var(--color-success);color:var(--surface-0);border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:10;box-shadow:0 2px 4px rgba(0,0,0,0.5);"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>` : '';
+    let statusBadge = '';
+    if (item.trackingStatus) {
+      const badges = {
+        'completed': { bg: 'var(--color-success)', icon: '<polyline points="20 6 9 17 4 12"/>' },
+        'watching': { bg: 'var(--color-primary)', icon: '<polygon points="5 3 19 12 5 21 5 3"/>' },
+        'paused': { bg: 'var(--color-warning)', icon: '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>' },
+        'dropped': { bg: 'var(--color-error)', icon: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>' },
+        'plan': { bg: 'var(--text-secondary)', icon: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>' }
+      };
+      const b = badges[item.trackingStatus];
+      if (b) {
+        statusBadge = `<div style="position:absolute;top:var(--space-2);left:var(--space-2);width:22px;height:22px;background:${b.bg};color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:10;box-shadow:0 2px 4px rgba(0,0,0,0.5);" title="${item.trackingStatus}"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${b.icon}</svg></div>`;
+      }
+    }
+
+    const showProgress = item.mediaType === 'show' && (item.trackingStatus === 'watching' || item.trackingStatus === 'paused');
+    let progressHtml = '';
+    if (showProgress) {
+       const color = item.trackingStatus === 'paused' ? 'var(--text-secondary)' : 'var(--color-primary)';
+       progressHtml = `
+          <div class="progress-bar-container" style="position:absolute; bottom:0; left:0; width:100%; height:4px; margin:0; border-radius:0; background:rgba(255,255,255,0.25); z-index:3;">
+            <div class="progress-bar-fill progress-dynamic" style="width:0%; border-radius:0; background:${color}; transition:width 0.3s ease;"></div>
+          </div>
+       `;
+    }
 
     if (variant === 'poster') {
       this.innerHTML = `
         <a href="${route}" class="poster-card" style="position:relative;display:block;">
           ${missingBadge}
-          ${completedBadge}
+          ${statusBadge}
           ${posterUrl
             ? `<img class="poster-card-image" src="${posterUrl}" alt="${customTitle}" loading="lazy">`
             : `<div class="poster-card-image skeleton"></div>`
@@ -77,9 +101,12 @@ export class MediaCard extends HTMLElement {
           <div class="poster-card-overlay">
             <div class="poster-card-title">${customTitle}</div>
             <div class="poster-card-meta">${customMeta}</div>
+            <div class="next-episode-dynamic" style="font-size:11px; color:hsla(0,0%,100%,0.8); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,0.8); display:none;"></div>
           </div>
+          ${progressHtml}
         </a>
       `;
+      this.loadProgress(item, showProgress);
       return;
     }
 
@@ -89,17 +116,19 @@ export class MediaCard extends HTMLElement {
       
       this.innerHTML = `
         <div class="library-list-item card" style="display:flex;gap:var(--space-4);padding:var(--space-3);margin-bottom:var(--space-2);text-decoration:none;">
-          <a href="${route}" style="flex-shrink:0;position:relative;display:block;">
-            ${completedBadge}
+          <a href="${route}" style="flex-shrink:0;position:relative;display:block;border-radius:var(--radius-sm);overflow:hidden;">
+            ${statusBadge}
             ${posterUrl
-              ? `<img src="${posterUrl}" alt="${customTitle}" style="width:64px;height:96px;object-fit:cover;border-radius:var(--radius-sm);" loading="lazy">`
-              : `<div style="width:64px;height:96px;background:var(--surface-3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;">🎬</span></div>`
+              ? `<img src="${posterUrl}" alt="${customTitle}" style="width:64px;height:96px;object-fit:cover;" loading="lazy">`
+              : `<div style="width:64px;height:96px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;">🎬</span></div>`
             }
+            ${progressHtml}
           </a>
           <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--space-1);">
             <a href="${route}" style="text-decoration:none;">
               <div style="font-weight:var(--weight-medium);color:var(--text-primary);font-size:var(--text-lg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${customTitle}</div>
               <div style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:2px;">${subMeta}</div>
+              <div class="next-episode-dynamic" style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:2px;display:none;"></div>
             </a>
             <div style="display:flex;gap:var(--space-2);align-items:center;margin-top:var(--space-2);">
               ${item.inLibrary
@@ -118,12 +147,13 @@ export class MediaCard extends HTMLElement {
       const subMeta = this.hasAttribute('custom-meta') ? customMeta : `${year} • ${typeLabel}`;
       this.innerHTML = `
         <div class="poster-card search-result-card">
-          <a href="${route}" style="position:relative;display:block;">
-            ${completedBadge}
+          <a href="${route}" style="position:relative;display:block;border-top-left-radius:var(--radius-md);border-top-right-radius:var(--radius-md);overflow:hidden;">
+            ${statusBadge}
             ${posterUrl
               ? `<img class="poster-card-image" src="${posterUrl}" alt="${customTitle}" loading="lazy">`
               : `<div class="poster-card-image" style="display:flex;align-items:center;justify-content:center;background:var(--surface-3);aspect-ratio:var(--card-poster-ratio);"><span style="font-size:var(--text-3xl);opacity:0.3;">🎬</span></div>`
             }
+            ${progressHtml}
           </a>
           <div class="poster-card-info" style="display:flex;flex-direction:column;gap:var(--space-1);">
             <div class="poster-card-info-title">${customTitle}</div>
@@ -131,6 +161,7 @@ export class MediaCard extends HTMLElement {
               <span>${subMeta}</span>
               ${rating ? `<span style="color:var(--color-warning);font-size:var(--text-xs);">${rating}</span>` : ''}
             </div>
+            <div class="next-episode-dynamic" style="color:var(--text-secondary); font-size:var(--text-xs); display:none;"></div>
             ${item.inLibrary
               ? `<span class="badge badge-success" style="width:fit-content;margin-top:var(--space-1);">✓ In Library</span>`
               : `<button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:var(--space-1);" data-action="add">
@@ -143,9 +174,32 @@ export class MediaCard extends HTMLElement {
       `;
     }
 
+
+
     // Bind Add Button
     const btn = this.querySelector('[data-action="add"]');
     if (btn) btn.addEventListener('click', this.handleAddClick);
+    
+    this.loadProgress(item, showProgress);
+  }
+
+  loadProgress(item, showProgress) {
+    if (showProgress && item.id) {
+      Promise.all([
+        getShowProgress(item.id),
+        getNextEpisode(item.id)
+      ]).then(([progress, next]) => {
+        const fill = this.querySelector('.progress-dynamic');
+        if (fill) fill.style.width = `${progress.percentage}%`;
+        
+        const nextContainer = this.querySelector('.next-episode-dynamic');
+        if (nextContainer && next) {
+          const nextLabel = `S${String(next.season).padStart(2, '0')}E${String(next.episode).padStart(2, '0')}${next.title && !next.title.toLowerCase().startsWith('episode') ? ` - ${next.title}` : ''}`;
+          nextContainer.textContent = nextLabel;
+          nextContainer.style.display = 'block';
+        }
+      }).catch(console.error);
+    }
   }
 }
 

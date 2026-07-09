@@ -37,6 +37,22 @@ export function render() {
           </p>
         </div>
 
+        <!-- Status Badges -->
+        <div class="card" style="padding:var(--space-6);">
+          <h3 class="section-title" style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3);">
+            <span>🏷️</span> Status Badges
+          </h3>
+          <p style="color:var(--text-secondary);line-height:1.6;margin-bottom:var(--space-4);">
+            Shows and movies in your library display an icon in the top-left corner indicating their current status:
+            <br><br>
+            • <span style="color:var(--color-primary);font-weight:bold;">▶ Blue Play Icon</span> – Watching<br>
+            • <span style="color:var(--color-warning);font-weight:bold;">⏸ Orange Pause Icon</span> – Paused<br>
+            • <span style="color:var(--color-success);font-weight:bold;">✓ Green Checkmark</span> – Completed<br>
+            • <span style="color:var(--color-error);font-weight:bold;">✕ Red Cross</span> – Dropped<br>
+            • <span style="color:var(--text-secondary);font-weight:bold;">🕒 Gray Clock</span> – Plan to Watch
+          </p>
+        </div>
+
         <!-- Getting Started -->
         <div class="card" style="padding:var(--space-6);">
           <h3 class="section-title" style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3);">
