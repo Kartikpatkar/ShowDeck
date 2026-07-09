@@ -2,6 +2,14 @@ import { getPosterUrl } from '../../api/tmdb.js';
 import { formatYear } from '../../utils/dom.js';
 import { getShowProgress, getNextEpisode } from '../../database/episodes.js';
 
+const STATUS_BADGES = {
+  'completed': { bg: 'var(--color-success)', icon: '<polyline points="20 6 9 17 4 12"/>' },
+  'watching': { bg: 'var(--color-primary)', icon: '<polygon points="5 3 19 12 5 21 5 3"/>' },
+  'paused': { bg: 'var(--color-warning)', icon: '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>' },
+  'dropped': { bg: 'var(--color-error)', icon: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>' },
+  'plan': { bg: 'var(--text-secondary)', icon: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>' }
+};
+
 function escapeHtml(unsafe) {
   if (!unsafe) return '';
   return unsafe
@@ -65,14 +73,7 @@ export class MediaCard extends HTMLElement {
 
     let statusBadge = '';
     if (item.trackingStatus) {
-      const badges = {
-        'completed': { bg: 'var(--color-success)', icon: '<polyline points="20 6 9 17 4 12"/>' },
-        'watching': { bg: 'var(--color-primary)', icon: '<polygon points="5 3 19 12 5 21 5 3"/>' },
-        'paused': { bg: 'var(--color-warning)', icon: '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>' },
-        'dropped': { bg: 'var(--color-error)', icon: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>' },
-        'plan': { bg: 'var(--text-secondary)', icon: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>' }
-      };
-      const b = badges[item.trackingStatus];
+      const b = STATUS_BADGES[item.trackingStatus];
       if (b) {
         statusBadge = `<div style="position:absolute;top:var(--space-2);left:var(--space-2);width:22px;height:22px;background:${b.bg};color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:10;box-shadow:0 2px 4px rgba(0,0,0,0.5);" title="${item.trackingStatus}"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${b.icon}</svg></div>`;
       }
@@ -185,21 +186,37 @@ export class MediaCard extends HTMLElement {
 
   loadProgress(item, showProgress) {
     if (showProgress && item.id) {
-      Promise.all([
-        getShowProgress(item.id),
-        getNextEpisode(item.id)
-      ]).then(([progress, next]) => {
-        const fill = this.querySelector('.progress-dynamic');
-        if (fill) fill.style.width = `${progress.percentage}%`;
-        
-        const nextContainer = this.querySelector('.next-episode-dynamic');
-        if (nextContainer && next) {
-          const nextLabel = `S${String(next.season).padStart(2, '0')}E${String(next.episode).padStart(2, '0')}${next.title && !next.title.toLowerCase().startsWith('episode') ? ` - ${next.title}` : ''}`;
-          nextContainer.textContent = nextLabel;
-          nextContainer.style.display = 'block';
-        }
-      }).catch(console.error);
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries, obs) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              this._fetchProgress(item);
+              obs.disconnect();
+            }
+          });
+        }, { rootMargin: '100px' });
+        observer.observe(this);
+      } else {
+        this._fetchProgress(item);
+      }
     }
+  }
+
+  _fetchProgress(item) {
+    Promise.all([
+      getShowProgress(item.id),
+      getNextEpisode(item.id)
+    ]).then(([progress, next]) => {
+      const fill = this.querySelector('.progress-dynamic');
+      if (fill) fill.style.width = `${progress.percentage}%`;
+      
+      const nextContainer = this.querySelector('.next-episode-dynamic');
+      if (nextContainer && next) {
+        const nextLabel = `S${String(next.season).padStart(2, '0')}E${String(next.episode).padStart(2, '0')}${next.title && !next.title.toLowerCase().startsWith('episode') ? ` - ${next.title}` : ''}`;
+        nextContainer.textContent = nextLabel;
+        nextContainer.style.display = 'block';
+      }
+    }).catch(console.error);
   }
 }
 
