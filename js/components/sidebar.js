@@ -114,8 +114,16 @@ export class Sidebar {
     overlay.className = 'sidebar-overlay';
     overlay.id = 'sidebar-overlay';
 
+    // Mobile Home button
+    const mobileHomeBtn = document.createElement('a');
+    mobileHomeBtn.className = 'mobile-home-btn';
+    mobileHomeBtn.href = '#/home';
+    mobileHomeBtn.setAttribute('aria-label', 'Go to Home');
+    mobileHomeBtn.innerHTML = icons.home;
+
     this.container.prepend(overlay);
     this.container.prepend(sidebar);
+    this.container.prepend(mobileHomeBtn);
     this.container.prepend(mobileBtn);
 
     this.sidebarEl = sidebar;
@@ -165,6 +173,16 @@ export class Sidebar {
     const activeItem = this.sidebarEl.querySelector(`.nav-item[data-route="${normalizedRoute}"]`);
     if (activeItem) {
       activeItem.classList.add('active');
+    }
+
+    // Hide mobile home button on home page
+    const mobileHomeBtn = document.querySelector('.mobile-home-btn');
+    if (mobileHomeBtn) {
+      if (normalizedRoute === '/') {
+        mobileHomeBtn.style.display = 'none';
+      } else {
+        mobileHomeBtn.style.display = '';
+      }
     }
   }
 

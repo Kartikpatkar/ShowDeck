@@ -12,11 +12,11 @@ import { toast } from '../components/toast.js';
 import { openEnrichModal } from '../components/enrich-modal.js';
 
 let viewMode = localStorage.getItem('showdeck-library-view') || 'grid';
-let filterStatus = '';
-let filterType = 'all'; // 'all' | 'shows' | 'movies'
-let sortBy = 'addedAt';
-let sortOrder = 'desc';
-let searchTerm = '';
+let filterStatus = sessionStorage.getItem('showdeck-library-status') || '';
+let filterType = sessionStorage.getItem('showdeck-library-type') || 'all'; // 'all' | 'shows' | 'movies'
+let sortBy = sessionStorage.getItem('showdeck-library-sortby') || 'addedAt';
+let sortOrder = sessionStorage.getItem('showdeck-library-sortorder') || 'desc';
+let searchTerm = sessionStorage.getItem('showdeck-library-search') || '';
 let filterCollection = null;
 let allItems = [];
 
@@ -56,32 +56,32 @@ export function render() {
 
         <!-- Type Filter -->
         <select class="input" id="filter-type" style="width:auto;min-width:110px;" aria-label="Filter by type">
-          <option value="all">All Types</option>
-          <option value="shows">TV Shows</option>
-          <option value="movies">Movies</option>
+          <option value="all" ${filterType === 'all' ? 'selected' : ''}>All Types</option>
+          <option value="shows" ${filterType === 'shows' ? 'selected' : ''}>TV Shows</option>
+          <option value="movies" ${filterType === 'movies' ? 'selected' : ''}>Movies</option>
         </select>
 
         <!-- Status Filter -->
         <select class="input" id="filter-status" style="width:auto;min-width:140px;" aria-label="Filter by status">
-          <option value="">All Status</option>
-          <option value="watching">Watching</option>
-          <option value="upcoming">Upcoming</option>
-          <option value="completed">Completed</option>
-          <option value="paused">Paused</option>
-          <option value="dropped">Dropped</option>
-          <option value="plan">Plan to Watch</option>
-          <option value="rewatching">Rewatching</option>
+          <option value="" ${filterStatus === '' ? 'selected' : ''}>All Status</option>
+          <option value="watching" ${filterStatus === 'watching' ? 'selected' : ''}>Watching</option>
+          <option value="upcoming" ${filterStatus === 'upcoming' ? 'selected' : ''}>Upcoming</option>
+          <option value="completed" ${filterStatus === 'completed' ? 'selected' : ''}>Completed</option>
+          <option value="paused" ${filterStatus === 'paused' ? 'selected' : ''}>Paused</option>
+          <option value="dropped" ${filterStatus === 'dropped' ? 'selected' : ''}>Dropped</option>
+          <option value="plan" ${filterStatus === 'plan' ? 'selected' : ''}>Plan to Watch</option>
+          <option value="rewatching" ${filterStatus === 'rewatching' ? 'selected' : ''}>Rewatching</option>
         </select>
 
         <!-- Sort -->
         <select class="input" id="sort-by" style="width:auto;min-width:130px;" aria-label="Sort by">
-          <option value="addedAt-desc">Recently Added</option>
-          <option value="addedAt-asc">Oldest Added</option>
-          <option value="title-asc">Title A→Z</option>
-          <option value="title-desc">Title Z→A</option>
-          <option value="rating-desc">Highest Rated</option>
-          <option value="rating-asc">Lowest Rated</option>
-          <option value="updatedAt-desc">Recently Updated</option>
+          <option value="addedAt-desc" ${sortBy === 'addedAt' && sortOrder === 'desc' ? 'selected' : ''}>Recently Added</option>
+          <option value="addedAt-asc" ${sortBy === 'addedAt' && sortOrder === 'asc' ? 'selected' : ''}>Oldest Added</option>
+          <option value="title-asc" ${sortBy === 'title' && sortOrder === 'asc' ? 'selected' : ''}>Title A→Z</option>
+          <option value="title-desc" ${sortBy === 'title' && sortOrder === 'desc' ? 'selected' : ''}>Title Z→A</option>
+          <option value="rating-desc" ${sortBy === 'rating' && sortOrder === 'desc' ? 'selected' : ''}>Highest Rated</option>
+          <option value="rating-asc" ${sortBy === 'rating' && sortOrder === 'asc' ? 'selected' : ''}>Lowest Rated</option>
+          <option value="updatedAt-desc" ${sortBy === 'updatedAt' && sortOrder === 'desc' ? 'selected' : ''}>Recently Updated</option>
         </select>
       </div>
 
@@ -132,11 +132,13 @@ function bindEvents() {
   // Filters
   document.getElementById('filter-type')?.addEventListener('change', (e) => {
     filterType = e.target.value;
+    sessionStorage.setItem('showdeck-library-type', filterType);
     renderItems();
   });
 
   document.getElementById('filter-status')?.addEventListener('change', (e) => {
     filterStatus = e.target.value;
+    sessionStorage.setItem('showdeck-library-status', filterStatus);
     renderItems();
   });
 
@@ -144,6 +146,8 @@ function bindEvents() {
     const [field, order] = e.target.value.split('-');
     sortBy = field;
     sortOrder = order;
+    sessionStorage.setItem('showdeck-library-sortby', sortBy);
+    sessionStorage.setItem('showdeck-library-sortorder', sortOrder);
     renderItems();
   });
 
@@ -151,6 +155,7 @@ function bindEvents() {
   document.getElementById('library-search')?.addEventListener('input',
     debounce((e) => {
       searchTerm = e.target.value.trim().toLowerCase();
+      sessionStorage.setItem('showdeck-library-search', searchTerm);
       renderItems();
     }, 200)
   );
