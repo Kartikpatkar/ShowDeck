@@ -116,21 +116,40 @@ export class Sidebar {
     overlay.className = 'sidebar-overlay';
     overlay.id = 'sidebar-overlay';
 
-    // Mobile Home button
-    const mobileHomeBtn = document.createElement('a');
-    mobileHomeBtn.className = 'mobile-home-btn';
-    mobileHomeBtn.href = '#/home';
-    mobileHomeBtn.setAttribute('aria-label', 'Go to Home');
-    mobileHomeBtn.innerHTML = icons.home;
+    // Bottom Navigation
+    const bottomNav = document.createElement('nav');
+    bottomNav.className = 'bottom-nav';
+    bottomNav.id = 'bottom-nav';
+    bottomNav.innerHTML = `
+      <div class="bottom-nav-inner">
+        <a href="#/" class="bottom-nav-item" data-route="/">
+          ${icons.home}
+          <span>Home</span>
+        </a>
+        <a href="#/search" class="bottom-nav-item" data-route="/search">
+          ${icons.search}
+          <span>Search</span>
+        </a>
+        <a href="#/library" class="bottom-nav-item" data-route="/library">
+          ${icons.library}
+          <span>Library</span>
+        </a>
+        <button class="bottom-nav-item" id="bottom-menu-btn">
+          ${icons.menu}
+          <span>Menu</span>
+        </button>
+      </div>
+    `;
 
     this.container.prepend(overlay);
     this.container.prepend(sidebar);
-    this.container.prepend(mobileHomeBtn);
+    this.container.prepend(bottomNav);
     this.container.prepend(mobileBtn);
 
     this.sidebarEl = sidebar;
     this.overlayEl = overlay;
     this.mobileBtnEl = mobileBtn;
+    this.bottomNavEl = bottomNav;
   }
 
   bindEvents() {
@@ -141,6 +160,12 @@ export class Sidebar {
     // Mobile menu
     this.mobileBtnEl.addEventListener('click', () => this.toggleMobile());
     this.overlayEl.addEventListener('click', () => this.closeMobile());
+    
+    // Bottom Menu button
+    const bottomMenuBtn = document.getElementById('bottom-menu-btn');
+    if (bottomMenuBtn) {
+      bottomMenuBtn.addEventListener('click', () => this.toggleMobile());
+    }
 
     // Close mobile on nav click
     this.sidebarEl.querySelectorAll('.nav-item[data-route]').forEach(item => {
@@ -177,13 +202,13 @@ export class Sidebar {
       activeItem.classList.add('active');
     }
 
-    // Hide mobile home button on home page
-    const mobileHomeBtn = document.querySelector('.mobile-home-btn');
-    if (mobileHomeBtn) {
-      if (normalizedRoute === '/') {
-        mobileHomeBtn.style.display = 'none';
-      } else {
-        mobileHomeBtn.style.display = '';
+    if (this.bottomNavEl) {
+      this.bottomNavEl.querySelectorAll('.bottom-nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      const activeBottom = this.bottomNavEl.querySelector(`.bottom-nav-item[data-route="${normalizedRoute}"]`);
+      if (activeBottom) {
+        activeBottom.classList.add('active');
       }
     }
   }

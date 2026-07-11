@@ -2,6 +2,15 @@
 
 All notable changes to ShowDeck will be documented in this file.
 
+## [1.4.0] - 2026-07-11
+
+### Added
+- **Mobile Bottom Navigation Bar**: Completely overhauled the mobile navigation experience. On screens under 768px, a native app-style bottom navigation bar now provides instant access to Home, Search, Library, and the Menu.
+- **Active Navigation States**: The bottom navigation bar features clear, Material-style active states with a background pill and filled icons, making it obvious which section of the app you are currently viewing.
+
+### Removed
+- **Mobile Floating Home Button**: Removed the floating action button on mobile devices in favor of the new permanent bottom navigation bar.
+
 ## [1.3.0] - 2026-07-09
 
 ### Added
