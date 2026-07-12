@@ -2,6 +2,7 @@
  * ShowDeck — Modal Component
  * Renders custom confirmation modals.
  */
+import { escapeHtml } from '../utils/dom.js';
 
 export function confirmModal(title, message, confirmText = 'Confirm', isDanger = false) {
   return new Promise((resolve) => {
@@ -361,8 +362,8 @@ export async function manageTagsModal(itemId, itemType) {
       const hasTag = currentTags.includes(t.name);
       return `
         <label style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-2); cursor:pointer; border-radius:var(--radius-sm); transition:background 0.2s;" onmouseover="this.style.background='var(--surface-3)'" onmouseout="this.style.background='transparent'">
-          <input type="checkbox" class="tag-checkbox" data-name="${t.name}" ${hasTag ? 'checked' : ''} style="accent-color:var(--text-primary);width:18px;height:18px;">
-          <span style="font-size:var(--text-md);">#${t.name}</span>
+          <input type="checkbox" class="tag-checkbox" data-name="${escapeHtml(t.name)}" ${hasTag ? 'checked' : ''} style="accent-color:var(--text-primary);width:18px;height:18px;">
+          <span style="font-size:var(--text-md);">#${escapeHtml(t.name)}</span>
         </label>
       `;
     }).join('') : `<p style="color:var(--text-tertiary); font-size:var(--text-sm); text-align:center;">No tags created yet. Go to Settings > Collections to create tags.</p>`;

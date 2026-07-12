@@ -3,6 +3,7 @@
  */
 import { db } from '../database/db.js';
 import { toast } from '../components/toast.js';
+import { escapeHtml } from '../utils/dom.js';
 
 export function render() {
   return `
@@ -68,13 +69,13 @@ async function loadTags() {
              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
           </div>
           <div>
-            <h3 style="margin:0; font-size:var(--text-lg); font-weight:var(--weight-semibold);">#${tag.name}</h3>
+            <h3 style="margin:0; font-size:var(--text-lg); font-weight:var(--weight-semibold);">#${escapeHtml(tag.name)}</h3>
             <p style="margin:0; font-size:var(--text-sm); color:var(--text-secondary);">${count} items</p>
           </div>
         </div>
         <div style="display:flex; gap:var(--space-2);">
-          <button class="btn btn-ghost btn-sm" data-action="rename" data-id="${tag.id}" data-name="${tag.name}">Rename</button>
-          <button class="btn btn-ghost btn-sm" data-action="delete" data-id="${tag.id}" data-name="${tag.name}" style="color:var(--color-danger);">Delete</button>
+          <button class="btn btn-ghost btn-sm" data-action="rename" data-id="${tag.id}" data-name="${escapeHtml(tag.name)}">Rename</button>
+          <button class="btn btn-ghost btn-sm" data-action="delete" data-id="${tag.id}" data-name="${escapeHtml(tag.name)}" style="color:var(--color-danger);">Delete</button>
         </div>
       </div>
     `;

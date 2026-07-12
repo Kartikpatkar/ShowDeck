@@ -2,6 +2,14 @@
 
 All notable changes to ShowDeck will be documented in this file.
 
+## [1.5.0] - 2026-07-12
+
+### Fixed
+- **Modal Syntax Error**: Fixed an issue where the Tags and Collections Modals failed to open on the detail page due to improperly formatted template strings.
+- **Custom Delete Confirmations**: Replaced the native browser alert prompts with beautifully styled custom Modals when removing shows and movies from your library.
+- **Recently Added Logic**: Removed the strict 7-day age filter from the Home dashboard. The "Recently Added" section will now predictably show the last 8 items you added to your library, regardless of how long ago they were added.
+- **Dashboard View Toggle Isolation**: Toggling the view mode (Grid vs List) in the "Recently Added" section no longer accidentally overrides the layout of the "Upcoming" section, which now properly maintains a consistent poster grid.
+
 ## [1.4.0] - 2026-07-11
 
 ### Added
