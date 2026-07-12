@@ -124,13 +124,13 @@ function renderContent(container) {
       
       <div class="detail-meta">
         ${countdown ? `<div style="display:inline-block;background:var(--color-primary);color:white;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:bold;margin-bottom:var(--space-2);">${countdown}</div>` : ''}
-        <h1 class="detail-title">${movieData.title}</h1>
-        ${director ? `<div style="font-size:var(--text-md);color:var(--text-secondary);margin-bottom:var(--space-2);">Directed by <span style="color:var(--text-primary);font-weight:var(--weight-medium);">${director}</span></div>` : ''}
+        <h1 class="detail-title">${escapeHtml(movieData.title)}</h1>
+        ${director ? `<div style="font-size:var(--text-md);color:var(--text-secondary);margin-bottom:var(--space-2);">Directed by <span style="color:var(--text-primary);font-weight:var(--weight-medium);">${escapeHtml(director)}</span></div>` : ''}
         <div class="detail-subtitle">
           <span>${year}</span>
           <span>•</span>
           <span>${movieData.runtime ? `${Math.floor(movieData.runtime/60)}h ${movieData.runtime%60}m` : 'Unknown runtime'}</span>
-          ${movieData.genres && movieData.genres.length > 0 ? `<span>•</span><span>${movieData.genres.slice(0,3).join(', ')}</span>` : ''}
+          ${movieData.genres && movieData.genres.length > 0 ? `<span>•</span><span>${escapeHtml(movieData.genres.slice(0,3).join(', '))}</span>` : ''}
           ${movieData.voteAverage ? `<span>•</span><span style="color:var(--color-warning);font-weight:var(--weight-semibold);">★ ${(movieData.voteAverage).toFixed(1)} <span style="font-size:12px;color:var(--text-tertiary);font-weight:normal;">(${formatVoteCount(movieData.voteCount)})</span></span>` : ''}
         </div>
         
@@ -199,8 +199,8 @@ function renderContent(container) {
                 ? `<img src="${getPosterUrl(c.profilePath, 'profileMedium')}" class="cast-photo" alt="${c.name}" loading="lazy">` 
                 : `<div class="cast-photo" style="display:flex;align-items:center;justify-content:center;font-size:24px;">👤</div>`}
               <div>
-                <div class="cast-name">${c.name}</div>
-                <div class="cast-character">${c.character}</div>
+                <div class="cast-name">${escapeHtml(c.name)}</div>
+                <div class="cast-character">${escapeHtml(c.character)}</div>
               </div>
             </div>
           `).join('')}
@@ -272,7 +272,9 @@ function bindEvents() {
   const removeBtn = document.getElementById('movie-remove-btn');
   if (removeBtn && isTracked) {
     removeBtn.addEventListener('click', async () => {
-      if (!confirm(`Are you sure you want to remove ${movieData.title} from your library?`)) return;
+      const { confirmModal } = await import('../components/modal.js');
+      const confirmed = await confirmModal('Remove Movie', `Are you sure you want to remove ${movieData.title} from your library?`, 'Remove', true);
+      if (!confirmed) return;
       try {
         const { deleteMovie } = await import('../database/movies.js');
         await deleteMovie(currentMovieId);

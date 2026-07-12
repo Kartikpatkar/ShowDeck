@@ -298,13 +298,13 @@ function renderContent(container) {
       </div>
       
       <div class="detail-meta">
-        <h1 class="detail-title">${showData.title}</h1>
+        <h1 class="detail-title">${escapeHtml(showData.title)}</h1>
         <div class="detail-subtitle">
           <span>${year}</span>
           <span>•</span>
-          <span style="color:var(--text-primary);font-weight:var(--weight-medium);">${showData.status}</span>
-          ${showData.network ? `<span>•</span><span>${showData.network}</span>` : ''}
-          ${showData.genres && showData.genres.length > 0 ? `<span>•</span><span>${showData.genres.slice(0,3).join(', ')}</span>` : ''}
+          <span style="color:var(--text-primary);font-weight:var(--weight-medium);">${escapeHtml(showData.status)}</span>
+          ${showData.network ? `<span>•</span><span>${escapeHtml(showData.network)}</span>` : ''}
+          ${showData.genres && showData.genres.length > 0 ? `<span>•</span><span>${escapeHtml(showData.genres.slice(0,3).join(', '))}</span>` : ''}
           ${showData.voteAverage ? `<span>•</span><span style="color:var(--color-warning);font-weight:var(--weight-semibold);">★ ${(showData.voteAverage).toFixed(1)} <span style="font-size:12px;color:var(--text-tertiary);font-weight:normal;">(${formatVoteCount(showData.voteCount)})</span></span>` : ''}
         </div>
         
@@ -455,7 +455,7 @@ function renderContent(container) {
                     ${imgHtml}
                     <div class="episode-info" style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;padding-right:var(--space-2);">
                       <div class="episode-number" style="font-size:var(--text-xs);color:var(--text-tertiary);">${ep.season}x${String(ep.episode).padStart(2, '0')}</div>
-                      <div class="episode-title" style="font-weight:var(--weight-medium);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${ep.title}</div>
+                      <div class="episode-title" style="font-weight:var(--weight-medium);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${escapeHtml(ep.title || `Episode ${ep.episode}`)}</div>
                       
                       <!-- Meta row -->
                       <div class="episode-meta" style="font-size:11px;color:var(--text-tertiary);margin-top:2px;display:flex;gap:4px;flex-wrap:wrap;">
@@ -476,7 +476,7 @@ function renderContent(container) {
                   </div>
                 </div>
                 <div class="episode-overview-inline" style="display:none;padding:0 var(--space-3) var(--space-3) 54px;font-size:var(--text-sm);color:var(--text-secondary);">
-                  ${ep.overview || 'No overview available.'}
+                  ${escapeHtml(ep.overview || 'No overview available.')}
                 </div>
               </div>
             `;
@@ -494,10 +494,10 @@ function renderContent(container) {
               ${c.profilePath 
                 ? `<img src="${getPosterUrl(c.profilePath, 'profileMedium')}" class="cast-photo" alt="${c.name}" loading="lazy">` 
                 : `<div class="cast-photo" style="display:flex;align-items:center;justify-content:center;font-size:24px;">👤</div>`}
-              <div>
-                <div class="cast-name">${c.name}</div>
-                <div class="cast-character">${c.character}</div>
-              </div>
+                  <div style="text-align:center;">
+                    <div style="font-size:var(--text-sm); font-weight:var(--weight-semibold); margin-bottom:2px;">${escapeHtml(c.name)}</div>
+                    <div style="font-size:var(--text-xs); color:var(--text-secondary);">${escapeHtml(c.character)}</div>
+                  </div>
             </div>
           `).join('')}
         </div>
@@ -574,7 +574,9 @@ function bindEvents() {
   const removeBtn = document.getElementById('remove-btn');
   if (removeBtn && isTracked) {
     removeBtn.addEventListener('click', async () => {
-      if (!confirm(`Are you sure you want to remove ${showData.title} from your library? All watch history will be lost.`)) return;
+      const { confirmModal } = await import('../components/modal.js');
+      const confirmed = await confirmModal('Remove Show', `Are you sure you want to remove ${showData.title} from your library? All watch history will be lost.`, 'Remove', true);
+      if (!confirmed) return;
       try {
         const { deleteShow } = await import('../database/shows.js');
         await deleteShow(currentShowId);
