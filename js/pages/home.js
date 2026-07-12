@@ -287,14 +287,10 @@ export async function render() {
       // Format as Month DD, YYYY
       const formattedDate = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
       
-      if (viewMode === 'list') {
-        return `<media-card view-mode="list" data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
-      }
-
       return `<media-card variant="poster" custom-meta="${formattedDate}" data-item='${JSON.stringify(item).replace(/'/g, "&#039;")}'></media-card>`;
     });
     
-    let containerClass = viewMode === 'list' ? 'library-list stagger-children' : 'grid-posters stagger-children';
+    let containerClass = 'grid-posters stagger-children';
 
     upcomingHTML = `
       <div class="section">
@@ -307,10 +303,8 @@ export async function render() {
     `;
   }
 
-  // Recently added (Strict 7 days)
-  const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+  // Recently added
   const recentItems = [...filteredRecentShows, ...filteredRecentMovies]
-    .filter(i => new Date(i.addedAt).getTime() > sevenDaysAgo)
     .sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt))
     .slice(0, 8);
 

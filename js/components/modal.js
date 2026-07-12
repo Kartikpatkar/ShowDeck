@@ -359,27 +359,27 @@ export async function manageTagsModal(itemId, itemType) {
 
     const tagListHtml = tags.length > 0 ? tags.map(t => {
       const hasTag = currentTags.includes(t.name);
-      return \`
+      return `
         <label style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-2); cursor:pointer; border-radius:var(--radius-sm); transition:background 0.2s;" onmouseover="this.style.background='var(--surface-3)'" onmouseout="this.style.background='transparent'">
-          <input type="checkbox" class="tag-checkbox" data-name="\${t.name}" \${hasTag ? 'checked' : ''} style="accent-color:var(--text-primary);width:18px;height:18px;">
-          <span style="font-size:var(--text-md);">#\${t.name}</span>
+          <input type="checkbox" class="tag-checkbox" data-name="${t.name}" ${hasTag ? 'checked' : ''} style="accent-color:var(--text-primary);width:18px;height:18px;">
+          <span style="font-size:var(--text-md);">#${t.name}</span>
         </label>
-      \`;
-    }).join('') : \`<p style="color:var(--text-tertiary); font-size:var(--text-sm); text-align:center;">No tags created yet. Go to Settings > Collections to create tags.</p>\`;
+      `;
+    }).join('') : `<p style="color:var(--text-tertiary); font-size:var(--text-sm); text-align:center;">No tags created yet. Go to Settings > Collections to create tags.</p>`;
 
-    modal.innerHTML = \`
+    modal.innerHTML = `
       <h3 style="margin-bottom:var(--space-4); display:flex; align-items:center; gap:var(--space-2);">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
         Manage Tags
       </h3>
       <div style="flex:1; overflow-y:auto; margin-bottom:var(--space-4); display:flex; flex-direction:column; gap:2px;">
-        \${tagListHtml}
+        ${tagListHtml}
       </div>
       <div style="display:flex; justify-content:flex-end; gap:var(--space-3); margin-top:auto;">
         <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
         <button class="btn btn-primary" id="modal-save">Save</button>
       </div>
-    \`;
+    `;
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);

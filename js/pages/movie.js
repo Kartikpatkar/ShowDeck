@@ -272,7 +272,9 @@ function bindEvents() {
   const removeBtn = document.getElementById('movie-remove-btn');
   if (removeBtn && isTracked) {
     removeBtn.addEventListener('click', async () => {
-      if (!confirm(`Are you sure you want to remove ${movieData.title} from your library?`)) return;
+      const { confirmModal } = await import('../components/modal.js');
+      const confirmed = await confirmModal('Remove Movie', `Are you sure you want to remove ${movieData.title} from your library?`, 'Remove', true);
+      if (!confirmed) return;
       try {
         const { deleteMovie } = await import('../database/movies.js');
         await deleteMovie(currentMovieId);

@@ -574,7 +574,9 @@ function bindEvents() {
   const removeBtn = document.getElementById('remove-btn');
   if (removeBtn && isTracked) {
     removeBtn.addEventListener('click', async () => {
-      if (!confirm(`Are you sure you want to remove ${showData.title} from your library? All watch history will be lost.`)) return;
+      const { confirmModal } = await import('../components/modal.js');
+      const confirmed = await confirmModal('Remove Show', `Are you sure you want to remove ${showData.title} from your library? All watch history will be lost.`, 'Remove', true);
+      if (!confirmed) return;
       try {
         const { deleteShow } = await import('../database/shows.js');
         await deleteShow(currentShowId);
