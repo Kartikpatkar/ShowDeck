@@ -224,6 +224,12 @@ router.afterEach = (route) => {
     sidebar.setActive(navRoute);
   }
 
+  if (route === '/onboarding') {
+    document.body.classList.add('is-onboarding');
+  } else {
+    document.body.classList.remove('is-onboarding');
+  }
+
   // Scroll content to saved position or top
   const content = document.querySelector('.main-content');
   if (content) {

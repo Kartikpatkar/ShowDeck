@@ -8,6 +8,9 @@ import { toast } from '../components/toast.js';
 import { el } from '../utils/dom.js';
 import { getApiUsage } from '../utils/apiTracker.js';
 import { APP_VERSION } from '../app.js';
+import { initDrive, backupToDrive, restoreFromDrive, clearDriveData, isDriveSignedIn, signOutDrive } from '../api/drive.js';
+import { confirmModal } from '../components/modal.js';
+import { formatDate, timeAgo } from '../utils/dom.js';
 
 export function render() {
   const currentKey = localStorage.getItem('showdeck_tmdb_key') || '';
@@ -104,6 +107,46 @@ export function render() {
                 <span class="text-tertiary">${getApiUsage().tvmaze} / ~2,000</span>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Google Drive Cloud Sync -->
+        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-6);border-color:var(--color-primary);">
+          <div>
+            <h3 class="section-title" style="margin:0;display:flex;align-items:center;gap:var(--space-2);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L10.3 21Z"/><path d="m14 19.5 3-3 3 3"/><path d="M17 22v-5.5"/></svg>
+              Google Drive Sync
+            </h3>
+            <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">Backup your data securely to your personal Google Drive.</p>
+          </div>
+          
+          <div style="display:flex;flex-direction:column;gap:var(--space-3);" id="drive-sync-actions">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-2);">
+              <span style="font-size:var(--text-sm);font-weight:var(--weight-medium);">Last Sync</span>
+              <span class="text-tertiary" style="font-size:var(--text-xs);" id="drive-last-sync">
+                ${localStorage.getItem('showdeck_last_drive_sync') ? timeAgo(localStorage.getItem('showdeck_last_drive_sync')) : 'Never'}
+              </span>
+            </div>
+            <button class="btn btn-primary" id="drive-backup-btn" style="width:100%;justify-content:center;">
+              Backup to Google Drive
+            </button>
+            <button class="btn btn-secondary" id="drive-restore-btn" style="width:100%;justify-content:center;">
+              Restore from Google Drive
+            </button>
+            <button class="btn btn-danger" id="drive-clear-btn" style="width:100%;justify-content:center;margin-top:var(--space-2);">
+              Delete Cloud Backup
+            </button>
+            <button class="btn btn-secondary" id="drive-signout-btn" style="width:100%;justify-content:center;margin-top:var(--space-2);">
+              Sign Out of Google
+            </button>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:var(--space-3);" id="drive-signin-actions">
+            <button class="btn btn-primary" id="drive-signin-btn" style="width:100%;justify-content:center;background:#4285F4;border:none;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" style="margin-right:8px;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+              Sign In with Google
+            </button>
+            <p class="text-tertiary" style="font-size:var(--text-xs);text-align:center;margin:0;">Sign in to securely backup and restore your library across devices.</p>
           </div>
         </div>
 
@@ -241,6 +284,7 @@ export function init() {
   checkApiStatus();
   renderBackups();
   renderStorageInfo();
+  initDrive().catch(err => console.error("Failed to init Drive", err));
 }
 
 async function renderStorageInfo() {
@@ -368,6 +412,189 @@ async function checkApiStatus() {
 }
 
 function bindEvents() {
+  const driveBackupBtn = document.getElementById('drive-backup-btn');
+  driveBackupBtn?.addEventListener('click', async () => {
+    try {
+      driveBackupBtn.disabled = true;
+      driveBackupBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></div> Backing up...';
+      
+      const { db } = await import('../database/db.js');
+      const backup = {
+        version: 2,
+        timestamp: new Date().toISOString(),
+        settings: {
+          tmdbKey: localStorage.getItem('showdeck_tmdb_key'),
+          name: localStorage.getItem('showdeck_user_name'),
+          theme: localStorage.getItem('showdeck_theme'),
+          accentTheme: localStorage.getItem('showdeck_accent_theme'),
+          customColor: localStorage.getItem('showdeck_custom_color'),
+          includeAdult: localStorage.getItem('showdeck_include_adult'),
+          view: localStorage.getItem('showdeck_view_preference')
+        },
+        data: {
+          shows: await db.shows.toArray(),
+          movies: await db.movies.toArray(),
+          episodes: await db.episodes.toArray(),
+          collections: await db.collections.toArray(),
+          tags: await db.tags.toArray(),
+          activity: await db.activity.toArray(),
+        }
+      };
+      
+      await backupToDrive(backup);
+      
+      const syncTime = new Date().toISOString();
+      localStorage.setItem('showdeck_last_drive_sync', syncTime);
+      const syncEl = document.getElementById('drive-last-sync');
+      if (syncEl) syncEl.textContent = 'Just now';
+      
+      toast('Backup saved to Google Drive', 'success');
+    } catch (err) {
+      console.error(err);
+      toast('Failed to backup to Drive', 'error');
+    } finally {
+      driveBackupBtn.disabled = false;
+      driveBackupBtn.textContent = 'Backup to Google Drive';
+    }
+  });
+
+  const driveRestoreBtn = document.getElementById('drive-restore-btn');
+  driveRestoreBtn?.addEventListener('click', async () => {
+    try {
+      driveRestoreBtn.disabled = true;
+      driveRestoreBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></div> Restoring...';
+      
+      const backup = await restoreFromDrive();
+      
+      if (!backup || !backup.data) {
+        toast('No backup found in Google Drive', 'error');
+        return;
+      }
+      
+      // We borrow the exact same restore logic from the manual JSON import
+      const { db, clearAllData } = await import('../database/db.js');
+      await clearAllData();
+      
+      // Restore Settings
+      if (backup.settings) {
+        if (backup.settings.tmdbKey) localStorage.setItem('showdeck_tmdb_key', backup.settings.tmdbKey);
+        if (backup.settings.name) localStorage.setItem('showdeck_user_name', backup.settings.name);
+        if (backup.settings.theme) localStorage.setItem('showdeck_theme', backup.settings.theme);
+        if (backup.settings.accentTheme) localStorage.setItem('showdeck_accent_theme', backup.settings.accentTheme);
+        if (backup.settings.customColor) localStorage.setItem('showdeck_custom_color', backup.settings.customColor);
+        if (backup.settings.includeAdult) localStorage.setItem('showdeck_include_adult', backup.settings.includeAdult);
+        if (backup.settings.view) localStorage.setItem('showdeck_view_preference', backup.settings.view);
+      }
+      
+      await db.transaction('rw', db.shows, db.movies, db.episodes, db.collections, db.tags, db.activity, async () => {
+        if (backup.data.shows) await db.shows.bulkAdd(backup.data.shows);
+        if (backup.data.movies) await db.movies.bulkAdd(backup.data.movies);
+        if (backup.data.episodes) await db.episodes.bulkAdd(backup.data.episodes);
+        if (backup.data.collections) await db.collections.bulkAdd(backup.data.collections);
+        if (backup.data.tags) await db.tags.bulkAdd(backup.data.tags);
+        if (backup.data.activity) await db.activity.bulkAdd(backup.data.activity);
+      });
+      
+      const syncTime = new Date().toISOString();
+      localStorage.setItem('showdeck_last_drive_sync', syncTime);
+      const syncEl = document.getElementById('drive-last-sync');
+      if (syncEl) syncEl.textContent = 'Just now';
+
+      toast('Data restored from Google Drive successfully', 'success');
+      
+      // Auto refresh app
+      setTimeout(() => {
+        window.location.hash = '#/';
+        window.location.reload();
+      }, 1500);
+      
+    } catch (err) {
+      console.error(err);
+      toast('Failed to restore from Drive', 'error');
+    } finally {
+      driveRestoreBtn.disabled = false;
+      driveRestoreBtn.textContent = 'Restore from Google Drive';
+    }
+  });
+
+  const driveClearBtn = document.getElementById('drive-clear-btn');
+  driveClearBtn?.addEventListener('click', async () => {
+    const confirm = await confirmModal(
+      'Delete Cloud Backup?',
+      'Are you sure you want to permanently delete your backup file from Google Drive? Your local data will not be affected.',
+      'Delete Backup',
+      true
+    );
+    if (!confirm) return;
+
+    try {
+      driveClearBtn.disabled = true;
+      driveClearBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></div> Deleting...';
+      
+      await clearDriveData();
+      
+      localStorage.removeItem('showdeck_last_drive_sync');
+      const syncEl = document.getElementById('drive-last-sync');
+      if (syncEl) syncEl.textContent = 'Never';
+      
+      toast('Cloud backup deleted successfully', 'success');
+    } catch (err) {
+      console.error(err);
+      if (err.message.includes('No backup found')) {
+        toast('No cloud backup exists to delete', 'error');
+      } else {
+        toast('Failed to delete cloud backup', 'error');
+      }
+    } finally {
+      driveClearBtn.disabled = false;
+      driveClearBtn.textContent = 'Delete Cloud Backup';
+    }
+  });
+
+  const driveSignOutBtn = document.getElementById('drive-signout-btn');
+  driveSignOutBtn?.addEventListener('click', async () => {
+    driveSignOutBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></div> Signing out...';
+    await signOutDrive();
+    toast('Signed out of Google', 'success');
+    driveSignOutBtn.textContent = 'Sign Out of Google';
+    updateDriveAuthUI();
+  });
+
+  const driveSignInBtn = document.getElementById('drive-signin-btn');
+  driveSignInBtn?.addEventListener('click', async () => {
+    try {
+      driveSignInBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;border-top-color:white;margin-right:4px;"></div>';
+      // We can trigger backupToDrive but throw an error intentionally to just authenticate
+      // or we can expose a public authenticate() method in drive.js.
+      // Easiest is to expose it. For now, since backupToDrive handles auth seamlessly,
+      // I'll just expose a public signInDrive function in drive.js or update UI.
+      const { signInDrive } = await import('../api/drive.js');
+      await signInDrive();
+      toast('Signed in successfully', 'success');
+      updateDriveAuthUI();
+    } catch (err) {
+      console.error(err);
+      toast('Sign in cancelled or failed', 'error');
+    } finally {
+      driveSignInBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" style="margin-right:8px;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> Sign In with Google';
+    }
+  });
+
+  function updateDriveAuthUI() {
+    const signedIn = isDriveSignedIn();
+    const actions = document.getElementById('drive-sync-actions');
+    const signin = document.getElementById('drive-signin-actions');
+    
+    if (actions && signin) {
+      actions.style.display = signedIn ? 'flex' : 'none';
+      signin.style.display = signedIn ? 'none' : 'flex';
+    }
+  }
+
+  // Update UI immediately and periodically
+  updateDriveAuthUI();
+  setInterval(updateDriveAuthUI, 2000);
+
   // User Name
   const saveNameBtn = document.getElementById('save-name-btn');
   saveNameBtn?.addEventListener('click', () => {
@@ -492,8 +719,17 @@ function bindEvents() {
       exportBtn.textContent = 'Exporting...';
       
       const backup = {
-        version: 1,
+        version: 2,
         timestamp: new Date().toISOString(),
+        settings: {
+          tmdbKey: localStorage.getItem('showdeck_tmdb_key'),
+          name: localStorage.getItem('showdeck_user_name'),
+          theme: localStorage.getItem('showdeck_theme'),
+          accentTheme: localStorage.getItem('showdeck_accent_theme'),
+          customColor: localStorage.getItem('showdeck_custom_color'),
+          includeAdult: localStorage.getItem('showdeck_include_adult'),
+          view: localStorage.getItem('showdeck_view_preference')
+        },
         data: {
           shows: await db.shows.toArray(),
           movies: await db.movies.toArray(),
