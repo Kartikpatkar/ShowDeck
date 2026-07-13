@@ -1,7 +1,7 @@
 # 🎬 ShowDeck – Personal Entertainment Tracker
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/Version-1.5.0-blue.svg)](#)
+[![Version](https://img.shields.io/badge/Version-1.6.0-blue.svg)](#)
 [![Progressive Web App](https://img.shields.io/badge/PWA-Ready-green.svg)](#)
 [![Vanilla JS](https://img.shields.io/badge/Tech-Vanilla%20JS-F7DF1E.svg)](#)
 
@@ -15,9 +15,10 @@
 
 Unlike traditional entertainment trackers (like Trakt, TV Time, or Letterboxd), ShowDeck focuses on:
 
-* Local-first privacy (No accounts, no cloud syncing)
+* Local-first privacy (No mandated accounts, optional Google Drive syncing)
 * Direct TMDB & TVMaze API connections
 * Offline-first Progressive Web App (PWA) architecture
+* High-performance, zero-framework Vanilla JS
 * Fast, native-like mobile experience powered by modern Web Components
 * 100% data ownership
 

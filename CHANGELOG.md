@@ -2,6 +2,18 @@
 
 All notable changes to ShowDeck will be documented in this file.
 
+## [1.6.0] - 2026-07-13
+
+### Added
+- **Google Drive Sync Improvements**: Significantly improved Google Drive synchronization. The app now caches the OAuth token locally for 1 hour, meaning you only see the Google "Choose an account" popup once per hour instead of on every action.
+- **Manual Backups Management**: You can now manually delete individual local backups directly from the Settings page.
+- **Onboarding Enhancements**: The onboarding flow now enforces providing a name before continuing, and successfully hides the global navigation bar while in the flow.
+
+### Fixed
+- **CSS Bleeding**: Scoped onboarding CSS classes to prevent them from bleeding into and breaking other pages.
+- **Empty Drive Deletion**: Gracefully handles the "Delete Cloud Backup" action when no backup actually exists on Google Drive, displaying a clear message instead of a generic error.
+- **Drive Button Colors**: Fixed button styling for Drive actions (Delete/Sign Out) across different color themes.
+
 ## [1.5.0] - 2026-07-12
 
 ### Fixed
