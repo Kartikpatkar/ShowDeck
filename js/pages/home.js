@@ -20,9 +20,16 @@ export async function init() {
   const adultInput = document.getElementById('home-adult-content');
   
   if (adultInput) {
-    adultInput.addEventListener('change', (e) => {
+    adultInput.addEventListener('change', async (e) => {
       if (e.target.checked) {
-        if (!confirm("Adult Content Warning:\n\nOnly select this if you are of legal age in your region. Are you sure you want to enable adult content?")) {
+        const { confirmModal } = await import('../components/modal.js');
+        const approved = await confirmModal(
+          'Adult Content Warning',
+          'Only select this if you are of legal age in your region. Are you sure you want to enable adult content?',
+          'Enable',
+          true
+        );
+        if (!approved) {
           e.target.checked = false;
         }
       }

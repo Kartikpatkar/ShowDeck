@@ -6,7 +6,7 @@
 import { Router } from './router.js';
 import { Sidebar } from './components/sidebar.js';
 
-export const APP_VERSION = '1.5.0';
+export const APP_VERSION = '1.6.0';
 
 const router = new Router();
 let sidebar = null;
@@ -222,6 +222,12 @@ router.afterEach = (route) => {
     if (route === '/history') navRoute = '/history';
     if (route === '/calendar') navRoute = '/calendar';
     sidebar.setActive(navRoute);
+  }
+
+  if (route === '/onboarding') {
+    document.body.classList.add('is-onboarding');
+  } else {
+    document.body.classList.remove('is-onboarding');
   }
 
   // Scroll content to saved position or top

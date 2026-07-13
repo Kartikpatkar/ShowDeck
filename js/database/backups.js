@@ -128,3 +128,16 @@ export async function getBackupMetadata() {
     size: b.size
   }));
 }
+
+/**
+ * Deletes a specific backup by ID.
+ */
+export async function deleteBackup(backupId) {
+  try {
+    await db.backups.delete(backupId);
+    return true;
+  } catch (err) {
+    console.error('Failed to delete backup:', err);
+    throw err;
+  }
+}
