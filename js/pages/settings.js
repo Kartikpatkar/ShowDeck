@@ -352,9 +352,14 @@ async function renderBackups() {
             <div style="font-weight:var(--weight-medium); font-size:var(--text-sm); text-transform:capitalize;">${b.type} Backup</div>
             <div style="font-size:var(--text-xs); color:var(--text-tertiary);">${dateStr} • ${sizeStr}</div>
           </div>
-          <button class="btn btn-sm btn-ghost text-primary restore-backup-btn" data-id="${b.id}" style="padding:var(--space-2);">
-            Restore
-          </button>
+          <div style="display:flex; gap:var(--space-2);">
+            <button class="btn btn-sm btn-ghost text-primary restore-backup-btn" data-id="${b.id}" style="padding:var(--space-2);">
+              Restore
+            </button>
+            <button class="btn btn-sm btn-ghost text-error delete-backup-btn" data-id="${b.id}" style="padding:var(--space-2);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            </button>
+          </div>
         </div>
       `;
     }).join('');
@@ -373,6 +378,25 @@ async function renderBackups() {
             setTimeout(() => window.location.reload(), 1500);
           } catch (err) {
             toast('Restore failed', 'error');
+          }
+        }
+      });
+    });
+    
+    // Bind delete buttons
+    container.querySelectorAll('.delete-backup-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = parseInt(e.currentTarget.dataset.id);
+        const { confirmModal } = await import('../components/modal.js');
+        const ok = await confirmModal('Delete Backup?', 'Are you sure you want to delete this local manual backup?');
+        if (ok) {
+          try {
+            const { deleteBackup } = await import('../database/backups.js');
+            await deleteBackup(id);
+            toast('Backup deleted successfully', 'success');
+            renderBackups(); // Refresh list
+          } catch (err) {
+            toast('Failed to delete backup', 'error');
           }
         }
       });
