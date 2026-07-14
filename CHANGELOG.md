@@ -2,6 +2,11 @@
 
 All notable changes to ShowDeck will be documented in this file.
 
+## [1.6.1] - 2026-07-14
+
+### Fixed
+- **Mobile Navigation Overlap**: Fixed an issue on iOS and Safari where the fixed bottom navigation bar on mobile devices would overlap and hide the very bottom content of scrollable pages (like the bottom of Settings or Library lists).
+
 ## [1.6.0] - 2026-07-13
 
 ### Added
