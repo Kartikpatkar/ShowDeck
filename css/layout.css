@@ -18,7 +18,7 @@
   border-right: 1px solid var(--border-subtle);
   flex-shrink: 0;
   transition: width var(--duration-slow) var(--ease-out),
-              transform var(--duration-slow) var(--ease-out);
+    transform var(--duration-slow) var(--ease-out);
   z-index: var(--z-sticky);
   overflow: hidden;
 }
@@ -387,7 +387,8 @@
   }
 
   .mobile-menu-toggle {
-    display: none; /* Replaced by bottom nav */
+    display: none;
+    /* Replaced by bottom nav */
   }
 
   .bottom-nav {
@@ -396,7 +397,10 @@
 
   .main-content {
     padding: var(--space-4);
-    padding-bottom: calc(var(--space-4) + 60px + env(safe-area-inset-bottom));
+  }
+
+  .page-container {
+    padding-bottom: calc(45px + env(safe-area-inset-bottom));
   }
 
   .sidebar-header {
