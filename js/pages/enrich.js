@@ -5,7 +5,7 @@
 
 import { db } from '../database/db.js';
 import { formatYear } from '../utils/dom.js';
-import { openEnrichModal } from '../components/enrich-modal.js';
+
 
 export async function render() {
   return `
@@ -81,9 +81,10 @@ async function loadItems() {
         const id = parseInt(btn.dataset.id);
         const type = btn.dataset.type;
         const title = decodeURIComponent(btn.dataset.title);
-        openEnrichModal(id, type, title, () => {
-          // Callback after successful match
-          loadItems();
+        import('../components/enrich-modal.js').then(m => {
+          m.openEnrichModal(id, type, title, () => {
+            loadItems();
+          });
         });
       });
     });

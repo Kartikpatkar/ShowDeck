@@ -260,3 +260,57 @@ export async function syncShow(id) {
   
   return await getShow(id);
 }
+
+/**
+ * Automatically checks and pauses shows that haven't been watched in 7 days.
+ * Returns the number of shows updated.
+ */
+export async function autoRecalculateStatuses() {
+  const shows = await db.shows.toArray();
+  const episodes = await db.episodes.toArray();
+  let updatedCount = 0;
+  
+  const now = new Date();
+  const oneWeekAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+  
+  const epMap = new Map();
+  for (const ep of episodes) {
+    if (!epMap.has(ep.showId)) epMap.set(ep.showId, []);
+    epMap.get(ep.showId).push(ep);
+  }
+  
+  await db.transaction('rw', db.shows, async () => {
+    for (const show of shows) {
+      if (show.trackingStatus === 'dropped' || show.trackingStatus === 'plan') continue;
+      
+      const showEps = epMap.get(show.id) || [];
+      const watchedEps = showEps.filter(e => e.watched);
+      
+      if (watchedEps.length === 0) continue;
+      
+      watchedEps.sort((a, b) => new Date(b.watchedAt).getTime() - new Date(a.watchedAt).getTime());
+      const latestWatch = new Date(watchedEps[0].watchedAt);
+      
+      let newStatus = show.trackingStatus;
+      const hasEpisodesLeft = show.totalEpisodes > 0 && watchedEps.length < show.totalEpisodes;
+      
+      if (hasEpisodesLeft) {
+        if (latestWatch < oneWeekAgo) {
+          newStatus = 'paused';
+        } else {
+          newStatus = 'watching';
+        }
+      } else if (show.status === 'Ended' || show.status === 'Canceled') {
+        newStatus = 'completed';
+      } else if (show.totalEpisodes > 0) {
+        newStatus = 'watching';
+      }
+      
+      if (newStatus !== show.trackingStatus) {
+        await db.shows.update(show.id, { trackingStatus: newStatus, updatedAt: now });
+        updatedCount++;
+      }
+    }
+  });
+  return updatedCount;
+}

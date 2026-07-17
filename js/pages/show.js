@@ -9,6 +9,7 @@ import { getEpisodes, markWatched, markUnwatched, markSeasonWatched, markSeasonU
 import { getPosterUrl, getBackdropUrl } from '../api/tmdb.js';
 import { formatYear, formatDate, starRating, interactiveStarRating, statusBadge, STATUS_MAP, formatVoteCount, getRelativeTime, toggleGlobalLoading, timeAgo, escapeHtml } from '../utils/dom.js';
 import { toast } from '../components/toast.js';
+import { renderEpisodeList } from '../components/episode-list.js';
 
 let currentShowId = null; // Internal ID
 let showData = null; // Data from DB or API
@@ -258,6 +259,12 @@ function renderContent(container) {
 
   const imdbUrl = showData.externalIds?.imdb_id ? `https://www.imdb.com/title/${showData.externalIds.imdb_id}/` : null;
 
+  const now = Date.now();
+  const hasUnreleasedEpisodes = episodesData.some(ep => {
+    if (!ep.airDate) return false;
+    return new Date(ep.airDate).getTime() > now;
+  });
+
   container.innerHTML = `
     <!-- Back Button -->
     <div style="padding:var(--space-4) var(--space-4) 0; position:relative; z-index:10; display:flex; justify-content:space-between; align-items:center;">
@@ -328,7 +335,7 @@ function renderContent(container) {
               <option value="watching" ${showData.trackingStatus === 'watching' ? 'selected' : ''}>Watching</option>
               <option value="paused" ${showData.trackingStatus === 'paused' ? 'selected' : ''}>Paused</option>
               <option value="plan" ${showData.trackingStatus === 'plan' ? 'selected' : ''}>Plan to Watch</option>
-              <option value="completed" ${showData.trackingStatus === 'completed' ? 'selected' : ''}>Completed</option>
+              <option value="completed" ${showData.trackingStatus === 'completed' ? 'selected' : ''} ${hasUnreleasedEpisodes ? 'disabled' : ''}>Completed${hasUnreleasedEpisodes ? ' (Unreleased Episodes)' : ''}</option>
               <option value="dropped" ${showData.trackingStatus === 'dropped' ? 'selected' : ''}>Dropped</option>
             </select>
             <button class="btn btn-outline" id="add-collection-btn" style="padding:0 var(--space-3);" data-tooltip="Add to Collection">
@@ -396,92 +403,7 @@ function renderContent(container) {
           ` : ''}
         </div>
         
-        <!-- Season Tabs -->
-        <div class="season-tabs" id="season-tabs">
-          ${seasonsList.map(s => `
-            <button class="season-tab ${s === currentSeason ? 'active' : ''}" data-season="${s}">
-              Season ${s}
-            </button>
-          `).join('')}
-        </div>
-
-        ${(() => {
-          const sData = showData.seasons?.find(s => s.seasonNumber === currentSeason);
-          if (!sData || (!sData.overview && !sData.posterPath)) return '';
-          const sPosterUrl = sData.posterPath ? getPosterUrl(sData.posterPath, 'posterMedium') : null;
-          return `
-            <div class="card" style="margin-bottom:var(--space-4); padding:var(--space-4); display:flex; gap:var(--space-4); align-items:flex-start;">
-              ${sPosterUrl ? `<img src="${sPosterUrl}" style="width:80px; border-radius:var(--radius-sm); flex-shrink:0;">` : ''}
-              <div style="flex:1; min-width:0;">
-                <h4 style="margin-bottom:var(--space-1);">${escapeHtml(sData.name || `Season ${currentSeason}`)}</h4>
-                <div class="season-overview-container" style="position:relative;">
-                  <p class="season-overview-text" style="font-size:var(--text-sm); color:var(--text-secondary); margin:0; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">
-                    ${escapeHtml(sData.overview || 'No overview available for this season.')}
-                  </p>
-                  ${sData.overview && sData.overview.length > 150 ? `
-                    <button class="btn btn-ghost btn-sm" data-action="read-more" style="padding:0; height:auto; min-height:0; color:var(--color-primary); font-size:var(--text-xs); margin-top:var(--space-1);">Read More</button>
-                  ` : ''}
-                </div>
-              </div>
-            </div>
-          `;
-        })()}
-
-        <!-- Episode List -->
-        <div class="card" style="padding:0;">
-          ${seasonEps.map(ep => {
-            let imgHtml = '';
-            if (ep.stillPath) {
-              const src = ep.stillPath.startsWith('http') ? ep.stillPath : getPosterUrl(ep.stillPath, 'backdropSmall');
-              imgHtml = `<img src="${src}" class="episode-image" loading="lazy" style="width:120px;height:68px;object-fit:cover;border-radius:var(--radius-sm);margin:0 var(--space-3);flex-shrink:0;">`;
-            } else if (showData.backdropPath) {
-              const src = getPosterUrl(showData.backdropPath, 'backdropSmall');
-              imgHtml = `<img src="${src}" class="episode-image" loading="lazy" style="width:120px;height:68px;object-fit:cover;border-radius:var(--radius-sm);margin:0 var(--space-3);flex-shrink:0;">`;
-            } else {
-              imgHtml = `<div class="episode-image" style="width:120px;height:68px;border-radius:var(--radius-sm);margin:0 var(--space-3);flex-shrink:0;background:var(--surface-3);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;font-size:24px;">📺</span></div>`;
-            }
-            
-            const epDate = ep.airDate ? new Date(ep.airDate) : null;
-            const isUnreleased = epDate ? epDate.getTime() > Date.now() : false;
-            const countdown = getRelativeTime(ep.airDate);
-
-            return `
-              <div class="episode-item ${ep.watched ? 'watched' : ''}" data-ep-id="${ep.id || ''}" data-ep-index="${ep.episode}" style="display:block;border-bottom:1px solid var(--border-subtle);">
-                <div class="episode-row" style="align-items:flex-start;">
-                  <div class="episode-checkbox ${ep.watched ? 'checked' : ''}" style="margin:0 var(--space-3);cursor:${isUnreleased ? 'not-allowed' : 'pointer'};opacity:${isUnreleased ? '0.3' : '1'};" ${!isUnreleased ? 'data-action="toggle-watch"' : 'title="Not released yet"'}>
-                    ${ep.watched ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : (isUnreleased ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' : '')}
-                  </div>
-                  <a href="#/episode/${showData.tmdbId}/${ep.season}/${ep.episode}" class="episode-link">
-                    ${imgHtml}
-                    <div class="episode-info" style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;padding-right:var(--space-2);">
-                      <div class="episode-number" style="font-size:var(--text-xs);color:var(--text-tertiary);">${ep.season}x${String(ep.episode).padStart(2, '0')}</div>
-                      <div class="episode-title" style="font-weight:var(--weight-medium);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${escapeHtml(ep.title || `Episode ${ep.episode}`)}</div>
-                      
-                      <!-- Meta row -->
-                      <div class="episode-meta" style="font-size:11px;color:var(--text-tertiary);margin-top:2px;display:flex;gap:4px;flex-wrap:wrap;">
-                        ${ep.airDate ? `<span>${formatDate(ep.airDate)}</span>` : ''}
-                        ${ep.airDate && (ep.runtime || ep.voteAverage) ? '<span>•</span>' : ''}
-                        ${ep.runtime ? `<span>${ep.runtime}m</span>` : ''}
-                        ${ep.runtime && ep.voteAverage ? '<span>•</span>' : ''}
-                        ${ep.voteAverage ? `<span style="color:var(--color-warning);">★ ${ep.voteAverage.toFixed(1)}</span>` : ''}
-                      </div>
-                      ${countdown ? `<div style="font-size:10px;font-weight:bold;color:var(--color-primary);margin-top:2px;">${countdown}</div>` : ''}
-                    </div>
-                  </a>
-                  <div class="episode-actions-wrapper" style="display:flex;align-items:center;gap:var(--space-1);margin-right:var(--space-2);">
-                    ${ep.watched && !isUnreleased ? `<button class="btn btn-secondary btn-sm add-watch-btn" data-ep-id="${ep.id}" data-action="add-watch" style="padding:0 var(--space-2);height:28px;min-height:28px;font-size:12px;border-radius:14px;" title="Add another watch">+1${ep.watchCount && ep.watchCount > 1 ? ` (${ep.watchCount})` : ''}</button>` : ''}
-                    <button class="btn btn-icon btn-sm" data-action="toggle-overview" style="color:var(--text-tertiary);padding:var(--space-1);" title="Expand overview">
-                      <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s;"><path d="m6 9 6 6 6-6"/></svg>
-                    </button>
-                  </div>
-                </div>
-                <div class="episode-overview-inline" style="display:none;padding:0 var(--space-3) var(--space-3) 54px;font-size:var(--text-sm);color:var(--text-secondary);">
-                  ${escapeHtml(ep.overview || 'No overview available.')}
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
+        ${renderEpisodeList(showData, episodesData, currentSeason, seasonsList, isTracked, isSeasonComplete)}
       </div>
     ` : ''}
 
@@ -791,66 +713,17 @@ function bindEvents() {
 
       if (action === 'toggle-watch') {
         const isWatched = target.classList.contains('checked');
+        const { toggleEpisodeWatch } = await import('../services/tracking-service.js');
+        const { ratingModal } = await import('../components/modal.js');
         
-        if (isWatched) {
-          await markUnwatched(epId);
-          ep.watched = false;
-          renderContent(container);
-          bindEvents();
-        } else {
-          let bulkUpdated = false;
-          const prevUnwatched = episodesData.filter(e => {
-            if (e.watched) return false;
-            if (e.season > ep.season) return false;
-            if (e.season === ep.season && e.episode >= ep.episode) return false;
-            
-            if (e.airDate) {
-              const epDate = new Date(e.airDate);
-              if (epDate.getTime() > Date.now()) return false;
-            }
-            return true;
-          });
-          if (prevUnwatched.length > 0) {
-            const { confirmModal } = await import('../components/modal.js');
-            const ok = await confirmModal('Mark Previous?', `You're marking Episode ${ep.episode} watched, but ${prevUnwatched.length} previous episodes are unwatched. Mark them as watched too?`);
-            if (ok) {
-              const { db } = await import('../database/db.js');
-              const now = new Date();
-              await db.transaction('rw', db.episodes, async () => {
-                for (const p of prevUnwatched) {
-                  await db.episodes.update(p.id, { watched: true, watchedAt: now, watchCount: (p.watchCount || 0) + 1 });
-                  p.watched = true;
-                }
-              });
-              bulkUpdated = true;
-            }
-          }
-          
-          await markWatched(epId);
-          ep.watched = true;
-
-          // Auto-complete logic
-          const allWatched = episodesData.every(e => e.watched);
-          if (allWatched && showData.trackingStatus !== 'completed') {
-            const { updateTrackingStatus } = await import('../database/shows.js');
-            await updateTrackingStatus(currentShowId, 'completed');
-            showData.trackingStatus = 'completed';
-            
-            const { ratingModal } = await import('../components/modal.js');
-            const rating = await ratingModal(`Rate ${showData.title}`);
-            if (rating !== null) {
-              const { db } = await import('../database/db.js');
-              await db.shows.update(currentShowId, { rating });
-              showData.rating = rating;
-            }
-            
-            toast('Show completed!', 'success');
-            bulkUpdated = true; // force re-render for status dropdown
-          }
-          
-          renderContent(container);
-          bindEvents();
+        const bulkUpdated = await toggleEpisodeWatch(epId, isWatched, currentShowId, episodesData, showData, ratingModal);
+        
+        if (bulkUpdated && showData.trackingStatus === 'completed') {
+          toast('Show completed!', 'success');
         }
+        
+        renderContent(container);
+        bindEvents();
       } else if (action === 'toggle-overview') {
         const item = target.closest('.episode-item');
         if (item) {
@@ -877,28 +750,12 @@ function bindEvents() {
       if (!isTracked) return;
       
       const isComplete = markSeasonBtn.textContent.includes('Unmark');
-      if (isComplete) {
-        await markSeasonUnwatched(currentShowId, currentSeason);
-        episodesData.forEach(e => { if (e.season === currentSeason) e.watched = false; });
-      } else {
-        await markSeasonWatched(currentShowId, currentSeason);
-        episodesData.forEach(e => { if (e.season === currentSeason) e.watched = true; });
-        
-        const allWatched = episodesData.every(e => e.watched);
-        if (allWatched && showData.trackingStatus !== 'completed') {
-          const { updateTrackingStatus } = await import('../database/shows.js');
-          await updateTrackingStatus(currentShowId, 'completed');
-          showData.trackingStatus = 'completed';
-          
-          const { ratingModal } = await import('../components/modal.js');
-          const rating = await ratingModal(`Rate ${showData.title}`);
-          if (rating !== null) {
-            const { db } = await import('../database/db.js');
-            await db.shows.update(currentShowId, { rating });
-            showData.rating = rating;
-          }
-          toast('Show completed!', 'success');
-        }
+      const { toggleSeasonWatch } = await import('../services/tracking-service.js');
+      const { ratingModal } = await import('../components/modal.js');
+      
+      const completed = await toggleSeasonWatch(currentShowId, currentSeason, isComplete, episodesData, showData, ratingModal);
+      if (completed) {
+        toast('Show completed!', 'success');
       }
       const tabsContainer = document.getElementById('season-tabs');
       const scrollPos = tabsContainer ? tabsContainer.scrollLeft : 0;

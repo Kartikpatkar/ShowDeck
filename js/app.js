@@ -6,7 +6,7 @@
 import { Router } from './router.js';
 import { Sidebar } from './components/sidebar.js';
 
-export const APP_VERSION = '1.6.1';
+export const APP_VERSION = '1.6.2';
 
 const router = new Router();
 let sidebar = null;
@@ -269,6 +269,23 @@ function init() {
   }
 
   console.log('[ShowDeck] App initialized');
+
+  // Auto-recalculate statuses (max once per day)
+  setTimeout(async () => {
+    const lastRecalc = localStorage.getItem('showdeck_last_auto_recalc');
+    const now = Date.now();
+    // 24 hours = 86400000 ms
+    if (!lastRecalc || now - parseInt(lastRecalc, 10) > 86400000) {
+      try {
+        const { autoRecalculateStatuses } = await import('./database/shows.js');
+        const count = await autoRecalculateStatuses();
+        if (count > 0) console.log(`[ShowDeck] Auto-paused ${count} shows`);
+        localStorage.setItem('showdeck_last_auto_recalc', now.toString());
+      } catch (e) {
+        console.error('Auto recalculate failed', e);
+      }
+    }
+  }, 5000); // Defer 5s so it doesn't block initial render
 }
 
 // ── Global image error handler ──
