@@ -9,7 +9,7 @@ import { getShowProgress } from '../database/episodes.js';
 import { getPosterUrl } from '../api/tmdb.js';
 import { formatYear, statusBadge, STATUS_MAP, debounce } from '../utils/dom.js';
 import { toast } from '../components/toast.js';
-import { openEnrichModal } from '../components/enrich-modal.js';
+
 
 let viewMode = localStorage.getItem('showdeck-library-view') || 'grid';
 let filterStatus = sessionStorage.getItem('showdeck-library-status') || '';
@@ -318,8 +318,10 @@ function bindEnrichTriggers(container) {
       const id = parseInt(el.dataset.id);
       const type = el.dataset.type;
       const title = decodeURIComponent(el.dataset.title);
-      openEnrichModal(id, type, title, () => {
-        loadLibrary();
+      import('../components/enrich-modal.js').then(m => {
+        m.openEnrichModal(id, type, title, () => {
+          loadLibrary();
+        });
       });
     });
   });
@@ -356,9 +358,11 @@ function renderMoreItems() {
     tempDiv.innerHTML = nextItems.map(renderCompactItem).join('');
   }
 
+  const fragment = document.createDocumentFragment();
   while (tempDiv.firstChild) {
-    container.appendChild(tempDiv.firstChild);
+    fragment.appendChild(tempDiv.firstChild);
   }
+  container.appendChild(fragment);
   
   bindEnrichTriggers(container);
 

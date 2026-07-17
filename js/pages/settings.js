@@ -9,7 +9,7 @@ import { el } from '../utils/dom.js';
 import { getApiUsage } from '../utils/apiTracker.js';
 import { APP_VERSION } from '../app.js';
 import { initDrive, backupToDrive, restoreFromDrive, clearDriveData, isDriveSignedIn, signOutDrive } from '../api/drive.js';
-import { confirmModal } from '../components/modal.js';
+
 import { formatDate, timeAgo } from '../utils/dom.js';
 
 export function render() {
@@ -442,33 +442,9 @@ function bindEvents() {
       driveBackupBtn.disabled = true;
       driveBackupBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></div> Backing up...';
       
-      const { db } = await import('../database/db.js');
-      const backup = {
-        version: 2,
-        timestamp: new Date().toISOString(),
-        settings: {
-          tmdbKey: localStorage.getItem('showdeck_tmdb_key'),
-          name: localStorage.getItem('showdeck_user_name'),
-          theme: localStorage.getItem('showdeck_theme'),
-          accentTheme: localStorage.getItem('showdeck_accent_theme'),
-          customColor: localStorage.getItem('showdeck_custom_color'),
-          includeAdult: localStorage.getItem('showdeck_include_adult'),
-          view: localStorage.getItem('showdeck_view_preference')
-        },
-        data: {
-          shows: await db.shows.toArray(),
-          movies: await db.movies.toArray(),
-          episodes: await db.episodes.toArray(),
-          collections: await db.collections.toArray(),
-          tags: await db.tags.toArray(),
-          activity: await db.activity.toArray(),
-        }
-      };
+      const { createCloudBackup } = await import('../services/sync-service.js');
+      const syncTime = await createCloudBackup();
       
-      await backupToDrive(backup);
-      
-      const syncTime = new Date().toISOString();
-      localStorage.setItem('showdeck_last_drive_sync', syncTime);
       const syncEl = document.getElementById('drive-last-sync');
       if (syncEl) syncEl.textContent = 'Just now';
       
@@ -488,39 +464,9 @@ function bindEvents() {
       driveRestoreBtn.disabled = true;
       driveRestoreBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></div> Restoring...';
       
-      const backup = await restoreFromDrive();
+      const { restoreCloudBackup } = await import('../services/sync-service.js');
+      await restoreCloudBackup();
       
-      if (!backup || !backup.data) {
-        toast('No backup found in Google Drive', 'error');
-        return;
-      }
-      
-      // We borrow the exact same restore logic from the manual JSON import
-      const { db, clearAllData } = await import('../database/db.js');
-      await clearAllData();
-      
-      // Restore Settings
-      if (backup.settings) {
-        if (backup.settings.tmdbKey) localStorage.setItem('showdeck_tmdb_key', backup.settings.tmdbKey);
-        if (backup.settings.name) localStorage.setItem('showdeck_user_name', backup.settings.name);
-        if (backup.settings.theme) localStorage.setItem('showdeck_theme', backup.settings.theme);
-        if (backup.settings.accentTheme) localStorage.setItem('showdeck_accent_theme', backup.settings.accentTheme);
-        if (backup.settings.customColor) localStorage.setItem('showdeck_custom_color', backup.settings.customColor);
-        if (backup.settings.includeAdult) localStorage.setItem('showdeck_include_adult', backup.settings.includeAdult);
-        if (backup.settings.view) localStorage.setItem('showdeck_view_preference', backup.settings.view);
-      }
-      
-      await db.transaction('rw', db.shows, db.movies, db.episodes, db.collections, db.tags, db.activity, async () => {
-        if (backup.data.shows) await db.shows.bulkAdd(backup.data.shows);
-        if (backup.data.movies) await db.movies.bulkAdd(backup.data.movies);
-        if (backup.data.episodes) await db.episodes.bulkAdd(backup.data.episodes);
-        if (backup.data.collections) await db.collections.bulkAdd(backup.data.collections);
-        if (backup.data.tags) await db.tags.bulkAdd(backup.data.tags);
-        if (backup.data.activity) await db.activity.bulkAdd(backup.data.activity);
-      });
-      
-      const syncTime = new Date().toISOString();
-      localStorage.setItem('showdeck_last_drive_sync', syncTime);
       const syncEl = document.getElementById('drive-last-sync');
       if (syncEl) syncEl.textContent = 'Just now';
 
@@ -534,7 +480,11 @@ function bindEvents() {
       
     } catch (err) {
       console.error(err);
-      toast('Failed to restore from Drive', 'error');
+      if (err.message.includes('No backup found')) {
+        toast('No backup found in Google Drive', 'error');
+      } else {
+        toast('Failed to restore from Drive', 'error');
+      }
     } finally {
       driveRestoreBtn.disabled = false;
       driveRestoreBtn.textContent = 'Restore from Google Drive';
@@ -543,6 +493,7 @@ function bindEvents() {
 
   const driveClearBtn = document.getElementById('drive-clear-btn');
   driveClearBtn?.addEventListener('click', async () => {
+    const { confirmModal } = await import('../components/modal.js');
     const confirm = await confirmModal(
       'Delete Cloud Backup?',
       'Are you sure you want to permanently delete your backup file from Google Drive? Your local data will not be affected.',
@@ -555,9 +506,9 @@ function bindEvents() {
       driveClearBtn.disabled = true;
       driveClearBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></div> Deleting...';
       
-      await clearDriveData();
+      const { deleteCloudBackup } = await import('../services/sync-service.js');
+      await deleteCloudBackup();
       
-      localStorage.removeItem('showdeck_last_drive_sync');
       const syncEl = document.getElementById('drive-last-sync');
       if (syncEl) syncEl.textContent = 'Never';
       
@@ -578,6 +529,7 @@ function bindEvents() {
   const driveSignOutBtn = document.getElementById('drive-signout-btn');
   driveSignOutBtn?.addEventListener('click', async () => {
     driveSignOutBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></div> Signing out...';
+    const { signOutDrive } = await import('../services/sync-service.js');
     await signOutDrive();
     toast('Signed out of Google', 'success');
     driveSignOutBtn.textContent = 'Sign Out of Google';
@@ -592,7 +544,7 @@ function bindEvents() {
       // or we can expose a public authenticate() method in drive.js.
       // Easiest is to expose it. For now, since backupToDrive handles auth seamlessly,
       // I'll just expose a public signInDrive function in drive.js or update UI.
-      const { signInDrive } = await import('../api/drive.js');
+      const { signInDrive } = await import('../services/sync-service.js');
       await signInDrive();
       toast('Signed in successfully', 'success');
       updateDriveAuthUI();
@@ -742,37 +694,9 @@ function bindEvents() {
       exportBtn.disabled = true;
       exportBtn.textContent = 'Exporting...';
       
-      const backup = {
-        version: 2,
-        timestamp: new Date().toISOString(),
-        settings: {
-          tmdbKey: localStorage.getItem('showdeck_tmdb_key'),
-          name: localStorage.getItem('showdeck_user_name'),
-          theme: localStorage.getItem('showdeck_theme'),
-          accentTheme: localStorage.getItem('showdeck_accent_theme'),
-          customColor: localStorage.getItem('showdeck_custom_color'),
-          includeAdult: localStorage.getItem('showdeck_include_adult'),
-          view: localStorage.getItem('showdeck_view_preference')
-        },
-        data: {
-          shows: await db.shows.toArray(),
-          movies: await db.movies.toArray(),
-          episodes: await db.episodes.toArray(),
-          collections: await db.collections.toArray(),
-          tags: await db.tags.toArray(),
-          activity: await db.activity.toArray(),
-        }
-      };
-
-      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
+      const { exportLocalBackup } = await import('../services/backup-service.js');
+      await exportLocalBackup();
       
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `showdeck_backup_${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      
-      URL.revokeObjectURL(url);
       toast('Backup exported successfully', 'success');
     } catch (err) {
       console.error(err);
@@ -790,29 +714,8 @@ function bindEvents() {
       exportCsvBtn.disabled = true;
       exportCsvBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></div> Exporting...';
       
-      const { db } = await import('../database/db.js');
-      const shows = await db.shows.toArray();
-      const movies = await db.movies.toArray();
-      const episodes = await db.episodes.where('watched').equals(1).toArray();
-      
-      let csvContent = 'Type,Title,Status,Rating,WatchedEpisodes\n';
-      
-      shows.forEach(s => {
-        const epCount = episodes.filter(e => e.showId === s.id).length;
-        csvContent += `Show,"${s.title.replace(/"/g, '""')}",${s.trackingStatus},${s.rating || ''},${epCount}\n`;
-      });
-      
-      movies.forEach(m => {
-        csvContent += `Movie,"${m.title.replace(/"/g, '""')}",${m.trackingStatus},${m.rating || ''},N/A\n`;
-      });
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `showdeck_export_${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const { exportCsv } = await import('../services/backup-service.js');
+      await exportCsv();
       
       toast('CSV exported successfully', 'success');
     } catch (err) {
@@ -901,33 +804,8 @@ function bindEvents() {
 
     try {
       const text = await file.text();
-      const backup = JSON.parse(text);
-
-      if (!backup.data || !backup.version) {
-        throw new Error('Invalid backup file format');
-      }
-
-      const { shows, movies, episodes, collections, tags, activity } = backup.data;
-
-      // Basic schema validation (M-5)
-      const requiredShowFields = ['title'];
-      const requiredMovieFields = ['title'];
-      if (shows?.length && !requiredShowFields.every(f => f in shows[0])) {
-        throw new Error('Invalid backup: shows data is malformed');
-      }
-      if (movies?.length && !requiredMovieFields.every(f => f in movies[0])) {
-        throw new Error('Invalid backup: movies data is malformed');
-      }
-
-      // Use Dexie bulkPut to merge (insert or update)
-      await db.transaction('rw', db.shows, db.movies, db.episodes, db.collections, db.tags, db.activity, async () => {
-        if (shows?.length) await db.shows.bulkPut(shows);
-        if (movies?.length) await db.movies.bulkPut(movies);
-        if (episodes?.length) await db.episodes.bulkPut(episodes);
-        if (collections?.length) await db.collections.bulkPut(collections);
-        if (tags?.length) await db.tags.bulkPut(tags);
-        if (activity?.length) await db.activity.bulkPut(activity);
-      });
+      const { importLocalBackup } = await import('../services/backup-service.js');
+      await importLocalBackup(text);
 
       toast('Backup restored successfully!', 'success');
     } catch (err) {

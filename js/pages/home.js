@@ -9,7 +9,7 @@ import { getRecentMovies, getAllMovies } from '../database/movies.js';
 import { getShowProgress, getNextEpisode } from '../database/episodes.js';
 import { getPosterUrl } from '../api/tmdb.js';
 import { formatDate, formatYear, truncate, statusBadge } from '../utils/dom.js';
-import { openEnrichModal } from '../components/enrich-modal.js';
+
 import '../components/web/media-card.js';
 
 let viewMode = localStorage.getItem('showdeck-home-view') || 'grid';
@@ -71,8 +71,10 @@ export async function init() {
       const id = parseInt(el.dataset.id);
       const type = el.dataset.type;
       const title = decodeURIComponent(el.dataset.title);
-      openEnrichModal(id, type, title, () => {
-        import('../router.js').then(r => window.dispatchEvent(new Event('hashchange')));
+      import('../components/enrich-modal.js').then(m => {
+        m.openEnrichModal(id, type, title, () => {
+          window.appRouter.renderPage();
+        });
       });
     });
   });
