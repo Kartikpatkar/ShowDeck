@@ -63,6 +63,7 @@ export async function markWatched(episodeId) {
 
   const ep = await db.episodes.get(episodeId);
   if (ep) {
+    await db.shows.update(ep.showId, { updatedAt: now });
     await db.activity.add({
       type: 'watched',
       itemId: ep.showId,
@@ -81,6 +82,10 @@ export async function markUnwatched(episodeId) {
     watched: false,
     watchedAt: null,
   });
+  const ep = await db.episodes.get(episodeId);
+  if (ep) {
+    await db.shows.update(ep.showId, { updatedAt: new Date() });
+  }
 }
 
 /**

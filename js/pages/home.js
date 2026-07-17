@@ -139,8 +139,8 @@ export async function render() {
 
   const filterMissing = arr => arr.filter(i => i.tmdbId !== null);
 
-  const filteredWatching = filterMissing(watchingShows);
-  const filteredPaused = filterMissing(pausedShows);
+  const filteredWatching = filterMissing(watchingShows).sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+  const filteredPaused = filterMissing(pausedShows).sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
   const filteredPlanToWatchShows = filterMissing(planToWatchShows);
   const filteredPlanToWatchMovies = filterMissing(planToWatchMovies);
   const filteredRecentShows = filterMissing(recentShows);
@@ -246,6 +246,11 @@ export async function render() {
 
   // Build Plan to Watch section
   const planItems = [...filteredPlanToWatchShows, ...filteredPlanToWatchMovies]
+    .filter(item => {
+      const dateStr = item.firstAirDate || item.releaseDate;
+      if (!dateStr) return true;
+      return new Date(dateStr) <= new Date();
+    })
     .sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt))
     .slice(0, 8);
     

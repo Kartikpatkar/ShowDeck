@@ -258,6 +258,12 @@ function renderContent(container) {
 
   const imdbUrl = showData.externalIds?.imdb_id ? `https://www.imdb.com/title/${showData.externalIds.imdb_id}/` : null;
 
+  const now = Date.now();
+  const hasUnreleasedEpisodes = episodesData.some(ep => {
+    if (!ep.airDate) return false;
+    return new Date(ep.airDate).getTime() > now;
+  });
+
   container.innerHTML = `
     <!-- Back Button -->
     <div style="padding:var(--space-4) var(--space-4) 0; position:relative; z-index:10; display:flex; justify-content:space-between; align-items:center;">
@@ -328,7 +334,7 @@ function renderContent(container) {
               <option value="watching" ${showData.trackingStatus === 'watching' ? 'selected' : ''}>Watching</option>
               <option value="paused" ${showData.trackingStatus === 'paused' ? 'selected' : ''}>Paused</option>
               <option value="plan" ${showData.trackingStatus === 'plan' ? 'selected' : ''}>Plan to Watch</option>
-              <option value="completed" ${showData.trackingStatus === 'completed' ? 'selected' : ''}>Completed</option>
+              <option value="completed" ${showData.trackingStatus === 'completed' ? 'selected' : ''} ${hasUnreleasedEpisodes ? 'disabled' : ''}>Completed${hasUnreleasedEpisodes ? ' (Unreleased Episodes)' : ''}</option>
               <option value="dropped" ${showData.trackingStatus === 'dropped' ? 'selected' : ''}>Dropped</option>
             </select>
             <button class="btn btn-outline" id="add-collection-btn" style="padding:0 var(--space-3);" data-tooltip="Add to Collection">
@@ -830,8 +836,10 @@ function bindEvents() {
           ep.watched = true;
 
           // Auto-complete logic
+          const nowTime = Date.now();
+          const hasUnreleased = episodesData.some(e => e.airDate && new Date(e.airDate).getTime() > nowTime);
           const allWatched = episodesData.every(e => e.watched);
-          if (allWatched && showData.trackingStatus !== 'completed') {
+          if (allWatched && !hasUnreleased && showData.trackingStatus !== 'completed') {
             const { updateTrackingStatus } = await import('../database/shows.js');
             await updateTrackingStatus(currentShowId, 'completed');
             showData.trackingStatus = 'completed';
@@ -884,8 +892,10 @@ function bindEvents() {
         await markSeasonWatched(currentShowId, currentSeason);
         episodesData.forEach(e => { if (e.season === currentSeason) e.watched = true; });
         
+        const nowTime = Date.now();
+        const hasUnreleased = episodesData.some(e => e.airDate && new Date(e.airDate).getTime() > nowTime);
         const allWatched = episodesData.every(e => e.watched);
-        if (allWatched && showData.trackingStatus !== 'completed') {
+        if (allWatched && !hasUnreleased && showData.trackingStatus !== 'completed') {
           const { updateTrackingStatus } = await import('../database/shows.js');
           await updateTrackingStatus(currentShowId, 'completed');
           showData.trackingStatus = 'completed';
