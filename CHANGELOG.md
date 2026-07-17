@@ -2,6 +2,18 @@
 
 All notable changes to ShowDeck will be documented in this file.
 
+## [1.6.2] - 2026-07-17
+
+### Added
+- **Performance & Lazy Loading:** Modals and specific components are now lazy-loaded, drastically reducing the initial JavaScript payload size and speeding up the initial page load.
+- **Rendering Optimizations:** Implemented `DocumentFragment` updates for infinite scrolling lists, preventing layout thrashing on lower-end devices.
+
+### Fixed
+- **Settings Modularization:** Decoupled settings components. Google Drive Sync and Local Backup operations have been fully modularized into separate, dedicated services.
+- **Show Page Refactor:** Extracted the complex HTML generation for seasons and episodes into an `episode-list` component.
+- **Tracking Logic:** Extracted core logic (toggling episodes, bulk-marking, auto-completing) into a centralized `tracking-service.js` to guarantee consistent data integrity across the app.
+- **Syntax Error Fix:** Fixed an uncaught SyntaxError in `settings.js` caused during previous modularization work.
+
 ## [1.6.1] - 2026-07-14
 
 ### Fixed
