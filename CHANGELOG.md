@@ -2,6 +2,14 @@
 
 All notable changes to ShowDeck will be documented in this file.
 
+## [1.6.4] - 2026-07-19
+
+### Fixed
+- **Mobile Navbar Overlap:** Fixed an issue where the bottom navigation bar would overlap content on mobile devices by adjusting safe-area padding.
+- **Scroll Restoration:** Fixed a bug where scroll position was not restored when navigating back to the search page from a detail view.
+- **Watch Count UX:** Improved watch count UI to prevent accidental increments and added a dedicated modal for easily adjusting watch counts.
+- **Inline CSS:** Removed inline CSS in episode list and modals, migrating styles to proper CSS utility classes for better maintainability.
+
 ## [1.6.3] - 2026-07-19
 
 ### Fixed
