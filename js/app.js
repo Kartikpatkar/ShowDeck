@@ -438,14 +438,33 @@ export function initTheme() {
   }
 }
 
-function updateOnlineStatus() {
+function updateOnlineStatus(forceOffline = false) {
   const banner = document.getElementById('offline-banner');
   if (banner) {
-    if (navigator.onLine) {
+    if (navigator.onLine && !forceOffline) {
       banner.classList.add('hidden');
     } else {
       banner.classList.remove('hidden');
     }
+  }
+}
+
+async function verifyOnlineStatus() {
+  if (!navigator.onLine) {
+    updateOnlineStatus();
+    return;
+  }
+  // Chrome SW quirk: navigator.onLine is stuck true on offline reload.
+  // Manually ping to verify. SW will return 404 if offline.
+  try {
+    const res = await fetch('./manifest.json', { headers: { 'X-Ping': 'true' }, cache: 'no-store' });
+    if (res.status === 503) {
+      updateOnlineStatus(true); // Force offline UI
+    } else {
+      updateOnlineStatus(false); // Force online UI
+    }
+  } catch (e) {
+    updateOnlineStatus(true);
   }
 }
 
@@ -472,12 +491,17 @@ function initKeyboardNavigation() {
   });
 }
 
-window.addEventListener('online', updateOnlineStatus);
-window.addEventListener('offline', updateOnlineStatus);
+window.addEventListener('online', () => updateOnlineStatus());
+window.addEventListener('offline', () => updateOnlineStatus());
 
 // Boot
 function bootApp() {
   updateOnlineStatus();
+  verifyOnlineStatus();
+  // Double check after a moment
+  setTimeout(verifyOnlineStatus, 1000);
+  
+  initTheme();
   initKeyboardNavigation();
   init();
 }

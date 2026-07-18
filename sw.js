@@ -1,5 +1,5 @@
-const CACHE_NAME = 'showdeck-v25';
-const IMAGE_CACHE_NAME = 'showdeck-images-v25';
+const CACHE_NAME = 'showdeck-v31';
+const IMAGE_CACHE_NAME = 'showdeck-images';
 
 const URLS_TO_CACHE = [
   './',
@@ -85,7 +85,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName !== IMAGE_CACHE_NAME) {
+          if (cacheName !== CACHE_NAME && cacheName !== IMAGE_CACHE_NAME && !cacheName.startsWith('showdeck-images')) {
             return caches.delete(cacheName);
           }
         })
@@ -97,7 +97,23 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
+  
+  if (event.request.headers.get('X-Ping') === 'true') {
+    event.respondWith(
+      fetch(event.request).catch(() => new Response('Offline', { status: 503 }))
+    );
+    return;
+  }
+  
   console.log('[SW] Intercepted fetch for:', event.request.url);
+
+  // Fake TMDB API response when offline to prevent extension crashes
+  if (requestUrl.origin === 'https://api.themoviedb.org') {
+    event.respondWith(
+      fetch(event.request).catch(() => new Response('Offline', { status: 503 }))
+    );
+    return;
+  }
 
   if (requestUrl.origin === 'https://image.tmdb.org') {
     event.respondWith(
