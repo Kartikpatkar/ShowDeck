@@ -246,7 +246,7 @@ export async function addToCollectionModal(itemId, itemType) {
     const colListHtml = collections.length > 0 ? collections.map(c => {
       const inCol = c.itemIds && c.itemIds.includes(itemKey);
       return `
-        <label style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-2); cursor:pointer; border-radius:var(--radius-sm); transition:background 0.2s;" onmouseover="this.style.background='var(--surface-3)'" onmouseout="this.style.background='transparent'">
+        <label class="hover-bg-3" style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-2); cursor:pointer; border-radius:var(--radius-sm); transition:background 0.2s;">
           <input type="checkbox" class="col-checkbox" data-id="${c.id}" ${inCol ? 'checked' : ''} style="accent-color:var(--text-primary);width:18px;height:18px;">
           <span style="font-size:var(--text-md);">${c.icon || '📁'} ${c.name}</span>
         </label>
@@ -361,7 +361,7 @@ export async function manageTagsModal(itemId, itemType) {
     const tagListHtml = tags.length > 0 ? tags.map(t => {
       const hasTag = currentTags.includes(t.name);
       return `
-        <label style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-2); cursor:pointer; border-radius:var(--radius-sm); transition:background 0.2s;" onmouseover="this.style.background='var(--surface-3)'" onmouseout="this.style.background='transparent'">
+        <label class="hover-bg-3" style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-2); cursor:pointer; border-radius:var(--radius-sm); transition:background 0.2s;">
           <input type="checkbox" class="tag-checkbox" data-name="${escapeHtml(t.name)}" ${hasTag ? 'checked' : ''} style="accent-color:var(--text-primary);width:18px;height:18px;">
           <span style="font-size:var(--text-md);">#${escapeHtml(t.name)}</span>
         </label>

@@ -53,16 +53,26 @@ export async function init(params) {
     }
 
     // 2. Fetch TMDB data
-    const [showResp, seasonResp] = await Promise.all([
-      tmdb.getShowDetails(showTmdbId),
-      tmdb.getSeasonEpisodes(showTmdbId, seasonNum)
-    ]);
+    let showResp = null, seasonResp = null;
+    if (navigator.onLine) {
+      try {
+        [showResp, seasonResp] = await Promise.all([
+          tmdb.getShowDetails(showTmdbId),
+          tmdb.getSeasonEpisodes(showTmdbId, seasonNum)
+        ]);
+      } catch (e) {
+        console.warn('Network error fetching episode details (offline?)', e);
+      }
+    } else {
+      console.log('[ShowDeck] Offline: Skipping episode details API call');
+    }
     
-    showData = showResp;
-    richEpData = seasonResp.find(e => e.episode === episodeNum) || null;
+    showData = showResp || localShow;
+    richEpData = seasonResp ? seasonResp.find(e => e.episode === episodeNum) : (localEp || null);
     
     if (!richEpData) {
-      container.innerHTML = `<div class="empty-state"><h3>Episode Not Found</h3><a href="javascript:window.appRouter.goBack()" class="btn btn-primary">Go Back</a></div>`;
+      container.innerHTML = `<div class="empty-state"><h3>Episode Not Found</h3><button id="err-back-btn" class="btn btn-primary">Go Back</button></div>`;
+      document.getElementById('err-back-btn').addEventListener('click', () => window.appRouter.goBack());
       return;
     }
     
@@ -83,7 +93,8 @@ export async function init(params) {
     
   } catch (err) {
     console.error('[Episode Detail] Error:', err);
-    container.innerHTML = `<div class="empty-state"><h3>Failed to load</h3><a href="javascript:window.appRouter.goBack()" class="btn btn-primary">Go Back</a></div>`;
+    container.innerHTML = `<div class="empty-state"><h3>Failed to load</h3><button id="err-back-btn2" class="btn btn-primary">Go Back</button></div>`;
+    document.getElementById('err-back-btn2')?.addEventListener('click', () => window.appRouter.goBack());
   }
 }
 

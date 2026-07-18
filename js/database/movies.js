@@ -159,6 +159,9 @@ export async function getMovieStatusCounts() {
  * Manually sync a movie to update its metadata.
  */
 export async function syncMovie(id) {
+  if (!navigator.onLine) {
+    throw new Error('Cannot sync movie while offline.');
+  }
   const movie = await getMovie(id);
   if (!movie || !movie.tmdbId) return null;
   

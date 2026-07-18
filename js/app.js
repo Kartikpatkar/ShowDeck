@@ -447,8 +447,9 @@ function updateOnlineStatus() {
       banner.classList.remove('hidden');
     }
   }
+}
 
-  // Keyboard Navigation
+function initKeyboardNavigation() {
   window.addEventListener('keydown', (e) => {
     // Ignore if typing in an input
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
@@ -473,13 +474,18 @@ function updateOnlineStatus() {
 
 window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
-updateOnlineStatus(); // Check on init
 
 // Boot
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
+function bootApp() {
+  updateOnlineStatus();
+  initKeyboardNavigation();
   init();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootApp);
+} else {
+  bootApp();
 }
 
 // Register PWA Service Worker
