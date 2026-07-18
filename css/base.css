@@ -9,6 +9,9 @@ body {
   line-height: var(--leading-normal);
   letter-spacing: var(--tracking-normal);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
 }
 
 /* ── Typography ── */

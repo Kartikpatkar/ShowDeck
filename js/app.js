@@ -6,7 +6,7 @@
 import { Router } from './router.js';
 import { Sidebar } from './components/sidebar.js';
 
-export const APP_VERSION = '1.6.2';
+export const APP_VERSION = '1.6.3';
 
 const router = new Router();
 let sidebar = null;
@@ -438,17 +438,37 @@ export function initTheme() {
   }
 }
 
-function updateOnlineStatus() {
+function updateOnlineStatus(forceOffline = false) {
   const banner = document.getElementById('offline-banner');
   if (banner) {
-    if (navigator.onLine) {
+    if (navigator.onLine && !forceOffline) {
       banner.classList.add('hidden');
     } else {
       banner.classList.remove('hidden');
     }
   }
+}
 
-  // Keyboard Navigation
+async function verifyOnlineStatus() {
+  if (!navigator.onLine) {
+    updateOnlineStatus();
+    return;
+  }
+  // Chrome SW quirk: navigator.onLine is stuck true on offline reload.
+  // Manually ping to verify. SW will return 404 if offline.
+  try {
+    const res = await fetch('./manifest.json', { headers: { 'X-Ping': 'true' }, cache: 'no-store' });
+    if (res.status === 503) {
+      updateOnlineStatus(true); // Force offline UI
+    } else {
+      updateOnlineStatus(false); // Force online UI
+    }
+  } catch (e) {
+    updateOnlineStatus(true);
+  }
+}
+
+function initKeyboardNavigation() {
   window.addEventListener('keydown', (e) => {
     // Ignore if typing in an input
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
@@ -471,15 +491,25 @@ function updateOnlineStatus() {
   });
 }
 
-window.addEventListener('online', updateOnlineStatus);
-window.addEventListener('offline', updateOnlineStatus);
-updateOnlineStatus(); // Check on init
+window.addEventListener('online', () => updateOnlineStatus());
+window.addEventListener('offline', () => updateOnlineStatus());
 
 // Boot
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
+function bootApp() {
+  updateOnlineStatus();
+  verifyOnlineStatus();
+  // Double check after a moment
+  setTimeout(verifyOnlineStatus, 1000);
+  
+  initTheme();
+  initKeyboardNavigation();
   init();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootApp);
+} else {
+  bootApp();
 }
 
 // Register PWA Service Worker

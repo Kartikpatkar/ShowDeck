@@ -2,7 +2,8 @@
 
 .app {
   display: flex;
-  height: 100dvh;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   background: var(--surface-1);
 }

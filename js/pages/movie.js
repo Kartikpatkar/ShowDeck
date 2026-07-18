@@ -35,9 +35,19 @@ export async function init(params) {
   try {
     const localMovie = await getMovieByTmdbId(tmdbId);
     
-    // Always fetch rich data from API for cast, overview, watchProviders, etc.
-    const { getMovieDetails } = await import('../api/tmdb.js');
-    const richData = await getMovieDetails(tmdbId);
+    // Fetch rich data from API
+    let richData = null;
+    if (navigator.onLine) {
+      const { getMovieDetails } = await import('../api/tmdb.js');
+      try {
+        richData = await getMovieDetails(tmdbId);
+      } catch (e) {
+        console.warn('Network error fetching movie details', e);
+      }
+    } else {
+      console.log('[ShowDeck] Offline: Skipping movie details API call');
+    }
+    
     if (!richData && !localMovie) throw new Error('Movie not found');
 
     if (localMovie) {

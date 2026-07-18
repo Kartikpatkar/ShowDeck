@@ -44,12 +44,13 @@
   <link rel="icon" type="image/png" href="assets/icon-192.png?v=4">
 </head>
 <body>
+  <!-- Offline Indicator -->
+  <div id="offline-banner" class="hidden" style="background:var(--color-error);color:white;text-align:center;padding:var(--space-2);font-size:var(--text-sm);font-weight:var(--weight-medium);z-index:9999;flex-shrink:0;">
+    You are offline. Showing cached data.
+  </div>
+
   <!-- App Shell -->
   <div class="app" id="app">
-    <!-- Offline Indicator -->
-    <div id="offline-banner" class="hidden" style="background:var(--color-error);color:white;text-align:center;padding:var(--space-2);font-size:var(--text-sm);font-weight:var(--weight-medium);z-index:9999;">
-      You are offline. Showing cached data.
-    </div>
 
     <!-- Sidebar injected by JS -->
 

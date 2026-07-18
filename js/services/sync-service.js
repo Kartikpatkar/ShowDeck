@@ -7,7 +7,7 @@ import { backupToDrive as apiBackup, restoreFromDrive as apiRestore, clearDriveD
 
 export async function createCloudBackup() {
   const backup = {
-    version: '1.6.1',
+    version: '1.6.3',
     timestamp: new Date().toISOString(),
     settings: {
       tmdbKey: localStorage.getItem('showdeck_tmdb_key'),

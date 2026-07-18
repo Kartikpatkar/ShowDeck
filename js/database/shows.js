@@ -233,6 +233,9 @@ export async function getShowStatusCounts() {
  * Manually sync a show to update its metadata and episodes.
  */
 export async function syncShow(id) {
+  if (!navigator.onLine) {
+    throw new Error('Cannot sync show while offline.');
+  }
   const show = await getShow(id);
   if (!show || !show.tmdbId) return null;
   

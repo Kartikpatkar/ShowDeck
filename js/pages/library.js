@@ -380,7 +380,7 @@ function renderGridCard(item) {
   const year = formatYear(item.itemType === 'show' ? item.firstAirDate : item.releaseDate);
   const status = STATUS_MAP[item.trackingStatus] || STATUS_MAP.plan;
   const isMissing = item.tmdbId === null;
-  const route = isMissing ? 'javascript:void(0)' : (item.itemType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`);
+  const route = isMissing ? '#' : (item.itemType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`);
   const triggerClass = isMissing ? 'enrich-trigger' : '';
   const triggerAttrs = isMissing ? `data-id="${item.id}" data-type="${item.itemType}" data-title="${encodeURIComponent(item.title)}"` : '';
   const missingBadge = isMissing ? `<div style="position:absolute;top:4px;right:4px;background:var(--color-error);color:white;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:bold;z-index:2;">Fix Match</div>` : '';
@@ -431,7 +431,7 @@ function renderListItem(item) {
   const year = formatYear(item.itemType === 'show' ? item.firstAirDate : item.releaseDate);
   const genres = (item.genres || []).slice(0, 3).join(', ');
   const isMissing = item.tmdbId === null;
-  const route = isMissing ? 'javascript:void(0)' : (item.itemType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`);
+  const route = isMissing ? '#' : (item.itemType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`);
   const triggerClass = isMissing ? 'enrich-trigger' : '';
   const triggerAttrs = isMissing ? `data-id="${item.id}" data-type="${item.itemType}" data-title="${encodeURIComponent(item.title)}"` : '';
   const missingBadge = isMissing ? `<div style="position:absolute;top:4px;right:4px;background:var(--color-error);color:white;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:bold;">Fix Match</div>` : '';
@@ -466,14 +466,13 @@ function renderCompactItem(item) {
   const year = formatYear(item.itemType === 'show' ? item.firstAirDate : item.releaseDate);
   const status = STATUS_MAP[item.trackingStatus] || STATUS_MAP.plan;
   const isMissing = item.tmdbId === null;
-  const route = isMissing ? 'javascript:void(0)' : (item.itemType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`);
+  const route = isMissing ? '#' : (item.itemType === 'show' ? `#/show/${item.tmdbId}` : `#/movie/${item.tmdbId}`);
   const triggerClass = isMissing ? 'enrich-trigger' : '';
   const triggerAttrs = isMissing ? `data-id="${item.id}" data-type="${item.itemType}" data-title="${encodeURIComponent(item.title)}"` : '';
 
   return `
-    <a href="${route}" class="library-compact-item ${triggerClass}" ${triggerAttrs} id="lib-compact-${item.itemType}-${item.id}"
-      style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) var(--space-3);border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--text-primary);transition:background var(--duration-fast) var(--ease-out);"
-      onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='transparent'">
+    <a href="${route}" class="library-compact-item hover-bg-2 ${triggerClass}" ${triggerAttrs} id="lib-compact-${item.itemType}-${item.id}"
+      style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) var(--space-3);border-bottom:1px solid var(--border-subtle);text-decoration:none;color:var(--text-primary);transition:background var(--duration-fast) var(--ease-out);">
       <span style="width:8px;height:8px;border-radius:var(--radius-full);background:var(--color-${status.color});flex-shrink:0;"></span>
       ${isMissing ? `<span style="font-size:10px;background:var(--color-error);color:white;padding:1px 4px;border-radius:4px;">Fix</span>` : ''}
       <span style="flex:1;font-size:var(--text-sm);font-weight:var(--weight-medium);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title}</span>

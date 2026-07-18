@@ -44,8 +44,17 @@ export async function init(params) {
     const localShow = await getShowByTmdbId(tmdbId);
     
     // Always fetch rich data from API for cast, overview, watchProviders, etc.
-    const { getShowDetails } = await import('../api/tmdb.js');
-    const richData = await getShowDetails(tmdbId);
+    let richData = null;
+    if (navigator.onLine) {
+      const { getShowDetails } = await import('../api/tmdb.js');
+      try {
+        richData = await getShowDetails(tmdbId);
+      } catch (e) {
+        console.warn('Network error fetching show details (offline?)', e);
+      }
+    } else {
+      console.log('[ShowDeck] Offline: Skipping show details API call');
+    }
     if (!richData && !localShow) throw new Error('Show not found');
     
     if (localShow) {
@@ -71,7 +80,12 @@ export async function init(params) {
       
       // Fetch episodes (in memory only, not saved to DB)
       const provider = await import('../api/provider.js');
-      episodesData = await provider.getAllEpisodes(tmdbId, null, showData.totalSeasons);
+      try {
+        episodesData = await provider.getAllEpisodes(tmdbId, null, showData.totalSeasons);
+      } catch (e) {
+        console.warn('Network error fetching episodes (offline?)', e);
+        episodesData = [];
+      }
     }
     
     // Set initial active season
@@ -167,6 +181,10 @@ async function fetchAndSaveEpisodes(tmdbId, tvmazeId, totalSeasons, localId) {
 
 async function enrichSeasonEpisodes(season) {
   if (!showData || !showData.tmdbId) return;
+  if (!navigator.onLine) {
+    console.log('[ShowDeck] Offline: Skipping season enrichment API call');
+    return;
+  }
   try {
     const { getSeasonEpisodes } = await import('../api/tmdb.js');
     const richEps = await getSeasonEpisodes(showData.tmdbId, season);
