@@ -2,7 +2,7 @@
   "name": "ShowDeck",
   "short_name": "ShowDeck",
   "description": "Your ultimate TV show and movie tracker.",
-  "start_url": "./?v=6",
+  "start_url": "./?v=7",
   "display": "standalone",
   "background_color": "#09090b",
   "theme_color": "#09090b",

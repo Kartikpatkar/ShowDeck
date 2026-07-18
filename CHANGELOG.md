@@ -2,6 +2,16 @@
 
 All notable changes to ShowDeck will be documented in this file.
 
+## [1.6.3] - 2026-07-19
+
+### Fixed
+- **Service Worker Boot:** Fixed a severe Chromium caching bug where \`navigator.onLine\` falsely reports true during an offline page refresh by implementing an explicit \`X-Ping\` network handshake.
+- **Offline API Fallbacks:** Explicitly intercepted TMDB API requests inside the Service Worker while offline to return synthetic \`503 Service Unavailable\` responses, preventing third-party browser extensions from crashing with unhandled Promise rejections.
+- **Image Caching Persistence:** Completely decoupled the TMDB image cache (\`showdeck-images\`) from the application cache versioning, ensuring downloaded posters persist securely across all future app updates.
+- **Opaque Image Caching:** Updated Service Worker fetch logic to properly cache opaque \`no-cors\` image responses (HTTP 0) from \`<img>\` tags.
+- **Offline Placeholders:** Implemented a lightweight, zero-dependency inline SVG fallback for posters missing from the offline cache to maintain UI layout stability.
+- **Data Sync Constraints:** Added strict offline checks to manual Movie and Show sync actions to protect IndexedDB metadata from offline network timeouts.
+
 ## [1.6.2] - 2026-07-17
 
 ### Added
