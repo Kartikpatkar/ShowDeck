@@ -40,10 +40,10 @@ export function renderEpisodeList(showData, episodesData, currentSeason, seasons
   }
 
   // Episodes List
-  const seasonEps = episodesData.filter(e => e.season === currentSeason).sort((a,b) => a.episode - b.episode);
-  
+  const seasonEps = episodesData.filter(e => e.season === currentSeason).sort((a, b) => a.episode - b.episode);
+
   html += `<div class="card" style="padding:0;">`;
-  
+
   if (seasonEps.length === 0) {
     html += `<div style="padding:var(--space-6); text-align:center; color:var(--text-tertiary);">No episodes available for this season yet.</div>`;
   }
@@ -59,7 +59,7 @@ export function renderEpisodeList(showData, episodesData, currentSeason, seasons
     } else {
       imgHtml = `<div class="episode-image" style="width:120px;height:68px;border-radius:var(--radius-sm);margin:0 var(--space-3);flex-shrink:0;background:var(--surface-3);display:flex;align-items:center;justify-content:center;"><span style="opacity:0.3;font-size:24px;">📺</span></div>`;
     }
-    
+
     const epDate = ep.airDate ? new Date(ep.airDate) : null;
     const isUnreleased = epDate ? epDate.getTime() > Date.now() : false;
     const countdown = getRelativeTime(ep.airDate);
@@ -88,7 +88,9 @@ export function renderEpisodeList(showData, episodesData, currentSeason, seasons
             </div>
           </a>
           <div class="episode-actions-wrapper" style="display:flex;align-items:center;gap:var(--space-1);margin-right:var(--space-2);">
-            ${ep.watched && !isUnreleased ? `<button class="btn btn-secondary btn-sm add-watch-btn" data-ep-id="${ep.id}" data-action="add-watch" style="padding:0 var(--space-2);height:28px;min-height:28px;font-size:12px;border-radius:14px;" title="Add another watch">+1${ep.watchCount && ep.watchCount > 1 ? ` (${ep.watchCount})` : ''}</button>` : ''}
+            ${ep.watched && !isUnreleased ? `
+              <button class="btn btn-secondary btn-sm edit-watch-btn" data-ep-id="${ep.id}" data-action="edit-watch" style="padding:0 var(--space-2);height:28px;min-height:28px;font-size:12px;border-radius:14px;" title="Edit watch count">${ep.watchCount && ep.watchCount > 1 ? `+${ep.watchCount}` : '+1'}</button>
+            ` : ''}
             <button class="btn btn-icon btn-sm" data-action="toggle-overview" style="color:var(--text-tertiary);padding:var(--space-1);" title="Expand overview">
               <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s;"><path d="m6 9 6 6 6-6"/></svg>
             </button>
@@ -102,6 +104,6 @@ export function renderEpisodeList(showData, episodesData, currentSeason, seasons
   }).join('');
 
   html += `</div>`;
-  
+
   return html;
 }

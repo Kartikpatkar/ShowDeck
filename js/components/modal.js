@@ -212,6 +212,82 @@ export function promptModal(title, message, placeholder = '') {
 }
 
 /**
+ * Edit Watch Count Modal
+ */
+export function editWatchCountModal(currentCount) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay animate-fade-in';
+    overlay.style.cssText = `
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      padding: var(--space-4);
+    `;
+
+    const modal = document.createElement('div');
+    modal.className = 'card';
+    modal.style.cssText = `
+      width: 100%; max-width: 300px; padding: var(--space-6);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      transform: scale(0.95);
+      animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    `;
+
+    let count = currentCount || 1;
+
+    modal.innerHTML = `
+      <h3 style="margin-bottom:var(--space-2); text-align:center;">Edit Watch Count</h3>
+      <div style="display:flex; align-items:center; justify-content:center; gap:var(--space-4); margin:var(--space-6) 0;">
+        <button class="btn btn-secondary btn-icon" id="dec-btn" style="border-radius:50%; width:40px; height:40px;">-</button>
+        <span id="count-display" style="font-size:24px; font-weight:var(--weight-bold); min-width:40px; text-align:center;">${count}</span>
+        <button class="btn btn-secondary btn-icon" id="inc-btn" style="border-radius:50%; width:40px; height:40px;">+</button>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:var(--space-3);">
+        <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="modal-ok">Save</button>
+      </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    const countDisplay = modal.querySelector('#count-display');
+    const decBtn = modal.querySelector('#dec-btn');
+    const incBtn = modal.querySelector('#inc-btn');
+
+    decBtn.addEventListener('click', () => {
+      if (count > 0) {
+        count--;
+        countDisplay.textContent = count;
+      }
+    });
+
+    incBtn.addEventListener('click', () => {
+      count++;
+      countDisplay.textContent = count;
+    });
+
+    const cleanup = (val) => {
+      overlay.style.opacity = '0';
+      modal.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        if (document.body.contains(overlay)) document.body.removeChild(overlay);
+        resolve(val);
+      }, 200);
+    };
+
+    modal.querySelector('#modal-cancel').addEventListener('click', () => cleanup(null));
+    modal.querySelector('#modal-ok').addEventListener('click', () => cleanup(count));
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) cleanup(null);
+    });
+  });
+}
+
+/**
  * Add To Collection modal
  */
 export async function addToCollectionModal(itemId, itemType) {

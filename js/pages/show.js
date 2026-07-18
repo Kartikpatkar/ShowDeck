@@ -718,14 +718,31 @@ function bindEvents() {
 
       const action = target.dataset.action;
 
-      if (action === 'add-watch') {
-        const { db } = await import('../database/db.js');
-        ep.watchCount = (ep.watchCount || 1) + 1;
-        ep.watchedAt = new Date();
-        await db.episodes.update(epId, { watchCount: ep.watchCount, watchedAt: ep.watchedAt });
-        toast('Added another watch', 'success');
-        renderContent(container);
-        bindEvents();
+      if (action === 'edit-watch') {
+        const { editWatchCountModal } = await import('../components/modal.js');
+        const newCount = await editWatchCountModal(ep.watchCount || 1);
+        
+        if (newCount !== null && newCount >= 0) {
+          const { db } = await import('../database/db.js');
+          ep.watchCount = newCount;
+          // If count is 0, we should ideally un-watch it, but let's keep it simple and just update count
+          // Or unwatch if count == 0:
+          if (newCount === 0) {
+            ep.watched = false;
+            ep.watchCount = 0;
+            ep.watchedAt = null;
+          } else {
+            ep.watchedAt = new Date();
+          }
+          await db.episodes.update(epId, { 
+            watchCount: ep.watchCount, 
+            watchedAt: ep.watchedAt,
+            watched: ep.watched
+          });
+          toast('Watch count updated', 'success');
+          renderContent(container);
+          bindEvents();
+        }
         return;
       }
 
