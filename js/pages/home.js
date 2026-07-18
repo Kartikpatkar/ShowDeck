@@ -174,17 +174,17 @@ export async function render() {
         : '';
 
       cards.push(`
-        <a href="#/show/${show.tmdbId}" class="poster-card" id="cw-${show.id}" style="position:relative;overflow:hidden;border-radius:var(--radius-md);">
-          ${posterUrl
+        <a href="#/show/${show.tmdbId}" class="poster-card relative overflow-hidden rounded-md" id="cw-${show.id}">
+          ${posterUrl 
             ? `<img class="poster-card-image" src="${posterUrl}" alt="${show.title}" loading="lazy">`
             : `<div class="poster-card-image skeleton"></div>`
           }
-          <div class="poster-card-overlay" style="background:linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%); opacity:1; padding:var(--space-2); padding-bottom:12px; display:flex; flex-direction:column; justify-content:flex-end;">
-            <div style="font-weight:var(--weight-bold); color:white; font-size:var(--text-sm); line-height:1.2; text-shadow:0 1px 2px rgba(0,0,0,0.8);">${show.title}</div>
-            ${nextLabel ? `<div style="font-size:11px; color:hsla(0,0%,100%,0.8); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,0.8);">${nextLabel}</div>` : ''}
+          <div class="poster-card-overlay flex flex-col justify-end p-2 pb-3 opacity-100" style="background:linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);">
+            <div class="font-bold text-white text-sm leading-tight" style="text-shadow:0 1px 2px rgba(0,0,0,0.8);">${show.title}</div>
+            ${nextLabel ? `<div class="text-[11px] text-white/80 mt-[2px] truncate" style="text-shadow:0 1px 2px rgba(0,0,0,0.8);">${nextLabel}</div>` : ''}
           </div>
-          <div class="progress-bar-container" style="position:absolute; bottom:0; left:0; width:100%; height:4px; margin:0; border-radius:0; background:rgba(255,255,255,0.25); z-index:3;">
-            <div class="progress-bar-fill" style="width:${progress.percentage}%; border-radius:0;"></div>
+          <div class="progress-bar-container absolute bottom-0 left-0 w-full h-1 m-0 rounded-none bg-white/25 z-10">
+            <div class="progress-bar-fill rounded-none" style="width:${progress.percentage}%;"></div>
           </div>
         </a>
       `);
@@ -220,17 +220,17 @@ export async function render() {
         : '';
 
       cards.push(`
-        <a href="#/show/${show.tmdbId}" class="poster-card" style="position:relative;overflow:hidden;border-radius:var(--radius-md);">
-          ${posterUrl
-            ? `<img class="poster-card-image" src="${posterUrl}" alt="${show.title}" loading="lazy" style="filter: grayscale(80%) opacity(0.7);">`
-            : `<div class="poster-card-image skeleton" style="filter: grayscale(80%) opacity(0.7);"></div>`
+        <a href="#/show/${show.tmdbId}" class="poster-card relative overflow-hidden rounded-md">
+          ${posterUrl 
+            ? `<img class="poster-card-image grayscale-[80%] opacity-70" src="${posterUrl}" alt="${show.title}" loading="lazy">`
+            : `<div class="poster-card-image skeleton grayscale-[80%] opacity-70"></div>`
           }
-          <div class="poster-card-overlay" style="background:linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%); opacity:1; padding:var(--space-2); padding-bottom:12px; display:flex; flex-direction:column; justify-content:flex-end;">
-            <div style="font-weight:var(--weight-bold); color:white; font-size:var(--text-sm); line-height:1.2; text-shadow:0 1px 2px rgba(0,0,0,0.8);">${show.title}</div>
-            ${nextLabel ? `<div style="font-size:11px; color:hsla(0,0%,100%,0.8); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,0.8);">${nextLabel}</div>` : ''}
+          <div class="poster-card-overlay flex flex-col justify-end p-2 pb-3 opacity-100" style="background:linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);">
+            <div class="font-bold text-white text-sm leading-tight" style="text-shadow:0 1px 2px rgba(0,0,0,0.8);">${show.title}</div>
+            ${nextLabel ? `<div class="text-[11px] text-white/80 mt-[2px] truncate" style="text-shadow:0 1px 2px rgba(0,0,0,0.8);">${nextLabel}</div>` : ''}
           </div>
-          <div class="progress-bar-container" style="position:absolute; bottom:0; left:0; width:100%; height:4px; margin:0; border-radius:0; background:rgba(255,255,255,0.25); z-index:3;">
-            <div class="progress-bar-fill" style="width:${progress.percentage}%; border-radius:0; background:var(--text-secondary);"></div>
+          <div class="progress-bar-container absolute bottom-0 left-0 w-full h-1 m-0 rounded-none bg-white/25 z-10">
+            <div class="progress-bar-fill rounded-none bg-secondary" style="width:${progress.percentage}%;"></div>
           </div>
         </a>
       `);
@@ -365,24 +365,25 @@ export async function render() {
   const userName = localStorage.getItem('showdeck_user_name') || '';
   
   const onboardingHtml = !apiKey ? `
-    <div class="card" style="margin-bottom:var(--space-8); border: 2px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); padding: var(--space-6);">
-      <h2 style="margin-bottom:var(--space-2);">Action Required: Missing API Key 🔌</h2>
-      <p style="margin-bottom:var(--space-4); color:var(--text-secondary);">
-        ShowDeck requires a free TMDB API key to search for and track shows. Your key is stored securely on your device.
+    <div class="card mb-8 p-6" style="border: 2px solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent);">
+      <h2 class="mb-2">Action Required: Missing API Key 🔌</h2>
+      <p class="mb-4 text-secondary">
+        ShowDeck connects directly to TMDB to fetch show metadata and posters. Please enter a free TMDB API key to unlock the app.
       </p>
-      <div style="display:flex; flex-direction:column; gap:var(--space-3);">
-        ${!userName ? `<input type="text" id="home-user-name" class="input" placeholder="What should we call you? (Optional)" style="width:100%; max-width:400px;">` : ''}
-        <label style="display:flex; align-items:center; gap:var(--space-2); cursor:pointer; font-size:var(--text-sm); color:var(--text-secondary);">
-          <input type="checkbox" id="home-adult-content" style="width:16px;height:16px;accent-color:var(--color-primary);">
+      <div class="flex flex-col gap-3">
+        ${!userName ? `<input type="text" id="home-user-name" class="input w-full max-w-[400px]" placeholder="What should we call you? (Optional)">` : ''}
+        <label class="flex items-center gap-2 cursor-pointer text-sm text-secondary">
+          <input type="checkbox" id="home-adult-content" class="w-4 h-4 accent-primary">
           <span>Include Adult Content (PG-18+ results)</span>
         </label>
-        <div style="display:flex; gap:var(--space-2);">
-          <input type="text" autocomplete="off" spellcheck="false" id="home-api-key" class="input" placeholder="Enter TMDB API Key" style="flex:1;">
-          <button class="btn btn-primary" id="home-save-key">Save & Connect</button>
+        <div class="flex gap-2">
+          <input type="text" autocomplete="off" spellcheck="false" id="home-api-key" class="input flex-1" placeholder="Enter TMDB API Key">
+          <button class="btn btn-primary" id="home-save-key">Save & Unlock</button>
         </div>
       </div>
-      <p style="margin-top:var(--space-2); font-size:var(--text-xs); color:var(--text-tertiary);">
-        <a href="https://developer.themoviedb.org/docs" target="_blank" style="color:var(--color-primary); text-decoration:underline;">Get a free key here</a>. 
+      <p class="mt-2 text-xs text-tertiary">
+        <a href="https://developer.themoviedb.org/docs" target="_blank" class="text-accent underline">Get a free key here</a>. 
+        Your key is stored locally on this device.
       </p>
     </div>
   ` : '';
@@ -409,8 +410,8 @@ export async function render() {
     'recent': `
       <div class="section">
         <div class="section-header">
-          <div style="display:flex;align-items:center;gap:var(--space-4);">
-            <h2 class="section-title" style="margin:0;">Recently Added</h2>
+          <div class="flex items-center gap-4">
+            <h2 class="section-title m-0">Recently Added</h2>
             <div class="view-toggle" id="home-view-toggle" role="group">
               <button class="btn btn-icon btn-sm ${viewMode === 'grid' ? 'btn-primary' : 'btn-ghost'}" data-view="grid">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/></svg>
@@ -432,21 +433,21 @@ export async function render() {
 
   return `
     <div class="page-container animate-fade-in">
-      <div class="page-header" style="align-items:flex-start;">
+      <div class="page-header items-start">
         <div class="page-header-left">
           <h1 class="page-title">Welcome back${userName ? `, ${userName}` : ''} 👋</h1>
           <p class="page-subtitle">Here's what's happening with your entertainment.</p>
         </div>
-        <button class="btn btn-secondary btn-sm" id="customize-dashboard-btn" style="display:flex;align-items:center;gap:var(--space-2);">
+        <button class="btn btn-secondary btn-sm flex items-center gap-2" id="customize-dashboard-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           <span class="hide-mobile">Customize</span>
         </button>
       </div>
 
-      <div id="customize-modal" class="card hidden" style="margin-bottom:var(--space-6); padding:var(--space-6); background:var(--surface-2); border-color:var(--color-primary);">
-        <h3 style="margin-top:0; margin-bottom:var(--space-4);">Customize Dashboard</h3>
-        <p style="font-size:var(--text-sm); color:var(--text-tertiary); margin-bottom:var(--space-4);">Select and reorder the sections you want to see on your home screen.</p>
-        <div style="display:flex; flex-direction:column; gap:var(--space-2);" id="widget-checkboxes">
+      <div id="customize-modal" class="card hidden mb-6 p-6 bg-surface-2 border-primary">
+        <h3 class="mt-0 mb-4">Customize Dashboard</h3>
+        <p class="text-sm text-tertiary mb-4">Select and reorder the sections you want to see on your home screen.</p>
+        <div class="flex flex-col gap-2" id="widget-checkboxes">
           ${(() => {
             const allWidgets = {
               'watching': 'Watching',
@@ -458,20 +459,20 @@ export async function render() {
             const orderedKeys = [...userWidgets, ...Object.keys(allWidgets).filter(k => !userWidgets.includes(k))];
             
             return orderedKeys.map(k => `
-              <div class="widget-row card" style="display:flex; align-items:center; justify-content:space-between; padding:var(--space-2) var(--space-3); background:var(--surface-1);">
-                <label style="display:flex; align-items:center; gap:var(--space-3); cursor:pointer; flex:1;">
-                  <input type="checkbox" value="${k}" ${userWidgets.includes(k) ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--color-primary);">
+              <div class="widget-row card flex items-center justify-between py-2 px-3 bg-surface-1">
+                <label class="flex items-center gap-3 cursor-pointer flex-1">
+                  <input type="checkbox" value="${k}" ${userWidgets.includes(k) ? 'checked' : ''} class="w-[18px] h-[18px] accent-primary">
                   <span>${allWidgets[k]}</span>
                 </label>
-                <div style="display:flex; gap:var(--space-1);">
-                  <button class="btn btn-ghost btn-sm" data-move="up" style="padding:4px; height:auto; min-height:0;">▲</button>
-                  <button class="btn btn-ghost btn-sm" data-move="down" style="padding:4px; height:auto; min-height:0;">▼</button>
+                <div class="flex gap-1">
+                  <button class="btn btn-ghost btn-sm p-1 h-auto min-h-0" data-move="up">▲</button>
+                  <button class="btn btn-ghost btn-sm p-1 h-auto min-h-0" data-move="down">▼</button>
                 </div>
               </div>
             `).join('');
           })()}
         </div>
-        <div style="display:flex; justify-content:flex-end; gap:var(--space-3); margin-top:var(--space-4);">
+        <div class="flex justify-end gap-3 mt-4">
           <button class="btn btn-ghost" id="cancel-customize-btn">Cancel</button>
           <button class="btn btn-primary" id="save-customize-btn">Save Layout</button>
         </div>

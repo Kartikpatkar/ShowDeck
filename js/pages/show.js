@@ -21,10 +21,10 @@ let activeTab = 'episodes'; // 'episodes' | 'cast'
 export function render() {
   return `
     <div class="page-container animate-fade-in" id="detail-container">
-      <div style="padding:var(--space-12);text-align:center;">
-        <div class="skeleton" style="width:100%;height:300px;border-radius:var(--radius-xl);margin-bottom:var(--space-6);"></div>
-        <div class="skeleton" style="width:60%;height:40px;margin:0 auto var(--space-4);"></div>
-        <div class="skeleton" style="width:40%;height:20px;margin:0 auto;"></div>
+      <div class="p-12 text-center">
+        <div class="skeleton w-full h-[300px] rounded-xl mb-6"></div>
+        <div class="skeleton w-[60%] h-10 mx-auto mb-4"></div>
+        <div class="skeleton w-[40%] h-5 mx-auto"></div>
       </div>
     </div>
   `;
@@ -285,22 +285,22 @@ function renderContent(container) {
 
   container.innerHTML = `
     <!-- Back Button -->
-    <div style="padding:var(--space-4) var(--space-4) 0; position:relative; z-index:10; display:flex; justify-content:space-between; align-items:center;">
-      <button class="btn btn-ghost" id="back-btn" style="padding:var(--space-2); margin-left:calc(-1 * var(--space-2)); font-weight:var(--weight-medium);">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="m15 18-6-6 6-6"/></svg>
+    <div class="pt-4 px-4 pb-0 relative z-10 flex justify-between items-center">
+      <button class="btn btn-ghost p-2 -ml-2 font-medium" id="back-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="m15 18-6-6 6-6"/></svg>
         Back
       </button>
-      <div style="display:flex;gap:var(--space-2);align-items:center;">
+      <div class="flex gap-2 items-center">
         ${isTracked ? `
-          <span class="text-tertiary" style="font-size:var(--text-xs);margin-right:var(--space-2);display:none;" id="last-synced-text">Synced ${timeAgo(showData.updatedAt)}</span>
-          <button class="btn btn-sm btn-ghost" id="sync-show-btn" style="color:var(--text-secondary);" aria-label="Sync with TMDB" data-tooltip="Sync">
+          <span class="text-tertiary text-xs mr-2 hidden" id="last-synced-text">Synced ${timeAgo(showData.updatedAt)}</span>
+          <button class="btn btn-sm btn-ghost text-secondary" id="sync-show-btn" aria-label="Sync with TMDB" data-tooltip="Sync">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
             Sync
           </button>
         ` : ''}
         ${imdbUrl ? `
-          <a href="${imdbUrl}" target="_blank" class="btn btn-sm btn-ghost" style="color:var(--color-warning);">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          <a href="${imdbUrl}" target="_blank" class="btn btn-sm btn-ghost text-warning">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             IMDb
           </a>
         ` : ''}
