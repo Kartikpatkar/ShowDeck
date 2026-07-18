@@ -94,7 +94,7 @@ export function render() {
   `;
 }
 
-export function init() {
+export async function init() {
   const searchInput = document.getElementById('search-input');
   const searchForm = document.getElementById('search-form');
   const clearBtn = document.getElementById('search-clear-btn');
@@ -129,6 +129,7 @@ export function init() {
     }
     
     currentPage = 1;
+    sessionStorage.setItem('showdeck-search-page', 1);
     performSearch();
   }, window.innerWidth < 768 ? 500 : 300);
 
@@ -211,15 +212,18 @@ export function init() {
     if (currentQuery) {
       document.getElementById('search-results').innerHTML = '';
       currentPage = 1;
+      sessionStorage.setItem('showdeck-search-page', 1);
       performSearch();
     } else {
       currentPage = 1;
+      sessionStorage.setItem('showdeck-search-page', 1);
       loadDiscover();
     }
   });
 
   document.getElementById('load-more-btn')?.addEventListener('click', () => {
     currentPage++;
+    sessionStorage.setItem('showdeck-search-page', currentPage);
     if (currentQuery) {
       performSearch(true);
     } else {
@@ -257,10 +261,17 @@ export function init() {
     searchInput.value = savedQuery;
     currentQuery = savedQuery;
     clearBtn?.classList.remove('hidden');
-    currentPage = 1;
-    performSearch();
+    let targetPage = parseInt(sessionStorage.getItem('showdeck-search-page')) || 1;
+    for (let p = 1; p <= targetPage; p++) {
+      currentPage = p;
+      await performSearch(p > 1);
+    }
   } else {
-    loadDiscover();
+    let targetPage = parseInt(sessionStorage.getItem('showdeck-search-page')) || 1;
+    for (let p = 1; p <= targetPage; p++) {
+      currentPage = p;
+      await loadDiscover(p > 1);
+    }
   }
 
   if (searchType !== 'multi' && !currentQuery) {

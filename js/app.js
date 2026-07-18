@@ -6,17 +6,21 @@
 import { Router } from './router.js';
 import { Sidebar } from './components/sidebar.js';
 
-export const APP_VERSION = '1.6.3';
+export const APP_VERSION = '1.6.4';
 
 const router = new Router();
 let sidebar = null;
-const scrollPositions = new Map();
 let currentModule = null; // Track current module for memory cleanup
+const appScrollPositions = new Map();
+window.appScrollPositions = appScrollPositions; // for backward compat/debugging
 
-window.addEventListener('scroll', () => {
-  const hash = window.location.hash || '#/';
-  scrollPositions.set(hash, window.scrollY);
-}, { passive: true });
+// Listen for scroll on the main scrollable area
+document.addEventListener('scroll', (e) => {
+  if (e.target && e.target.classList && e.target.classList.contains('main-content')) {
+    const hash = window.location.hash || '#/';
+    appScrollPositions.set(hash, e.target.scrollTop);
+  }
+}, true);
 
 // Page container reference
 const getPageContainer = () => document.getElementById('page-content');
@@ -63,14 +67,17 @@ async function loadPage(loader, params = {}) {
       await module.init(params);
     }
     
-    // Restore scroll position
+    // Restore scroll position AFTER module initialization is fully complete
     const hash = window.location.hash || '#/';
-    if (scrollPositions.has(hash)) {
-      requestAnimationFrame(() => {
-        window.scrollTo(0, scrollPositions.get(hash));
-      });
-    } else {
-      window.scrollTo(0, 0);
+    const contentArea = document.querySelector('.main-content');
+    if (contentArea) {
+      if (appScrollPositions.has(hash)) {
+        requestAnimationFrame(() => {
+          contentArea.scrollTop = appScrollPositions.get(hash);
+        });
+      } else {
+        contentArea.scrollTop = 0;
+      }
     }
   } catch (err) {
     console.error('[ShowDeck] Page load error:', err);
@@ -229,25 +236,7 @@ router.afterEach = (route) => {
   } else {
     document.body.classList.remove('is-onboarding');
   }
-
-  // Scroll content to saved position or top
-  const content = document.querySelector('.main-content');
-  if (content) {
-    const savedScroll = window.appScrollPositions?.get(window.location.hash) || 0;
-    // Delay slightly to let content render before scrolling
-    setTimeout(() => {
-      if (content) content.scrollTop = savedScroll;
-    }, 150);
-  }
 };
-
-// ── Track Scroll Positions ──
-window.appScrollPositions = new Map();
-document.addEventListener('scroll', (e) => {
-  if (e.target && e.target.classList && e.target.classList.contains('main-content')) {
-    window.appScrollPositions.set(window.location.hash, e.target.scrollTop);
-  }
-}, true);
 
 // ── Initialize App ──
 function init() {

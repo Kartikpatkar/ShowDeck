@@ -24,30 +24,30 @@ export function render() {
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:var(--space-8);">
+      <div class="grid-display gap-8" style="grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));">
         
         <!-- Personalization -->
-        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-6);">
+        <div class="card flex flex-col gap-4 p-6">
           <div>
-            <h3 class="section-title" style="margin:0;">Personalization</h3>
-            <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">Customize your ShowDeck experience.</p>
+            <h3 class="section-title m-0">Personalization</h3>
+            <p class="text-tertiary text-sm mt-1">Customize your ShowDeck experience.</p>
           </div>
-          <div style="display:flex;flex-direction:column;gap:var(--space-3);">
-            <label style="font-weight:var(--weight-medium);">Your Name</label>
-            <div style="display:flex;gap:var(--space-2);">
-              <input type="text" id="user-name-input" class="input" placeholder="What should we call you?" value="${localStorage.getItem('showdeck_user_name') || ''}" style="flex:1;">
+          <div class="flex flex-col gap-3">
+            <label class="font-medium">Your Name</label>
+            <div class="flex gap-2">
+              <input type="text" id="user-name-input" class="input flex-1" placeholder="What should we call you?" value="${localStorage.getItem('showdeck_user_name') || ''}">
               <button class="btn btn-secondary" id="save-name-btn">Save</button>
             </div>
             
-            <label style="display:flex; align-items:center; gap:var(--space-2); cursor:pointer; font-size:var(--text-sm); margin-top:var(--space-2);">
-              <input type="checkbox" id="adult-content-setting" style="width:16px;height:16px;accent-color:var(--color-primary);" ${localStorage.getItem('showdeck_include_adult') === 'true' ? 'checked' : ''}>
+            <label class="flex items-center gap-2 cursor-pointer text-sm mt-2">
+              <input type="checkbox" id="adult-content-setting" class="w-4 h-4 accent-primary" ${localStorage.getItem('showdeck_include_adult') === 'true' ? 'checked' : ''}>
               <span>Include Adult Content (PG-18+ results)</span>
             </label>
           </div>
 
-          <div style="display:flex;flex-direction:column;gap:var(--space-3);margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--border-color);">
-            <label style="font-weight:var(--weight-medium);">Base Theme</label>
-            <select id="base-theme-select" class="input" style="width:100%;">
+          <div class="flex flex-col gap-3 mt-4 pt-4 border-t-subtle">
+            <label class="font-medium">Base Theme</label>
+            <select id="base-theme-select" class="input w-full">
               <option value="system">System Default</option>
               <option value="light">Light</option>
               <option value="dark">Dark</option>
@@ -59,9 +59,9 @@ export function render() {
             </select>
           </div>
 
-          <div style="display:flex;flex-direction:column;gap:var(--space-3);margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--border-color);">
-            <label style="font-weight:var(--weight-medium);">Accent Color</label>
-            <div style="display:flex;gap:var(--space-3);align-items:center;" id="theme-color-picker">
+          <div class="flex flex-col gap-3 mt-4 pt-4 border-t-subtle">
+            <label class="font-medium">Accent Color</label>
+            <div class="flex gap-3 items-center" id="theme-color-picker">
               <button class="btn btn-ghost color-preset" data-theme="purple" style="width:40px;height:40px;border-radius:50%;background:hsl(245, 58%, 51%);border:2px solid transparent;" aria-label="Purple"></button>
               <button class="btn btn-ghost color-preset" data-theme="blue" style="width:40px;height:40px;border-radius:50%;background:hsl(210, 100%, 50%);border:2px solid transparent;" aria-label="Blue"></button>
               <button class="btn btn-ghost color-preset" data-theme="green" style="width:40px;height:40px;border-radius:50%;background:hsl(152, 55%, 42%);border:2px solid transparent;" aria-label="Green"></button>
@@ -75,34 +75,34 @@ export function render() {
         </div>
         
         <!-- API Keys -->
-        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-6);">
+        <div class="card flex flex-col gap-4 p-6">
           <div>
-            <h3 class="section-title" style="margin:0;">API Providers</h3>
-            <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">ShowDeck connects directly to these services.</p>
+            <h3 class="section-title m-0">API Providers</h3>
+            <p class="text-tertiary text-sm mt-1">ShowDeck connects directly to these services.</p>
           </div>
           
-          <div style="display:flex;flex-direction:column;gap:var(--space-3);">
-            <label style="font-weight:var(--weight-medium);display:flex;justify-content:space-between;align-items:center;">
+          <div class="flex flex-col gap-3">
+            <label class="font-medium flex justify-between items-center">
               <span>TMDB API Key</span>
-              <div style="display:flex;gap:var(--space-2);align-items:center;">
-                <span id="api-status-badge" class="badge" style="display:none;"></span>
+              <div class="flex gap-2 items-center">
+                <span id="api-status-badge" class="badge hidden"></span>
                 <span class="badge badge-primary">Required for Movies</span>
               </div>
             </label>
             <input type="text" autocomplete="off" spellcheck="false" id="tmdb-key-input" class="input" placeholder="Enter your TMDB API Key (v3 auth)" value="${currentKey}">
-            <p class="text-tertiary" style="font-size:var(--text-xs);">
-              Your key is stored locally on this device and never sent to our servers. <a href="https://developer.themoviedb.org/docs" target="_blank" style="color:var(--color-primary);">Get a free key here.</a>
+            <p class="text-tertiary text-xs">
+              Your key is stored locally on this device and never sent to our servers. <a href="https://developer.themoviedb.org/docs" target="_blank" class="text-accent">Get a free key here.</a>
             </p>
             <button class="btn btn-primary" id="save-key-btn">Save Key</button>
 
-            <hr style="border:0;border-top:1px solid var(--border-subtle);margin:var(--space-4) 0;">
-            <label style="font-weight:var(--weight-medium);">Daily API Usage (Local Tracker)</label>
-            <div style="display:flex;flex-direction:column;gap:var(--space-2);">
-              <div style="display:flex;justify-content:space-between;font-size:var(--text-sm);">
+            <hr class="divider my-4">
+            <label class="font-medium">Daily API Usage (Local Tracker)</label>
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between text-sm">
                 <span>TMDB Requests</span>
                 <span class="text-tertiary">${getApiUsage().tmdb} / ~20,000</span>
               </div>
-              <div style="display:flex;justify-content:space-between;font-size:var(--text-sm);">
+              <div class="flex justify-between text-sm">
                 <span>TVMaze Requests</span>
                 <span class="text-tertiary">${getApiUsage().tvmaze} / ~2,000</span>
               </div>
@@ -110,59 +110,38 @@ export function render() {
           </div>
         </div>
 
-        <!-- Google Drive Cloud Sync -->
-        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-6);border-color:var(--color-primary);">
-          <div>
-            <h3 class="section-title" style="margin:0;display:flex;align-items:center;gap:var(--space-2);">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L10.3 21Z"/><path d="m14 19.5 3-3 3 3"/><path d="M17 22v-5.5"/></svg>
-              Google Drive Sync
-            </h3>
-            <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">Backup your data securely to your personal Google Drive.</p>
+        <!-- Sync & Backup -->
+        <div class="card flex flex-col gap-4 p-6" style="grid-column: 1 / -1;">
+          <div class="flex items-center gap-2 mb-2">
+            <svg class="w-6 h-6 text-accent" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l2-9 5 18 5-18 2 9h4"/></svg>
+            <h3 class="section-title m-0">ShowDeck Sync</h3>
           </div>
           
-          <div style="display:flex;flex-direction:column;gap:var(--space-3);" id="drive-sync-actions">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-2);">
-              <span style="font-size:var(--text-sm);font-weight:var(--weight-medium);">Last Sync</span>
-              <span class="text-tertiary" style="font-size:var(--text-xs);" id="drive-last-sync">
-                ${localStorage.getItem('showdeck_last_drive_sync') ? timeAgo(localStorage.getItem('showdeck_last_drive_sync')) : 'Never'}
-              </span>
+          <div class="flex flex-col gap-3">
+            <div class="flex justify-between items-center bg-surface-2 p-4 rounded-md">
+              <div>
+                <h4 class="font-medium m-0">Google Drive Sync</h4>
+                <p class="text-tertiary text-sm mt-1 mb-0" id="drive-sync-status">Keep your library backed up to your personal Google Drive.</p>
+              </div>
             </div>
-            <button class="btn btn-primary" id="drive-backup-btn" style="width:100%;justify-content:center;">
-              Backup to Google Drive
-            </button>
-            <button class="btn btn-secondary" id="drive-restore-btn" style="width:100%;justify-content:center;">
-              Restore from Google Drive
-            </button>
-            <button class="btn btn-danger" id="drive-clear-btn" style="width:100%;justify-content:center;margin-top:var(--space-2);">
-              Delete Cloud Backup
-            </button>
-            <button class="btn btn-secondary" id="drive-signout-btn" style="width:100%;justify-content:center;margin-top:var(--space-2);">
-              Sign Out of Google
-            </button>
-          </div>
+            
+            <div class="flex flex-col gap-3" id="drive-sync-actions">
+              <button class="btn btn-primary" id="drive-backup-btn">Backup to Google Drive</button>
+              <button class="btn btn-secondary" id="drive-restore-btn">Restore from Google Drive</button>
+              <button class="btn btn-ghost text-error" id="drive-clear-btn">Delete Cloud Backup</button>
+              <button class="btn btn-ghost" id="drive-signout-btn">Sign Out of Google</button>
+            </div>
 
-          <div style="display:flex;flex-direction:column;gap:var(--space-3);" id="drive-signin-actions">
-            <button class="btn btn-primary" id="drive-signin-btn" style="width:100%;justify-content:center;background:#4285F4;border:none;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" style="margin-right:8px;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-              Sign In with Google
-            </button>
-            <p class="text-tertiary" style="font-size:var(--text-xs);text-align:center;margin:0;">Sign in to securely backup and restore your library across devices.</p>
+            <div class="hidden flex flex-col gap-3" id="drive-signin-actions">
+              <button class="btn btn-primary bg-blue-600 border-none" id="drive-signin-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" class="mr-2"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                Sign In with Google
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Versioned Backups -->
-        <div class="card" style="display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-6);">
-          <div>
-            <h3 class="section-title" style="margin:0;">Versioned Backups</h3>
-            <p class="text-tertiary" style="font-size:var(--text-sm);margin-top:var(--space-1);">Local database snapshots (V2 schema).</p>
-          </div>
-          
-          <div style="display:flex;flex-direction:column;gap:var(--space-3);">
-            <button class="btn btn-primary" id="create-manual-backup-btn" style="width:100%;justify-content:center;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-              Create Manual Backup
-            </button>
-
             <div style="margin-top:var(--space-4);">
               <h4 style="font-size:var(--text-sm); color:var(--text-secondary); margin-bottom:var(--space-2);">Available Snapshots</h4>
               <div id="backup-list-container" style="display:flex; flex-direction:column; gap:var(--space-2);">
@@ -197,7 +176,7 @@ export function render() {
             </p>
           </div>
           
-          <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+          <div class="flex flex-col gap-3">
             <button class="btn btn-primary" id="tvtime-import-btn">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
               Select TV Time ZIP File
