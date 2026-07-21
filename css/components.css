@@ -135,7 +135,12 @@
 
 /* ── Show/Movie Poster Card ── */
 
+media-card {
+  display: block;
+}
+
 .poster-card {
+  display: block;
   position: relative;
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -173,8 +178,35 @@
   transition: opacity var(--duration-normal) var(--ease-out);
 }
 
-.poster-card:hover .poster-card-overlay {
+.poster-card:hover .poster-card-overlay,
+.poster-card-overlay.always-visible {
   opacity: 1;
+}
+
+.poster-card-overlay.always-visible {
+  padding: var(--space-2) var(--space-2) var(--space-3) var(--space-2);
+  background: linear-gradient(
+    to top,
+    hsla(0, 0%, 0%, 0.9) 0%,
+    hsla(0, 0%, 0%, 0.4) 50%,
+    transparent 100%
+  );
+}
+
+.poster-card-overlay.always-visible .poster-card-title {
+  font-size: var(--text-sm);
+  margin-bottom: 2px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  line-height: 1.2;
+}
+
+.poster-card-overlay.always-visible .poster-card-meta {
+  font-size: 11px;
+  color: hsla(0, 0%, 100%, 0.8);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .poster-card-title {
@@ -228,6 +260,25 @@
 .progress-bar.success { background: var(--color-success); }
 .progress-bar.warning { background: var(--color-warning); }
 .progress-bar.accent { background: var(--color-accent); }
+
+.card-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: hsla(0, 0%, 100%, 0.25);
+  z-index: 10;
+}
+
+.card-progress-bar {
+  height: 100%;
+  background: var(--color-primary);
+}
+
+.card-progress-bar.secondary {
+  background: var(--text-secondary);
+}
 
 /* ── Badges / Status ── */
 

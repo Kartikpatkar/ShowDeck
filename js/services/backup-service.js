@@ -6,7 +6,7 @@ import { db, clearAllData } from '../database/db.js';
 
 export async function exportLocalBackup() {
   const backup = {
-    version: '1.6.4',
+    version: '1.6.5',
     settings: {
       tmdbKey: localStorage.getItem('showdeck_tmdb_key'),
       name: localStorage.getItem('showdeck_user_name'),

@@ -174,17 +174,17 @@ export async function render() {
         : '';
 
       cards.push(`
-        <a href="#/show/${show.tmdbId}" class="poster-card relative overflow-hidden rounded-md" id="cw-${show.id}">
+        <a href="#/show/${show.tmdbId}" class="poster-card" id="cw-${show.id}">
           ${posterUrl 
             ? `<img class="poster-card-image" src="${posterUrl}" alt="${show.title}" loading="lazy">`
             : `<div class="poster-card-image skeleton"></div>`
           }
-          <div class="poster-card-overlay flex flex-col justify-end p-2 pb-3 opacity-100" style="background:linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);">
-            <div class="font-bold text-white text-sm leading-tight" style="text-shadow:0 1px 2px rgba(0,0,0,0.8);">${show.title}</div>
-            ${nextLabel ? `<div class="text-[11px] text-white/80 mt-[2px] truncate" style="text-shadow:0 1px 2px rgba(0,0,0,0.8);">${nextLabel}</div>` : ''}
+          <div class="poster-card-overlay always-visible">
+            <div class="poster-card-title">${show.title}</div>
+            ${nextLabel ? `<div class="poster-card-meta">${nextLabel}</div>` : ''}
           </div>
-          <div class="progress-bar-container absolute bottom-0 left-0 w-full h-1 m-0 rounded-none bg-white/25 z-10">
-            <div class="progress-bar-fill rounded-none" style="width:${progress.percentage}%;"></div>
+          <div class="card-progress">
+            <div class="card-progress-bar" style="width:${progress.percentage}%;"></div>
           </div>
         </a>
       `);
@@ -220,17 +220,17 @@ export async function render() {
         : '';
 
       cards.push(`
-        <a href="#/show/${show.tmdbId}" class="poster-card relative overflow-hidden rounded-md">
+        <a href="#/show/${show.tmdbId}" class="poster-card">
           ${posterUrl 
-            ? `<img class="poster-card-image grayscale-[80%] opacity-70" src="${posterUrl}" alt="${show.title}" loading="lazy">`
-            : `<div class="poster-card-image skeleton grayscale-[80%] opacity-70"></div>`
+            ? `<img class="poster-card-image" src="${posterUrl}" alt="${show.title}" loading="lazy" style="filter: grayscale(80%); opacity: 0.7;">`
+            : `<div class="poster-card-image skeleton" style="filter: grayscale(80%); opacity: 0.7;"></div>`
           }
-          <div class="poster-card-overlay flex flex-col justify-end p-2 pb-3 opacity-100" style="background:linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);">
-            <div class="font-bold text-white text-sm leading-tight" style="text-shadow:0 1px 2px rgba(0,0,0,0.8);">${show.title}</div>
-            ${nextLabel ? `<div class="text-[11px] text-white/80 mt-[2px] truncate" style="text-shadow:0 1px 2px rgba(0,0,0,0.8);">${nextLabel}</div>` : ''}
+          <div class="poster-card-overlay always-visible">
+            <div class="poster-card-title">${show.title}</div>
+            ${nextLabel ? `<div class="poster-card-meta">${nextLabel}</div>` : ''}
           </div>
-          <div class="progress-bar-container absolute bottom-0 left-0 w-full h-1 m-0 rounded-none bg-white/25 z-10">
-            <div class="progress-bar-fill rounded-none bg-secondary" style="width:${progress.percentage}%;"></div>
+          <div class="card-progress">
+            <div class="card-progress-bar secondary" style="width:${progress.percentage}%;"></div>
           </div>
         </a>
       `);

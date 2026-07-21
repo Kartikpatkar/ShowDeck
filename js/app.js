@@ -6,7 +6,7 @@
 import { Router } from './router.js';
 import { Sidebar } from './components/sidebar.js';
 
-export const APP_VERSION = '1.6.4';
+export const APP_VERSION = '1.6.5';
 
 const router = new Router();
 let sidebar = null;
