@@ -1,6 +1,16 @@
 # Changelog
 
 All notable changes to ShowDeck will be documented in this file.
+## [1.6.5] - 2026-07-21
+
+### Added
+- **SEO & Accessibility**: Added visually-hidden semantic HTML blocks (`H1`, `H2`) to the index page to improve search engine crawling on the SPA without disrupting the UI.
+- **Security Headers**: Added deployment configuration files (`_headers`, `.htaccess`, `vercel.json`) to enforce strict security policies (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Content-Security-Policy`).
+
+### Fixed
+- **Dashboard Layout**: Replaced hallucinated inline Tailwind CSS utility classes in the "Watching" and "Paused" sections with standard BEM-structured CSS components (`.poster-card`).
+- **CSS Grid Alignment**: Fixed a bug where `<media-card>` elements inside the "Plan to Watch" CSS grid collapsed due to defaulting to inline display, by forcing `display: block`.
+
 
 ## [1.6.4] - 2026-07-19
 
