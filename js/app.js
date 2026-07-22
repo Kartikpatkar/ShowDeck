@@ -6,7 +6,7 @@
 import { Router } from './router.js';
 import { Sidebar } from './components/sidebar.js';
 
-export const APP_VERSION = '1.6.5';
+export const APP_VERSION = '1.6.6';
 
 const router = new Router();
 let sidebar = null;
@@ -212,7 +212,9 @@ router.onNotFound(() => {
   const onboarded = localStorage.getItem('showdeck_onboarded');
   if (!onboarded && window.location.hash !== '#/onboarding') {
     window.location.hash = '#/onboarding';
-  } else if (!window.location.hash) {
+  } else if (onboarded && window.location.hash === '#/onboarding') {
+    window.location.hash = '#/home';
+  } else if (!window.location.hash || window.location.hash === '#/') {
     window.location.hash = '#/home';
   }
 

@@ -1,9 +1,14 @@
 # Changelog
 
 All notable changes to ShowDeck will be documented in this file.
-## [1.6.5] - 2026-07-21
+## [1.6.6] - 2026-07-22
 
-### Added
+### Fixed
+- **Settings UI:** Fixed missing Google Drive Sign-In button visibility caused by conflicting CSS classes.
+- **Settings UI:** Corrected SVG dimensions for the ShowDeck Sync icon and removed hallucinated utility classes.
+- **Routing:** Fixed an edge-case routing loop where the app could permanently start on the Onboarding page.
+
+## [1.6.5] - 2026-07-21
 - **SEO & Accessibility**: Added visually-hidden semantic HTML blocks (`H1`, `H2`) to the index page to improve search engine crawling on the SPA without disrupting the UI.
 - **Security Headers**: Added deployment configuration files (`_headers`, `.htaccess`, `vercel.json`) to enforce strict security policies (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Content-Security-Policy`).
 
