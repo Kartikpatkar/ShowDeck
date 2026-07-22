@@ -212,7 +212,9 @@ router.onNotFound(() => {
   const onboarded = localStorage.getItem('showdeck_onboarded');
   if (!onboarded && window.location.hash !== '#/onboarding') {
     window.location.hash = '#/onboarding';
-  } else if (!window.location.hash) {
+  } else if (onboarded && window.location.hash === '#/onboarding') {
+    window.location.hash = '#/home';
+  } else if (!window.location.hash || window.location.hash === '#/') {
     window.location.hash = '#/home';
   }
 
