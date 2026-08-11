@@ -122,6 +122,7 @@ export function render() {
               <div>
                 <h4 class="font-medium m-0">Google Drive Sync</h4>
                 <p class="text-tertiary text-sm mt-1 mb-0" id="drive-sync-status">Keep your library backed up to your personal Google Drive.</p>
+                <p class="text-tertiary text-xs mt-1 mb-0">Last Sync: <span id="drive-last-sync">Never</span></p>
               </div>
             </div>
             
@@ -142,8 +143,11 @@ export function render() {
 
           <!-- Versioned Backups -->
           <div style="margin-top:var(--space-4);">
-            <h4 style="font-size:var(--text-sm); color:var(--text-secondary); margin-bottom:var(--space-2);">Available Snapshots</h4>
-              <div id="backup-list-container" style="display:flex; flex-direction:column; gap:var(--space-2);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-2);">
+              <h4 style="font-size:var(--text-sm); color:var(--text-secondary); margin:0;">Available Snapshots</h4>
+              <button class="btn btn-sm btn-ghost text-primary" id="create-snapshot-btn">+ Create</button>
+            </div>
+            <div id="backup-list-container" style="display:flex; flex-direction:column; gap:var(--space-2);">
                 <div class="spinner"></div>
               </div>
             </div>
@@ -266,6 +270,17 @@ export function init() {
   renderBackups();
   renderStorageInfo();
   initDrive().catch(err => console.error("Failed to init Drive", err));
+
+  const lastSyncStr = localStorage.getItem('showdeck_last_drive_sync');
+  const syncEl = document.getElementById('drive-last-sync');
+  if (syncEl) {
+    if (lastSyncStr) {
+      const date = new Date(lastSyncStr);
+      syncEl.textContent = isNaN(date.getTime()) ? lastSyncStr : date.toLocaleString();
+    } else {
+      syncEl.textContent = 'Never';
+    }
+  }
 }
 
 async function renderStorageInfo() {
@@ -417,6 +432,24 @@ async function checkApiStatus() {
 }
 
 function bindEvents() {
+  const createSnapshotBtn = document.getElementById('create-snapshot-btn');
+  createSnapshotBtn?.addEventListener('click', async () => {
+    try {
+      createSnapshotBtn.disabled = true;
+      createSnapshotBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div>';
+      const { createBackup } = await import('../database/backups.js');
+      await createBackup('manual');
+      toast('Snapshot created successfully', 'success');
+      renderBackups();
+    } catch (err) {
+      console.error(err);
+      toast('Failed to create snapshot', 'error');
+    } finally {
+      createSnapshotBtn.disabled = false;
+      createSnapshotBtn.textContent = '+ Create';
+    }
+  });
+
   const driveBackupBtn = document.getElementById('drive-backup-btn');
   driveBackupBtn?.addEventListener('click', async () => {
     try {

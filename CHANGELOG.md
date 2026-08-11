@@ -1,6 +1,17 @@
 # Changelog
 
 All notable changes to ShowDeck will be documented in this file.
+## [1.6.7] - 2026-08-12
+
+### Added
+- **SEO & Social:** Added Open Graph and Twitter Card tags to `index.html` for rich social media sharing previews.
+- **SEO:** Added `sitemap.xml` and `robots.txt` to improve search engine indexing.
+- **Legal:** Added `TERMS.md` and linked both Privacy Policy and Terms in the Settings footer.
+
+### Fixed
+- **Settings UI:** Restored the missing '+ Create' button for generating manual local backup snapshots.
+- **Settings UI:** Restored the 'Last Sync' timestamp under the Google Drive Sync section.
+
 ## [1.6.6] - 2026-07-22
 
 ### Fixed
