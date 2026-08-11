@@ -250,7 +250,11 @@ export function render() {
       </div>
 
       <div style="text-align:center;padding:var(--space-4) 0;">
-        <p class="text-tertiary" style="font-size:var(--text-xs);">ShowDeck v${APP_VERSION} • Privacy-first, offline-first entertainment tracker.</p>
+        <p class="text-tertiary" style="font-size:var(--text-xs); margin-bottom: 8px;">ShowDeck v${APP_VERSION} • Privacy-first, offline-first entertainment tracker.</p>
+        <div style="font-size:var(--text-xs); display:flex; justify-content:center; gap:var(--space-4);">
+          <a href="./PRIVACY.md" target="_blank" style="color:var(--text-secondary); text-decoration:underline;">Privacy Policy</a>
+          <a href="./TERMS.md" target="_blank" style="color:var(--text-secondary); text-decoration:underline;">Terms & Conditions</a>
+        </div>
       </div>
     </div>
   `;
