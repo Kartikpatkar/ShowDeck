@@ -66,7 +66,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
       // Add files sequentially to prevent local dev servers (Live Server) from choking on 48 concurrent requests
-      console.log('[SW] Starting sequential cache install...');
+      // console.log('[SW] Starting sequential cache install...');
       for (const url of URLS_TO_CACHE) {
         try {
           await cache.add(url);
@@ -74,7 +74,7 @@ self.addEventListener('install', (event) => {
           console.warn('[SW] Failed to cache:', url, err);
         }
       }
-      console.log('[SW] Finished cache install.');
+      // console.log('[SW] Finished cache install.');
     })
   );
   self.skipWaiting();
@@ -105,7 +105,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  console.log('[SW] Intercepted fetch for:', event.request.url);
+  // console.log('[SW] Intercepted fetch for:', event.request.url);
 
   // Fake TMDB API response when offline to prevent extension crashes
   if (requestUrl.origin === 'https://api.themoviedb.org') {
@@ -149,7 +149,7 @@ self.addEventListener('fetch', (event) => {
         let cachedResponse = null;
         try {
           cachedResponse = await caches.match(event.request.url, { ignoreSearch: true, ignoreVary: true });
-          if (cachedResponse) console.log('[SW] Found in cache:', event.request.url);
+          // if (cachedResponse) console.log('[SW] Found in cache:', event.request.url);
         } catch (err) {
           console.error('[SW] Cache match error:', err);
         }
@@ -166,7 +166,7 @@ self.addEventListener('fetch', (event) => {
             }
             return networkResponse;
           }).catch(err => {
-            console.log('[SW] Background fetch failed (offline expected):', err.message);
+            // console.log('[SW] Background fetch failed (offline expected):', err.message);
           });
         } catch (syncErr) {
           console.error('[SW] Sync fetch error:', syncErr);
@@ -181,7 +181,7 @@ self.addEventListener('fetch', (event) => {
           const response = await networkFetch;
           if (response) return response;
         } catch (e) {
-          console.log('[SW] Network fallback failed:', e.message);
+          // console.log('[SW] Network fallback failed:', e.message);
           // 4. Fallbacks if network fails and cache is empty
           if (event.request.mode === 'navigate') {
             const indexUrl = new URL('./index.html', self.location).href;

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - ShowDeck</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/utilities.css">
+  <style>
+    body { padding: 2rem; max-width: 800px; margin: 0 auto; line-height: 1.6; }
+    h1, h2 { color: var(--text-color); margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.5rem; }
+    p, li { color: var(--text-color-subtle); margin-bottom: 0.5rem; }
+    ul { list-style: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+    a { color: var(--primary-color); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    hr { border: 0; border-top: 1px solid var(--border-color); margin: 2rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy for ShowDeck</h1>
+  <p><strong>Last Updated:</strong> July 5, 2026</p>
+  <p>Your privacy and the security of your data are of paramount importance. This Privacy Policy details how <strong>ShowDeck</strong> handles data, what information is stored, and your controls over your personal data.</p>
+  <hr>
+  <h2>1. What Data We Collect</h2>
+  <p>To provide its core functionality (entertainment tracking), ShowDeck stores the following information locally on your device:</p>
+  <ul>
+    <li><strong>Authentication Information</strong>: Your personal TMDB API Key.</li>
+    <li><strong>Library Metadata</strong>: Show and movie titles, IDs, posters, overviews, ratings, watch status, and personal notes.</li>
+    <li><strong>User Preferences</strong>: UI configuration settings, such as your theme preference (light/dark mode, accent colors), your display name, and adult content toggle preference.</li>
+  </ul>
+  <hr>
+  <h2>2. Adult Content &amp; Filtering</h2>
+  <p>By default, ShowDeck enforces a "safe" search environment by automatically filtering out adult (PG-18+) content when making requests to the TMDB API.</p>
+  <p>If you choose to enable the <strong>Include Adult Content</strong> toggle in the onboarding or settings screen, you must confirm that you are of legal age. Your preference is stored purely locally (<code>localStorage</code>) and simply instructs your browser to include the <code>include_adult=true</code> flag when talking directly to TMDB. We do not report, track, or monitor your adult content preference or viewing history.</p>
+  <h2>3. How Data Is Stored and Transmitted</h2>
+  <p>ShowDeck is designed with an <strong>offline-first, zero-tracking architecture</strong>:</p>
+  <ul>
+    <li><strong>Local Storage</strong>: All your data is stored locally on your physical device using the browser's IndexedDB (<code>Dexie.js</code>) and <code>localStorage</code>.</li>
+    <li><strong>No Cloud Syncing</strong>: The application does <strong>not</strong> use any cloud services for storage. Your data never leaves your device unless you manually export it.</li>
+    <li><strong>No Backend Servers</strong>: ShowDeck does <strong>not</strong> transmit any usage data, analytics, or library data to any ShowDeck-owned servers. We do not run a backend database.</li>
+    <li><strong>Direct API Calls</strong>: When searching for shows or syncing data, your browser makes requests directly to <code>api.themoviedb.org</code> and <code>api.tvmaze.com</code>. These third-party services may collect standard connection logs (like IP addresses) subject to their own privacy policies.</li>
+  </ul>
+  <hr>
+  <h2>4. Data Portability &amp; Deletion</h2>
+  <p>You have complete control over your data:</p>
+  <ul>
+    <li><strong>Export</strong>: You can export your entire library at any time to a JSON or CSV file via the Settings page.</li>
+    <li><strong>Deletion</strong>: You can instantly and permanently delete all your data using the "Wipe All Data" button in Settings. This clears IndexedDB and all local storage keys, leaving no trace behind.</li>
+  </ul>
+  <hr>
+  <h2>5. Analytics and Tracking</h2>
+  <p><strong>We do not track you.</strong></p>
+  <p>ShowDeck contains:</p>
+  <ul>
+    <li>Zero analytics scripts (no Google Analytics, Mixpanel, etc.)</li>
+    <li>Zero tracking pixels</li>
+    <li>Zero advertising networks</li>
+  </ul>
+  <hr>
+  <h2>6. Changes to This Policy</h2>
+  <p>We may update our Privacy Policy from time to time. Any changes will be documented in this repository.</p>
+  <p>If you have any questions regarding this Privacy Policy, please open an issue on the <a href="https://github.com/Kartikpatkar/ShowDeck/issues">GitHub repository</a>.</p>
+  <hr>
+  <p><a href="index.html">← Back to ShowDeck</a></p>
+</body>
+</html>

@@ -64,7 +64,7 @@ export async function init(params) {
         console.warn('Network error fetching episode details (offline?)', e);
       }
     } else {
-      console.log('[ShowDeck] Offline: Skipping episode details API call');
+      // console.log('[ShowDeck] Offline: Skipping episode details API call');
     }
     
     showData = showResp || localShow;
