@@ -53,6 +53,17 @@ function parseCSVLine(line) {
 
 // ── Main Import Function ──
 
+async function loadJSZip() {
+  if (window.JSZip) return window.JSZip;
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'js/lib/jszip.min.js';
+    script.onload = () => resolve(window.JSZip);
+    script.onerror = reject;
+    document.body.appendChild(script);
+  });
+}
+
 /**
  * Import TV Time GDPR ZIP data into ShowDeck.
  * @param {File} zipFile - The ZIP file from TV Time
@@ -74,8 +85,11 @@ export async function importTVTimeData(zipFile, onProgress = () => {}, options =
   };
 
   // 1. Read ZIP
+  onProgress('reading', 0, 1, 'Loading JSZip library...');
+  const JSZipLib = await loadJSZip();
+  
   onProgress('reading', 0, 1, 'Reading ZIP file...');
-  const zip = await JSZip.loadAsync(zipFile);
+  const zip = await JSZipLib.loadAsync(zipFile);
 
   // 2. Extract the key CSVs
   onProgress('parsing', 0, 3, 'Parsing followed shows...');

@@ -126,15 +126,15 @@ export async function init() {
         </div>
       </div>
     `;
-    renderCharts(stats);
+    await renderCharts(stats);
 
     if (window.statsThemeObserver) {
       window.statsThemeObserver.disconnect();
     }
-    window.statsThemeObserver = new MutationObserver(() => {
+    window.statsThemeObserver = new MutationObserver(async () => {
       chartInstances.forEach(c => c.destroy());
       chartInstances = [];
-      renderCharts(stats);
+      await renderCharts(stats);
     });
     window.statsThemeObserver.observe(document.body, { attributes: true, attributeFilter: ['class', 'data-theme'] });
 
@@ -157,9 +157,22 @@ export function destroy() {
   }
 }
 
-function renderCharts(stats) {
-  if (!window.Chart) {
-    console.warn('Chart.js not loaded');
+async function loadChartJS() {
+  if (window.Chart) return window.Chart;
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'js/lib/chart.umd.js';
+    script.onload = () => resolve(window.Chart);
+    script.onerror = reject;
+    document.body.appendChild(script);
+  });
+}
+
+async function renderCharts(stats) {
+  try {
+    await loadChartJS();
+  } catch (e) {
+    console.warn('Chart.js failed to load');
     return;
   }
 
