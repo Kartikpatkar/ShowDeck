@@ -53,7 +53,7 @@ export async function init(params) {
         console.warn('Network error fetching show details (offline?)', e);
       }
     } else {
-      console.log('[ShowDeck] Offline: Skipping show details API call');
+      // console.log('[ShowDeck] Offline: Skipping show details API call');
     }
     if (!richData && !localShow) throw new Error('Show not found');
     
@@ -182,7 +182,7 @@ async function fetchAndSaveEpisodes(tmdbId, tvmazeId, totalSeasons, localId) {
 async function enrichSeasonEpisodes(season) {
   if (!showData || !showData.tmdbId) return;
   if (!navigator.onLine) {
-    console.log('[ShowDeck] Offline: Skipping season enrichment API call');
+    // console.log('[ShowDeck] Offline: Skipping season enrichment API call');
     return;
   }
   try {

@@ -6,7 +6,7 @@
 import { Router } from './router.js';
 import { Sidebar } from './components/sidebar.js';
 
-export const APP_VERSION = '1.6.7';
+export const APP_VERSION = '1.6.8';
 
 const router = new Router();
 let sidebar = null;
@@ -259,7 +259,7 @@ function init() {
     router.navigate('/');
   }
 
-  console.log('[ShowDeck] App initialized');
+  // console.log('[ShowDeck] App initialized');
 
   // Auto-recalculate statuses (max once per day)
   setTimeout(async () => {
@@ -270,7 +270,7 @@ function init() {
       try {
         const { autoRecalculateStatuses } = await import('./database/shows.js');
         const count = await autoRecalculateStatuses();
-        if (count > 0) console.log(`[ShowDeck] Auto-paused ${count} shows`);
+        // if (count > 0) console.log(`[ShowDeck] Auto-paused ${count} shows`);
         localStorage.setItem('showdeck_last_auto_recalc', now.toString());
       } catch (e) {
         console.error('Auto recalculate failed', e);
@@ -376,7 +376,7 @@ window.addEventListener('keydown', (e) => {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').then((registration) => {
-      console.log('ServiceWorker registration successful:', registration.scope);
+      // console.log('ServiceWorker registration successful:', registration.scope);
       
       // Check for updates
       registration.addEventListener('updatefound', () => {
@@ -507,7 +507,7 @@ if (document.readyState === 'loading') {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
-      .then(registration => console.log('SW registered:', registration.scope))
-      .catch(err => console.log('SW registration failed:', err));
+      .then(registration => { /* SW registered */ })
+      .catch(err => { /* SW registration failed */ });
   });
 }

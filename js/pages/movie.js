@@ -45,7 +45,7 @@ export async function init(params) {
         console.warn('Network error fetching movie details', e);
       }
     } else {
-      console.log('[ShowDeck] Offline: Skipping movie details API call');
+      // console.log('[ShowDeck] Offline: Skipping movie details API call');
     }
     
     if (!richData && !localMovie) throw new Error('Movie not found');
