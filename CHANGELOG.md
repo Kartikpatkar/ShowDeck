@@ -8,8 +8,10 @@ All notable changes to ShowDeck will be documented in this file.
 - **Performance:** Reduced unused JS (~150KB savings on load) by lazy-loading `chart.js` and `jszip` dynamically only when needed.
 - **Performance:** Fixed synchronous layout thrashing in `app.js` page transitions and scrolling by wrapping DOM writes in `requestAnimationFrame`.
 - **Performance:** Fixed duplicate fetching of `manifest.json` by adding a ping query string for the network check.
-- **Accessibility:** Increased contrast of the footer links and onboarding progress label to meet WCAG AAA standards.
-- **Accessibility:** Removed redundant `role="navigation"` from the `<aside>` element.
+- **Accessibility:** Globally increased text contrast across all 6 themes to strictly pass WCAG AAA standards.
+- **Accessibility:** Explicitly fixed Google Sign In button contrast and removed redundant `role="navigation"` from the `<aside>` element.
+- **Layout:** Fixed a flex-box issue causing the global footer to render as a broken right-hand column on desktop.
+- **Layout:** Adjusted mobile safe-area padding so the footer and page content are not hidden behind the mobile bottom navigation bar.
 
 ## [1.6.8] - 2026-08-13
 
