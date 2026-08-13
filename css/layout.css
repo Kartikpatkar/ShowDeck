@@ -398,10 +398,11 @@
 
   .main-content {
     padding: var(--space-4);
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
   }
 
   .page-container {
-    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    /* Padding moved to main-content */
   }
 
   .sidebar-header {
