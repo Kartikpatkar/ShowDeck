@@ -68,7 +68,6 @@ export class Sidebar {
     const sidebar = document.createElement('aside');
     sidebar.className = `sidebar${this.collapsed ? ' collapsed' : ''}`;
     sidebar.id = 'sidebar';
-    sidebar.setAttribute('role', 'navigation');
     sidebar.setAttribute('aria-label', 'Main navigation');
 
     sidebar.innerHTML = `

@@ -36,8 +36,9 @@ async function loadPage(loader, params = {}) {
 
   // Add transition
   container.classList.remove('page-enter');
-  void container.offsetWidth; // Force reflow
-  container.classList.add('page-enter');
+  requestAnimationFrame(() => {
+    container.classList.add('page-enter');
+  });
 
   try {
     const module = await loader();
@@ -76,7 +77,9 @@ async function loadPage(loader, params = {}) {
           contentArea.scrollTop = appScrollPositions.get(hash);
         });
       } else {
-        contentArea.scrollTop = 0;
+        requestAnimationFrame(() => {
+          contentArea.scrollTop = 0;
+        });
       }
     }
   } catch (err) {
@@ -448,7 +451,7 @@ async function verifyOnlineStatus() {
   // Chrome SW quirk: navigator.onLine is stuck true on offline reload.
   // Manually ping to verify. SW will return 404 if offline.
   try {
-    const res = await fetch('./manifest.json', { headers: { 'X-Ping': 'true' }, cache: 'no-store' });
+    const res = await fetch('./manifest.json?ping=1', { headers: { 'X-Ping': 'true' }, cache: 'no-store' });
     if (res.status === 503) {
       updateOnlineStatus(true); // Force offline UI
     } else {
