@@ -12,6 +12,7 @@ All notable changes to ShowDeck will be documented in this file.
 - **Accessibility:** Explicitly fixed Google Sign In button contrast and removed redundant `role="navigation"` from the `<aside>` element.
 - **Layout:** Fixed a flex-box issue causing the global footer to render as a broken right-hand column on desktop.
 - **Layout:** Adjusted mobile safe-area padding so the footer and page content are not hidden behind the mobile bottom navigation bar.
+- **Layout:** Fixed an issue where static pages (`privacy.html`, `terms.html`) were unable to scroll vertically.
 
 ## [1.6.8] - 2026-08-13
 
