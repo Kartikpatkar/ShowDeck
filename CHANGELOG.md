@@ -1,6 +1,16 @@
 # Changelog
 
 All notable changes to ShowDeck will be documented in this file.
+
+## [1.6.8] - 2026-08-13
+
+### Security & Pre-Launch Polish
+- **Security:** Hardened host configuration (`_headers`, `vercel.json`) with strict Content-Security-Policy, Referrer-Policy, Permissions-Policy, COOP, and HSTS headers.
+- **Security:** Added `.well-known/security.txt` for responsible disclosure routing.
+- **Legal:** Published static `privacy.html` and `terms.html` files and added global footer links in `index.html`.
+- **Cleanup:** Silenced development `console.log` statements for production deployment.
+- **Cleanup:** Removed extraneous scratch and test files.
+
 ## [1.6.7] - 2026-08-12
 
 ### Added
