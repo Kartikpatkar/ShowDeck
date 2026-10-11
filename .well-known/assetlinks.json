@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.kartikpatkar.showdeck",
+      "sha256_cert_fingerprints": [
+        "E4:80:F1:C2:A2:9B:4C:74:4D:14:B9:16:AE:BA:BE:E0:29:A4:A1:54:C1:8C:9E:3F:D0:F2:23:C4:C1:26:7E:BE"
+      ]
+    }
+  }
+]

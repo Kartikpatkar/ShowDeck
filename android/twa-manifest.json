@@ -1,0 +1,51 @@
+{
+  "packageId": "io.github.kartikpatkar.showdeck",
+  "host": "kartikpatkar.github.io",
+  "name": "ShowDeck",
+  "launcherName": "ShowDeck",
+  "display": "standalone",
+  "themeColor": "#09090B",
+  "themeColorDark": "#09090B",
+  "navigationColor": "#09090B",
+  "navigationColorDark": "#09090B",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#09090B",
+  "enableNotifications": true,
+  "startUrl": "/ShowDeck/?v=7",
+  "iconUrl": "https://kartikpatkar.github.io/ShowDeck/assets/icon-512.png?v=6",
+  "maskableIconUrl": "https://kartikpatkar.github.io/ShowDeck/assets/icon-512.png?v=6",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "1.6.9",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://kartikpatkar.github.io/ShowDeck/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://kartikpatkar.github.io/ShowDeck/",
+  "minSdkVersion": 24,
+  "orientation": "default",
+  "fingerprints": [
+    {
+      "value": "E4:80:F1:C2:A2:9B:4C:74:4D:14:B9:16:AE:BA:BE:E0:29:A4:A1:54:C1:8C:9E:3F:D0:F2:23:C4:C1:26:7E:BE"
+    }
+  ],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [],
+  "appVersion": "1.6.9"
+}

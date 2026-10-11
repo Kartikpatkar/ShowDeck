@@ -1,0 +1,14 @@
+# Gradle cache & build artifacts
+.gradle/
+build/
+app/build/
+
+# Built binaries
+*.apk
+*.aab
+*.idsig
+*-aligned.apk
+
+# Keystores (uncomment if you want to keep keystore private and off git)
+# *.keystore
+# *.jks
