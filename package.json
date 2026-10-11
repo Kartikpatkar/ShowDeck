@@ -1,0 +1,32 @@
+{
+  "name": "showdeck",
+  "version": "1.6.9",
+  "description": "ShowDeck - Personal Entertainment Tracker",
+  "main": "index.html",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "cap:sync": "npm run build && npx cap sync android",
+    "cap:open": "npx cap open android",
+    "build:android:debug": "npm run cap:sync && cd android && ./gradlew assembleDebug",
+    "build:android:bundle": "npm run cap:sync && cd android && ./gradlew bundleRelease"
+  },
+  "keywords": [
+    "showdeck",
+    "entertainment",
+    "tracker",
+    "pwa"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5"
+  }
+}

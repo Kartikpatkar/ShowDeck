@@ -376,7 +376,8 @@ window.addEventListener('keydown', (e) => {
 
 // ── PWA & Offline Support ──
 
-if ('serviceWorker' in navigator) {
+// Skip Service Worker when running as native Capacitor app
+if ('serviceWorker' in navigator && !window.Capacitor?.isNativePlatform?.()) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').then((registration) => {
       // console.log('ServiceWorker registration successful:', registration.scope);
@@ -497,7 +498,51 @@ function bootApp() {
   
   initTheme();
   initKeyboardNavigation();
+  initNativeApp();
   init();
+}
+
+function initNativeApp() {
+  if (window.Capacitor?.isNativePlatform?.()) {
+    const CapApp = window.Capacitor.Plugins?.App;
+    if (CapApp) {
+      CapApp.addListener('backButton', () => {
+        // 1. Close open modal if any
+        const activeModal = document.querySelector('.modal-backdrop, .modal-container, #enrich-modal, .modal-overlay');
+        if (activeModal) {
+          const closeBtn = activeModal.querySelector('.modal-close, button.close, [data-action="close"]');
+          if (closeBtn) {
+            closeBtn.click();
+            return;
+          }
+          activeModal.remove();
+          return;
+        }
+
+        // 2. Close mobile sidebar if open
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar && sidebar.classList.contains('open')) {
+          sidebar.classList.remove('open');
+          return;
+        }
+
+        // 3. Router back or exit app
+        const currentHash = window.location.hash;
+        if (currentHash && currentHash !== '#/' && currentHash !== '') {
+          window.history.back();
+        } else {
+          CapApp.exitApp();
+        }
+      });
+    }
+
+    // Configure Status Bar style
+    const StatusBar = window.Capacitor.Plugins?.StatusBar;
+    if (StatusBar) {
+      StatusBar.setBackgroundColor({ color: '#09090b' }).catch(() => {});
+      StatusBar.setStyle({ style: 'DARK' }).catch(() => {});
+    }
+  }
 }
 
 if (document.readyState === 'loading') {
@@ -506,11 +551,3 @@ if (document.readyState === 'loading') {
   bootApp();
 }
 
-// Register PWA Service Worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(registration => { /* SW registered */ })
-      .catch(err => { /* SW registration failed */ });
-  });
-}
